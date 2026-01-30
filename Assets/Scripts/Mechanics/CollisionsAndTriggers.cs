@@ -33,6 +33,7 @@ public class CollisionsAndTriggers : MonoBehaviour
     public float targetMoveSpeed = 5f;
 
     [Header("Rotation Settings")]
+    public bool enableRotation; // Enable rotation while moving
     public bool rotateClockwise; // Rotate clockwise if true, counter-clockwise if false
     public float rotationSpeed = 100f; // Degrees per second
 
@@ -74,7 +75,12 @@ public class CollisionsAndTriggers : MonoBehaviour
         if (allowConstantMotion)
         {
             ContinuousMovement();
-            ApplyRotation();
+            
+            // Apply rotation independently if enabled
+            if (enableRotation)
+            {
+                ApplyRotation();
+            }
         }
 
         // Handle one-time movement to target
@@ -97,10 +103,12 @@ public class CollisionsAndTriggers : MonoBehaviour
         float xDirection = moveRight ? 1f : -1f;
         float yDirection = moveUp ? 1f : -1f;
         
+        // Move in world space to avoid rotation affecting movement direction
         objectTransform.Translate(
             xDirection * Time.deltaTime * moveSpeed,
             yDirection * Time.deltaTime * moveSpeed,
-            0
+            0,
+            Space.World
         );
     }
 
