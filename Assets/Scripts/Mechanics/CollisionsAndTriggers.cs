@@ -24,8 +24,8 @@ public class CollisionsAndTriggers : MonoBehaviour
     public bool allowConstantMotion; // TRUE = continuous, FALSE = move to target once
 
     [Header("Continuous Motion Settings")]
-    public float moveDirectionX;
-    public float moveDirectionY;
+    public bool moveRight; // Move right if true, left if false
+    public bool moveUp; // Move up if true, down if false
     public float moveSpeed = 5f;
 
     [Header("One-Time Movement Settings")]
@@ -33,8 +33,8 @@ public class CollisionsAndTriggers : MonoBehaviour
     public float targetMoveSpeed = 5f;
 
     [Header("Rotation Settings")]
-    public float rotationZ;
-    public float rotationX;
+    public bool rotateClockwise; // Rotate clockwise if true, counter-clockwise if false
+    public float rotationSpeed = 100f; // Degrees per second
 
     [Header("Physics Modification Settings")]
     public float newGravityScale = 1f;
@@ -74,6 +74,7 @@ public class CollisionsAndTriggers : MonoBehaviour
         if (allowConstantMotion)
         {
             ContinuousMovement();
+            ApplyRotation();
         }
 
         // Handle one-time movement to target
@@ -81,7 +82,6 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             MoveToTarget();
         }
-        ApplyRotation();
 
         // Apply fall speed multiplier when physics is modified
         if (isPhysicsModified && modifyRigidbody != null)
@@ -94,14 +94,14 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void ContinuousMovement()
     {
-        if (moveDirectionX != 0 || moveDirectionY != 0)
-        {
-            objectTransform.Translate(
-                moveDirectionX * Time.deltaTime * moveSpeed,
-                moveDirectionY * Time.deltaTime * moveSpeed,
-                0
-            );
-        }
+        float xDirection = moveRight ? 1f : -1f;
+        float yDirection = moveUp ? 1f : -1f;
+        
+        objectTransform.Translate(
+            xDirection * Time.deltaTime * moveSpeed,
+            yDirection * Time.deltaTime * moveSpeed,
+            0
+        );
     }
 
     void MoveToTarget()
@@ -120,14 +120,12 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void ApplyRotation()
     {
-        if (rotationX != 0 || rotationZ != 0)
-        {
-            objectTransform.Rotate(
-                rotationX * Time.deltaTime * moveSpeed,
-                0,
-                rotationZ * Time.deltaTime * moveSpeed
-            );
-        }
+        float rotationDirection = rotateClockwise ? -1f : 1f;
+        objectTransform.Rotate(
+            0,
+            0,
+            rotationDirection * rotationSpeed * Time.deltaTime
+        );
     }
 
     void StartContinuousMotion()
@@ -147,10 +145,7 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void SetObjectActiveState()
     {
-        if(objectToTrigger.activeSelf == true){
-            objectToTrigger.SetActive(true);
-        }
-        else{objectToTrigger.SetActive(false);}
+        objectToTrigger.SetActive(!objectToTrigger.activeSelf);
     }
 
     void AddComponentToObject()

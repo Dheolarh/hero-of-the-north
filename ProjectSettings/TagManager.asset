@@ -7,6 +7,7 @@ TagManager:
   - Floor
   - Death
   - Barrier
+  - PlatformGround
   layers:
   - Default
   - TransparentFX
