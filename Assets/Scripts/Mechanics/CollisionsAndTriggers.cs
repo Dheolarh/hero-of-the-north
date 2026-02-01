@@ -82,6 +82,9 @@ public class CollisionsAndTriggers : MonoBehaviour
     private float originalGravityScale;
     private bool isPhysicsModified = false;
 
+    [Header("Delete Trigger Zone")]
+    public bool deleteTriggerZone;
+
     void Start()
     {
         if (objectToTrigger != null)
@@ -355,6 +358,11 @@ public class CollisionsAndTriggers : MonoBehaviour
             {
                 ResetPhysics();
             }
+        }
+
+        if (deleteTriggerZone)
+        {
+            Destroy(gameObject);
         }
     }
 }
