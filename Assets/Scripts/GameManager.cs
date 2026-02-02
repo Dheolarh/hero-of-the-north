@@ -9,8 +9,8 @@ public class GameManager : MonoBehaviour
 
     [Header("Game State")]
     public bool isPaused = false;
-    public int currentLevel = 1;
-    public int playerScore = 0;
+    public bool isGameOver= false;
+    public bool isLevelCompleted = false;
 
     void Awake()
     {
@@ -28,7 +28,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        // Initialize game state
+        
     }
 
     // ========== GAME STATE METHODS ==========
@@ -45,33 +45,10 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
     }
 
-    public void AddScore(int points)
-    {
-        playerScore += points;
-        Debug.Log("Score: " + playerScore);
-    }
-
     public void GameOver()
     {
         Debug.Log("Game Over!");
-        RestartLevel();
-    }
-
-    public void RestartLevel()
-    {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-    }
-
-    public void LoadNextLevel()
-    {
-        currentLevel++;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
-    }
-
-    public void LoadLevel(int levelIndex)
-    {
-        SceneManager.LoadScene(levelIndex);
+        LevelManager.Instance.RestartLevel();
     }
 
     public void QuitGame()

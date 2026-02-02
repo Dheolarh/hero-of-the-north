@@ -6,8 +6,8 @@ public enum TriggerType
 {
     None,
     Teleport,
-    Trap,
-    MotionTrap,
+    ContinousMotion,
+    SingleMotion,
     RotationTrap,
     Ally,
     PhysicsModifier
@@ -37,8 +37,8 @@ public enum RotationDirection
 
 public class CollisionsAndTriggers : MonoBehaviour
 {
-    [Header("Object to Manipulate")]
-    public GameObject objectToTrigger;
+    [Header("Objects to Manipulate")]
+    public GameObject[] objectsToTrigger;
 
     [Header("This Object only uses physics settings")]
     public GameObject objectToModify;
@@ -50,33 +50,33 @@ public class CollisionsAndTriggers : MonoBehaviour
     public ComponentAction componentAction = ComponentAction.None;
     
     [Header("Object Active Toggle")]
-    public bool setObjectActive; // Toggle objectToTrigger active state
+    public bool setObjectActive; // Toggle objectsToTrigger active state
 
     [Header("Movement Settings")]
     public bool enableMove;
     public MoveDirection moveDirection = MoveDirection.Right;
-    public float moveSpeed = 5f;
+    public float moveSpeed;
     public bool stopMoveOnExit;
 
     [Header("Rotation Settings")]
     public bool enableRotation;
     public RotationDirection rotationDirection = RotationDirection.Clockwise;
-    public float rotationSpeed = 100f;
+    public float rotationSpeed;
     public bool stopRotationOnExit;
 
     [Header("One-Time Movement Settings")]
     public Vector2 targetPosition;
-    public float targetMoveSpeed = 5f;
+    public float targetMoveSpeed;
 
     [Header("Teleport Settings")]
     public Vector2 teleportPosition;
 
     [Header("Physics Modification Settings")]
-    public float newGravityScale = 1f;
-    public float fallSpeedMultiplier = 2.5f;
+    public float newGravityScale;
+    public float fallSpeedMultiplier;
     public bool applyOnEnter = true; 
     public bool resetOnExit = false;
-    private Transform objectTransform;
+    
     private bool isMovingToTarget = false;
     private Rigidbody2D modifyRigidbody;
     private float originalGravityScale;
@@ -87,11 +87,6 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void Start()
     {
-        if (objectToTrigger != null)
-        {
-            objectTransform = objectToTrigger.transform;
-        }
-
         // Cache the Rigidbody2D component if objectToModify is set
         if (objectToModify != null)
         {
@@ -105,8 +100,6 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void Update()
     {
-        if (objectTransform == null) return;
-
         // Handle continuous motion (independent)
         if (enableMove)
         {
@@ -136,18 +129,29 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void MoveToTarget()
     {
-        Vector2 currentPos = objectTransform.position;
-        Vector2 newPos = Vector2.MoveTowards(currentPos, targetPosition, targetMoveSpeed * Time.deltaTime);
-        objectTransform.position = newPos;
-        if (Vector2.Distance(currentPos, targetPosition) < 0.01f)
+        if (objectsToTrigger == null || objectsToTrigger.Length == 0) return;
+        
+        foreach (GameObject obj in objectsToTrigger)
         {
-            objectTransform.position = targetPosition;
-            isMovingToTarget = false;
+            if (obj == null) continue;
+            
+            Vector2 currentPos = obj.transform.position;
+            Vector2 newPos = Vector2.MoveTowards(currentPos, targetPosition, targetMoveSpeed * Time.deltaTime);
+            obj.transform.position = newPos;
+            
+            // Check if reached target (using first object as reference)
+            if (obj == objectsToTrigger[0] && Vector2.Distance(currentPos, targetPosition) < 0.01f)
+            {
+                obj.transform.position = targetPosition;
+                isMovingToTarget = false;
+            }
         }
     }
 
     void ContinuousMovement()
     {
+        if (objectsToTrigger == null) return;
+        
         float xDirection = 0f;
         float yDirection = 0f;
         
@@ -159,22 +163,39 @@ public class CollisionsAndTriggers : MonoBehaviour
             case MoveDirection.Down: yDirection = -1f; break;
         }
         
-        objectTransform.Translate(
-            xDirection * Time.deltaTime * moveSpeed,
-            yDirection * Time.deltaTime * moveSpeed,
-            0,
-            Space.World
-        );
+        // Apply movement to all objects in array
+        foreach (GameObject obj in objectsToTrigger)
+        {
+            if (obj != null)
+            {
+                obj.transform.Translate(
+                    xDirection * Time.deltaTime * moveSpeed,
+                    yDirection * Time.deltaTime * moveSpeed,
+                    0,
+                    Space.World
+                );
+            }
+        }
     }
 
     void ApplyRotation()
     {
+        if (objectsToTrigger == null) return;
+        
         float rotationDir = (rotationDirection == RotationDirection.Clockwise) ? -1f : 1f;
-        objectTransform.Rotate(
-            0,
-            0,
-            rotationDir * rotationSpeed * Time.deltaTime
-        );
+        
+        // Apply rotation to all objects in array
+        foreach (GameObject obj in objectsToTrigger)
+        {
+            if (obj != null)
+            {
+                obj.transform.Rotate(
+                    0,
+                    0,
+                    rotationDir * rotationSpeed * Time.deltaTime
+                );
+            }
+        }
     }
 
     void StartMoveToTarget()
@@ -204,8 +225,16 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void Teleport()
     {
-        if (objectTransform == null) return;
-        objectTransform.position = teleportPosition;
+        if (objectsToTrigger != null && objectsToTrigger.Length > 0)
+        {
+            foreach (GameObject obj in objectsToTrigger)
+            {
+                if (obj != null)
+                {
+                    obj.transform.position = teleportPosition;
+                }
+            }
+        }
     }
 
 
@@ -216,23 +245,39 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void SetObjectActiveState()
     {
-        objectToTrigger.SetActive(!objectToTrigger.activeSelf);
+        if (objectsToTrigger != null)
+        {
+            foreach (GameObject obj in objectsToTrigger)
+            {
+                if (obj != null)
+                {
+                    obj.SetActive(!obj.activeSelf);
+                }
+            }
+        }
     }
 
     void AddComponentToObject()
     {
-        switch (componentAction)
+        if (objectsToTrigger == null) return;
+        
+        foreach (GameObject obj in objectsToTrigger)
         {
-            case ComponentAction.AddRigidbody2D:
-                objectToTrigger.AddComponent<Rigidbody2D>();
-                break;
-            case ComponentAction.AddBoxCollider2D:
-                objectToTrigger.AddComponent<BoxCollider2D>();
-                break;
-            case ComponentAction.RemoveCollider:
-                var collider = objectToTrigger.GetComponent<BoxCollider2D>();
-                if (collider != null) collider.enabled = false;
-                break;
+            if (obj == null) continue;
+            
+            switch (componentAction)
+            {
+                case ComponentAction.AddRigidbody2D:
+                    obj.AddComponent<Rigidbody2D>();
+                    break;
+                case ComponentAction.AddBoxCollider2D:
+                    obj.AddComponent<BoxCollider2D>();
+                    break;
+                case ComponentAction.RemoveCollider:
+                    var collider = obj.GetComponent<BoxCollider2D>();
+                    if (collider != null) collider.enabled = false;
+                    break;
+            }
         }
     }
 
@@ -297,7 +342,7 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             switch (triggerType)
             {
-                case TriggerType.MotionTrap:
+                case TriggerType.ContinousMotion:
                     enableMove = true;
                     break;
                     
@@ -305,7 +350,7 @@ public class CollisionsAndTriggers : MonoBehaviour
                     enableRotation = true;
                     break;
                     
-                case TriggerType.Trap:
+                case TriggerType.SingleMotion:
                     StartMoveToTarget();
                     Debug.Log("Trap triggered!");
                     break;
@@ -344,7 +389,7 @@ public class CollisionsAndTriggers : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            if (triggerType == TriggerType.MotionTrap && stopMoveOnExit)
+            if (triggerType == TriggerType.ContinousMotion && stopMoveOnExit)
             {
                 StopMove();
             }
@@ -362,7 +407,8 @@ public class CollisionsAndTriggers : MonoBehaviour
 
         if (deleteTriggerZone)
         {
-            Destroy(gameObject);
+            var collider = GetComponent<Collider2D>();
+           collider.enabled = false;
         }
     }
 }

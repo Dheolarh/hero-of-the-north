@@ -11,6 +11,7 @@ public class LevelManager : MonoBehaviour
     
     private int currentLevelIndex = 0;
     private int highestUnlockedLevel = 1;
+    public string mainMenu;
     
     public bool allowMultiJumps = false;
 
@@ -20,7 +21,6 @@ public class LevelManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            LoadProgress();
         }
         else
         {
@@ -45,6 +45,7 @@ public class LevelManager : MonoBehaviour
 
     public void LoadLevel(int levelNumber)
     {
+        GameManager.Instance.isGameOver = false;
         LevelData level = GetLevel(levelNumber);
         if (level != null && IsLevelUnlocked(levelNumber))
         {
@@ -57,58 +58,20 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-    public void LoadNextLevel()
-    {
-        int nextLevel = currentLevelIndex + 1;
-        if (nextLevel <= allLevels.Count)
-        {
-            LoadLevel(nextLevel);
-        }
-        else
-        {
-            Debug.Log("No more levels! Game complete!");
-        }
-    }
-
     public void RestartLevel()
     {
+        GameManager.Instance.isGameOver = false;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void CompleteLevel()
     {
-        int nextLevel = currentLevelIndex + 1;
-        if (nextLevel > highestUnlockedLevel)
-        {
-            highestUnlockedLevel = nextLevel;
-            SaveProgress();
-        }
+        GameManager.Instance.isGameOver = false;
+        GameManager.Instance.isLevelCompleted = true;
+        SceneManager.LoadScene(mainMenu);
     }
 
-    public int GetCurrentLevelNumber()
-    {
-        return currentLevelIndex;
-    }
 
-    public int GetHighestUnlockedLevel()
-    {
-        return highestUnlockedLevel;
-    }
 
-    private void SaveProgress()
-    {
-        PlayerPrefs.SetInt("HighestUnlockedLevel", highestUnlockedLevel);
-        PlayerPrefs.Save();
-    }
-
-    private void LoadProgress()
-    {
-        highestUnlockedLevel = PlayerPrefs.GetInt("HighestUnlockedLevel", 1);
-    }
-
-    public void ResetProgress()
-    {
-        highestUnlockedLevel = 1;
-        SaveProgress();
-    }
 }
+

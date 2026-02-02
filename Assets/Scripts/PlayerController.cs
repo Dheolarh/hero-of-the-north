@@ -41,6 +41,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (GameManager.Instance.isGameOver) return;
         HandleMovement();
         OnJump();
         ResetPlayerRotation();
@@ -166,6 +167,7 @@ public class PlayerController : MonoBehaviour
         if (other.CompareTag("Death"))
         {
             Debug.Log("Player is Dead");
+            GameManager.Instance.isGameOver = true;
             PlayAnimation("isDead");
             StartCoroutine(StopCameraAfterDelay(1f));
             StartCoroutine(GameOver());
