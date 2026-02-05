@@ -12,5 +12,8 @@ public class LevelData : ScriptableObject
     [Header("UI")]
     public Sprite levelIcon; 
     public Sprite lockedIcon;
-    public Sprite bossLevelIcon; // Special icon for boss levels (shows instead of level number)
+    
+    [Header("Boss Level UI")]
+    public Sprite bossUnlockedIcon; // Icon for unlocked boss levels
+    public Sprite bossLockedIcon;   // Icon for locked boss levels
 }

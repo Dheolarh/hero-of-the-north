@@ -48,7 +48,7 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     [Header("Component Action")]
     public ComponentAction componentAction = ComponentAction.None;
-    
+
     [Header("Object Active Toggle")]
     public bool setObjectActive; // Toggle objectsToTrigger active state
 
@@ -74,9 +74,9 @@ public class CollisionsAndTriggers : MonoBehaviour
     [Header("Physics Modification Settings")]
     public float newGravityScale;
     public float fallSpeedMultiplier;
-    public bool applyOnEnter = true; 
+    public bool applyOnEnter = true;
     public bool resetOnExit = false;
-    
+
     private bool isMovingToTarget = false;
     private Rigidbody2D modifyRigidbody;
     private float originalGravityScale;
@@ -105,7 +105,7 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             ContinuousMovement();
         }
-        
+
         // Handle continuous rotation (independent)
         if (enableRotation)
         {
@@ -130,15 +130,15 @@ public class CollisionsAndTriggers : MonoBehaviour
     void MoveToTarget()
     {
         if (objectsToTrigger == null || objectsToTrigger.Length == 0) return;
-        
+
         foreach (GameObject obj in objectsToTrigger)
         {
             if (obj == null) continue;
-            
+
             Vector2 currentPos = obj.transform.position;
             Vector2 newPos = Vector2.MoveTowards(currentPos, targetPosition, targetMoveSpeed * Time.deltaTime);
             obj.transform.position = newPos;
-            
+
             // Check if reached target (using first object as reference)
             if (obj == objectsToTrigger[0] && Vector2.Distance(currentPos, targetPosition) < 0.01f)
             {
@@ -151,10 +151,10 @@ public class CollisionsAndTriggers : MonoBehaviour
     void ContinuousMovement()
     {
         if (objectsToTrigger == null) return;
-        
+
         float xDirection = 0f;
         float yDirection = 0f;
-        
+
         switch (moveDirection)
         {
             case MoveDirection.Right: xDirection = 1f; break;
@@ -162,7 +162,7 @@ public class CollisionsAndTriggers : MonoBehaviour
             case MoveDirection.Up: yDirection = 1f; break;
             case MoveDirection.Down: yDirection = -1f; break;
         }
-        
+
         // Apply movement to all objects in array
         foreach (GameObject obj in objectsToTrigger)
         {
@@ -181,9 +181,9 @@ public class CollisionsAndTriggers : MonoBehaviour
     void ApplyRotation()
     {
         if (objectsToTrigger == null) return;
-        
+
         float rotationDir = (rotationDirection == RotationDirection.Clockwise) ? -1f : 1f;
-        
+
         // Apply rotation to all objects in array
         foreach (GameObject obj in objectsToTrigger)
         {
@@ -212,7 +212,7 @@ public class CollisionsAndTriggers : MonoBehaviour
     {
         enableMove = false;
     }
-    
+
     void StartRotation()
     {
         enableRotation = true;
@@ -260,11 +260,11 @@ public class CollisionsAndTriggers : MonoBehaviour
     void AddComponentToObject()
     {
         if (objectsToTrigger == null) return;
-        
+
         foreach (GameObject obj in objectsToTrigger)
         {
             if (obj == null) continue;
-            
+
             switch (componentAction)
             {
                 case ComponentAction.AddRigidbody2D:
@@ -329,6 +329,13 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             if (triggerType == TriggerType.Ally)
             {
+                // Track ally saved in ScoreManager
+                if (ScoreManager.Instance != null)
+                {
+                    ScoreManager.Instance.alliesSaved++;
+                    Debug.Log($"[CollisionsAndTriggers] Ally saved! Total: {ScoreManager.Instance.alliesSaved}");
+                }
+
                 Destroy(gameObject);
             }
         }
@@ -345,38 +352,38 @@ public class CollisionsAndTriggers : MonoBehaviour
                 case TriggerType.ContinousMotion:
                     enableMove = true;
                     break;
-                    
+
                 case TriggerType.RotationTrap:
                     enableRotation = true;
                     break;
-                    
+
                 case TriggerType.SingleMotion:
                     StartMoveToTarget();
                     Debug.Log("Trap triggered!");
                     break;
-                    
+
                 case TriggerType.Teleport:
                     Teleport();
                     Debug.Log("Teleport triggered!");
                     break;
-                    
+
                 case TriggerType.PhysicsModifier:
                     if (applyOnEnter)
                     {
                         ModifyPhysics();
                     }
                     break;
-                    
+
                 case TriggerType.Ally:
                     break;
             }
-            
+
             // Handle object active toggle
             if (setObjectActive)
             {
                 SetObjectActiveState();
             }
-            
+
             // Handle component actions
             if (componentAction != ComponentAction.None)
             {
@@ -393,12 +400,12 @@ public class CollisionsAndTriggers : MonoBehaviour
             {
                 StopMove();
             }
-            
+
             if (triggerType == TriggerType.RotationTrap && stopRotationOnExit)
             {
                 StopRotation();
             }
-            
+
             if (triggerType == TriggerType.PhysicsModifier && resetOnExit)
             {
                 ResetPhysics();
@@ -408,7 +415,7 @@ public class CollisionsAndTriggers : MonoBehaviour
         if (deleteTriggerZone)
         {
             var collider = GetComponent<Collider2D>();
-           collider.enabled = false;
+            collider.enabled = false;
         }
     }
 }

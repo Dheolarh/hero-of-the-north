@@ -16,6 +16,7 @@ MonoBehaviour:
   sceneName: Level 18
   levelName: 18
   isBossLevel: 0
-  levelIcon: {fileID: 21300000, guid: e647493eaaf43524285f71b3c6f1b38d, type: 3}
-  lockedIcon: {fileID: 21300000, guid: b6b4101dae68d02489cfa744cec9b66a, type: 3}
-  bossLevelIcon: {fileID: 0}
+  levelIcon: {fileID: 21300000, guid: 0f271ac103ca0b8439b878d0d23f2375, type: 3}
+  lockedIcon: {fileID: 21300000, guid: ae0deb8daee84f0408c803b8e168b4c3, type: 3}
+  bossUnlockedIcon: {fileID: 21300000, guid: aca4a8577912a1c488f3cf0ba839c82f, type: 3}
+  bossLockedIcon: {fileID: 21300000, guid: 2df92e8af84b8ae43a13441aeab2fbbe, type: 3}
