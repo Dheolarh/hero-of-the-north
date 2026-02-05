@@ -22,6 +22,7 @@ public class LeaderboardUI : MonoBehaviour
     [SerializeField] private GameObject playerStandingPanel;
     [SerializeField] private TextMeshProUGUI playerRankText;
     [SerializeField] private Image playerHeroImage;
+    [SerializeField] private Sprite playerDefaultAvatar;
     [SerializeField] private TextMeshProUGUI playerHeroName;
     [SerializeField] private TextMeshProUGUI playerPointsText;
 
@@ -49,10 +50,14 @@ public class LeaderboardUI : MonoBehaviour
 
     void OnEnable()
     {
+        // Only auto-refresh in WebGL builds (when running on Reddit)
+        // In Unity Editor, use the test button instead
+#if UNITY_WEBGL && !UNITY_EDITOR
         if (autoRefreshOnEnable)
         {
             RefreshLeaderboard();
         }
+#endif
     }
 
     /// <summary>
@@ -128,6 +133,9 @@ public class LeaderboardUI : MonoBehaviour
 
         SetLoadingState(false, "");
         Debug.Log($"[LeaderboardUI] Displayed {entries.Length} leaderboard entries (Top 3 + {entries.Length - 3} dynamic)");
+        
+        // Reset scroll position to top after layout recalculates
+        StartCoroutine(ResetScrollPosition());
     }
 
     /// <summary>
@@ -155,7 +163,13 @@ public class LeaderboardUI : MonoBehaviour
             playerPointsText.text = $"{standing.totalPoints}";
         }
 
-        // Load player's avatar
+        // Set default avatar first
+        if (playerHeroImage != null && playerDefaultAvatar != null)
+        {
+            playerHeroImage.sprite = playerDefaultAvatar;
+        }
+
+        // Load player's avatar (will replace default if available)
         if (playerHeroImage != null && DevvitBridge.Instance != null && !string.IsNullOrEmpty(DevvitBridge.Instance.avatarUrl))
         {
             StartCoroutine(LoadPlayerAvatar(DevvitBridge.Instance.avatarUrl));
@@ -249,6 +263,20 @@ public class LeaderboardUI : MonoBehaviour
             Destroy(entry);
         }
         dynamicLeaderboardEntries.Clear();
+    }
+
+    /// <summary>
+    /// Reset scroll position to top after layout recalculates
+    /// </summary>
+    private IEnumerator ResetScrollPosition()
+    {
+        // Wait for end of frame to ensure layout is recalculated
+        yield return new WaitForEndOfFrame();
+        
+        if (scrollRect != null)
+        {
+            scrollRect.verticalNormalizedPosition = 1f; // 1 = top, 0 = bottom
+        }
     }
 
     /// <summary>

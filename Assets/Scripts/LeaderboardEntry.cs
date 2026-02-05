@@ -19,15 +19,27 @@ public class LeaderboardEntry : MonoBehaviour
         {
             rankText.text = $"#{rank}";
         }
+        else
+        {
+            Debug.LogWarning($"[LeaderboardEntry] rankText is NULL on {gameObject.name}");
+        }
 
         if (usernameText != null)
         {
             usernameText.text = username;
         }
+        else
+        {
+            Debug.LogWarning($"[LeaderboardEntry] usernameText is NULL on {gameObject.name}");
+        }
 
         if (pointsText != null)
         {
-            pointsText.text = $"{points} pts";
+            pointsText.text = $"{points}";
+        }
+        else
+        {
+            Debug.LogWarning($"[LeaderboardEntry] pointsText is NULL on {gameObject.name}");
         }
 
         // Set default avatar initially
