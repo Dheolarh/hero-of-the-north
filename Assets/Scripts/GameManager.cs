@@ -1,7 +1,6 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,6 +10,7 @@ public class GameManager : MonoBehaviour
     public bool isPaused = false;
     public bool isGameOver= false;
     public bool isLevelCompleted = false;
+    [SerializeField] ScrollRect levelRect;
 
     void Awake()
     {
@@ -28,7 +28,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        
+        StartCoroutine(ResetScrollPosition());
     }
 
     // ========== GAME STATE METHODS ==========
@@ -55,5 +55,15 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("Quitting game...");
         Application.Quit();
+    }
+
+    private IEnumerator ResetScrollPosition()
+    {
+        yield return new WaitForEndOfFrame();
+        
+        if (levelRect != null)
+        {
+            levelRect.verticalNormalizedPosition = 1f; // 1 = top, 0 = bottom
+        }
     }
 }

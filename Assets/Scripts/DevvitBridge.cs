@@ -107,6 +107,41 @@ public class DevvitBridge : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Called when score submission completes (response from backend)
+    /// Message format: { "success": true, "heroPoints": 850, "totalPoints": 2500, "rank": 42, "message": "..." }
+    /// </summary>
+    public void OnScoreSubmitted(string json)
+    {
+        try
+        {
+            ScoreSubmissionResponse response = JsonUtility.FromJson<ScoreSubmissionResponse>(json);
+
+            if (response.success)
+            {
+                if (logMessages)
+                {
+                    Debug.Log($"[DevvitBridge] Score submitted! Hero Points: {response.heroPoints}, Total: {response.totalPoints}, Rank: #{response.rank}");
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Debug.Log($"[DevvitBridge] Message: {response.message}");
+                    }
+                }
+                
+                // Optionally trigger UI update or achievement notification here
+                // Example: EventManager.TriggerEvent("ScoreUpdated", response);
+            }
+            else
+            {
+                Debug.LogWarning($"[DevvitBridge] Score submission failed: {response.message}");
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[DevvitBridge] Error parsing score response: {e.Message}");
+        }
+    }
+
     // ========== SENDING DATA TO REDDIT ==========
 
     /// <summary>
@@ -221,5 +256,15 @@ public class DevvitBridge : MonoBehaviour
         public float timeSpent;
         public int retryCount;
         public int heroPoints;
+    }
+
+    [Serializable]
+    public class ScoreSubmissionResponse
+    {
+        public bool success;
+        public int heroPoints;
+        public int totalPoints;
+        public int rank;
+        public string message;
     }
 }

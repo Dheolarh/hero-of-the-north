@@ -3,6 +3,10 @@ import {
   InitResponse,
   LevelCompletedRequest,
   LevelCompletedResponse,
+  ScoreSubmissionRequest,
+  ScoreSubmissionResponse,
+  LeaderboardResponse,
+  PlayerStandingResponse,
 } from "../shared/types/api";
 import {
   createServer,
@@ -12,6 +16,16 @@ import {
   redis,
 } from "@devvit/web/server";
 import { createPost } from "./core/post";
+import { validateLevelStats, calculateHeroPoints } from "./services/scoreService";
+import {
+  getTop50,
+  getPlayerStanding,
+  savePlayerStats,
+  saveLevelScore,
+  updateLeaderboard,
+  getCompletedLevels,
+  addCompletedLevel,
+} from "./services/leaderboardService";
 
 const app = express();
 
@@ -43,7 +57,7 @@ router.get<
   try {
     const username = await reddit.getCurrentUsername();
     const currentUsername = username ?? "anonymous";
-    
+
     // Fetch user info for snoovatar
     let snoovatarUrl = "";
     if (username && context.userId) {
@@ -52,7 +66,7 @@ router.get<
         snoovatarUrl = (await user.getSnoovatarUrl()) ?? "";
       }
     }
-    
+
     // Fetch previous time from Redis using postId:username as key
     const redisKey = `${postId}:${currentUsername}`;
     const previousTime = await redis.get(redisKey);
@@ -80,7 +94,7 @@ router.post<
   LevelCompletedRequest
 >("/api/level-completed", async (req, res): Promise<void> => {
   const { postId } = context;
-  
+
   if (!postId) {
     console.error("No postId in context");
     res.status(400).json({
@@ -92,7 +106,7 @@ router.post<
 
   try {
     const { username, time } = req.body;
-    
+
     if (!username || !time) {
       console.error("Missing username or time in request");
       res.status(400).json({
@@ -121,6 +135,184 @@ router.post<
       type: "level-completed",
       success: false,
       message: errorMessage,
+    });
+  }
+});
+
+// ===== LEADERBOARD ENDPOINTS =====
+
+// Submit score for a completed level
+router.post<
+  unknown,
+  ScoreSubmissionResponse | { status: string; message: string },
+  ScoreSubmissionRequest
+>("/api/submit-score", async (req, res): Promise<void> => {
+  const { userId } = context;
+
+  if (!userId) {
+    res.status(401).json({
+      status: "error",
+      message: "User not authenticated",
+    });
+    return;
+  }
+
+  try {
+    const { levelNumber, alliesSaved, timeSpent, retryCount } = req.body;
+
+    // Validate input
+    const validation = validateLevelStats(levelNumber, {
+      alliesSaved,
+      timeSpent,
+      retryCount,
+    });
+
+    if (!validation.isValid) {
+      res.status(400).json({
+        status: "error",
+        message: validation.error || "Invalid stats",
+      });
+      return;
+    }
+
+    // Calculate hero points SERVER-SIDE (never trust client)
+    const heroPoints = calculateHeroPoints({
+      alliesSaved,
+      timeSpent,
+      retryCount,
+    });
+
+    // Get user info
+    const username = (await reddit.getCurrentUsername()) ?? "anonymous";
+    let avatarUrl = "";
+    if (userId) {
+      const user = await reddit.getUserById(userId);
+      if (user) {
+        avatarUrl = (await user.getSnoovatarUrl()) ?? "";
+      }
+    }
+
+    // Check if level was already completed (prevent score overwriting on replay)
+    const existingLevelData = await redis.hGetAll(`player:${userId}:level:${levelNumber}`);
+
+    if (existingLevelData && existingLevelData.heroPoints) {
+      // Level already completed - don't overwrite, just return existing data
+      const existingPoints = parseInt(existingLevelData.heroPoints);
+
+      // Get current standing
+      const standing = await getPlayerStanding(redis, userId);
+
+      res.json({
+        success: true,
+        heroPoints: existingPoints,
+        totalPoints: standing.totalPoints,
+        rank: standing.rank,
+        message: "Level already completed - score not updated",
+      });
+      return;
+    }
+
+    // Save level score (first completion only)
+    await saveLevelScore(
+      redis,
+      userId,
+      levelNumber,
+      alliesSaved,
+      timeSpent,
+      retryCount,
+      heroPoints
+    );
+
+    // Add to completed levels list
+    await addCompletedLevel(redis, userId, levelNumber);
+
+    // Get all completed levels and calculate total points
+    const completedLevels = await getCompletedLevels(redis, userId);
+    let totalPoints = 0;
+
+    for (const level of completedLevels) {
+      const levelData = await redis.hGetAll(`player:${userId}:level:${level}`);
+      if (levelData?.heroPoints) {
+        totalPoints += parseInt(levelData.heroPoints);
+      }
+    }
+
+    // Update player stats
+    await savePlayerStats(
+      redis,
+      userId,
+      username,
+      avatarUrl,
+      totalPoints,
+      completedLevels.length
+    );
+
+    // Update leaderboard
+    await updateLeaderboard(redis, userId, totalPoints);
+
+    // Get new rank
+    const standing = await getPlayerStanding(redis, userId);
+
+    res.json({
+      success: true,
+      heroPoints,
+      totalPoints,
+      rank: standing.rank,
+      message: "Score submitted successfully",
+    });
+  } catch (error) {
+    console.error("Error submitting score:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to submit score",
+    });
+  }
+});
+
+// Get top 50 leaderboard
+router.get<unknown, LeaderboardResponse | { status: string; message: string }>(
+  "/api/leaderboard",
+  async (_req, res): Promise<void> => {
+    try {
+      const entries = await getTop50(redis);
+
+      res.json({
+        entries,
+      });
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Failed to fetch leaderboard",
+      });
+    }
+  }
+);
+
+// Get player's standing
+router.get<
+  unknown,
+  PlayerStandingResponse | { status: string; message: string }
+>("/api/player-standing", async (_req, res): Promise<void> => {
+  const { userId } = context;
+
+  if (!userId) {
+    res.status(401).json({
+      status: "error",
+      message: "User not authenticated",
+    });
+    return;
+  }
+
+  try {
+    const standing = await getPlayerStanding(redis, userId);
+
+    res.json(standing);
+  } catch (error) {
+    console.error("Error fetching player standing:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch player standing",
     });
   }
 });
