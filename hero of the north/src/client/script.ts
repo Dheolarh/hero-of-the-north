@@ -148,6 +148,106 @@ if (loadingBar) {
   loadingBar.style.display = "block";
 }
 
+// ... (previous code) ...
+
+// Define message types
+interface UnityMessage {
+  type: string;
+  data: any;
+}
+
+// Global function to receive messages from Unity (via .jslib)
+(window as any).sendToDevvit = async (messageJson: string) => {
+  console.log('[Devvit Client] Received from Unity:', messageJson);
+
+  try {
+    const message: UnityMessage = JSON.parse(messageJson);
+    const { type, data } = message;
+
+    if (!unityGame) {
+      console.error('[Devvit Client] Unity instance not ready');
+      return;
+    }
+
+    switch (type) {
+      case 'REQUEST_UNLOCKED_LEVELS':
+        try {
+          const res = await fetch('/api/levels/all-info');
+          const json = await res.json();
+          unityGame.SendMessage('DevvitBridge', 'ReceiveUnlockedLevels', JSON.stringify(json));
+        } catch (e) {
+          console.error('Error fetching levels:', e);
+        }
+        break;
+
+      case 'LEVEL_COMPLETE':
+        try {
+          const userRes = await fetch('/api/user/me');
+          const user = await userRes.json();
+
+          if (!user.userId) {
+            console.error('User not authenticated');
+            return;
+          }
+
+          const res = await fetch('/api/score/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.userId,
+              username: user.username,
+              avatarUrl: user.avatarUrl || '', // Pass avatarUrl
+              ...data
+            })
+          });
+          const json = await res.json();
+          unityGame.SendMessage('DevvitBridge', 'OnScoreSubmitted', JSON.stringify(json));
+        } catch (e) {
+          console.error('Error submitting score:', e);
+        }
+        break;
+
+      case 'REQUEST_LEADERBOARD':
+        try {
+          const res = await fetch('/api/leaderboard/top');
+          const json = await res.json();
+          // Unity expects { entries: [...] }
+          unityGame.SendMessage('DevvitBridge', 'ReceiveLeaderboard', JSON.stringify(json));
+        } catch (e) { console.error(e); }
+        break;
+
+      case 'REQUEST_PLAYER_STANDING':
+        try {
+          // We need userId first
+          const userRes = await fetch('/api/user/me');
+          const user = await userRes.json();
+          if (user.userId) {
+            const res = await fetch(`/api/leaderboard/standing/${user.userId}`);
+            const json = await res.json();
+            if (json.found) {
+              unityGame.SendMessage('DevvitBridge', 'ReceivePlayerStanding', JSON.stringify(json.standing));
+            }
+          }
+        } catch (e) { console.error(e); }
+        break;
+
+      case 'REQUEST_USER_IDENTITY': // Use this if Unity requests it explicitly
+      default:
+        // Also auto-fetch user identity on load if possible, or just handle this request
+        try {
+          const res = await fetch('/api/user/me');
+          const json = await res.json();
+          unityGame.SendMessage('DevvitBridge', 'ReceiveUserData', JSON.stringify(json));
+        } catch (e) { console.error(e); }
+        break;
+    }
+  } catch (e) {
+    console.error('[Devvit Client] Error processing message:', e);
+  }
+};
+
+let unityGame: UnityInstance | null = null;
+
 const script = document.createElement("script");
 script.src = loaderUrl;
 script.onload = () => {
@@ -157,6 +257,9 @@ script.onload = () => {
       progressBarFull.style.width = 100 * progress + "%";
     }
   }).then((unityInstance: UnityInstance) => {
+    unityGame = unityInstance; // Save instance
+
+    // ... loading bar hiding ...
     const loadingBar = document.querySelector<HTMLElement>("#unity-loading-bar");
     if (loadingBar) {
       loadingBar.style.display = "none";
@@ -168,8 +271,16 @@ script.onload = () => {
         unityInstance.SetFullscreen(1);
       };
     }
+
+    // Initial fetch of user data when Unity is ready
+    setTimeout(() => {
+      (window as any).sendToDevvit(JSON.stringify({ type: 'REQUEST_USER_IDENTITY', data: {} }));
+      (window as any).sendToDevvit(JSON.stringify({ type: 'REQUEST_UNLOCKED_LEVELS', data: {} }));
+    }, 2000); // Wait a bit for Unity to initialize scripts
+
   }).catch((message: unknown) => {
     alert(message);
+    console.error(message);
   });
 };
 
