@@ -21,11 +21,13 @@ public class LevelButton : MonoBehaviour
             Debug.LogError($"[LevelButton] buttonImage is not assigned in the Inspector for {gameObject.name}!");
             return;
         }
+
         if (levelText == null)
         {
             Debug.LogError($"[LevelButton] levelText is not assigned in the Inspector for {gameObject.name}!");
             return;
         }
+
         if (button == null)
         {
             Debug.LogError($"[LevelButton] button is not assigned in the Inspector for {gameObject.name}!");
@@ -34,11 +36,8 @@ public class LevelButton : MonoBehaviour
 
         UpdateVisuals();
 
-        button.onClick.RemoveAllListeners();
-        if (isUnlocked)
-        {
-            button.onClick.AddListener(OnButtonClicked);
-        }
+        // Add listener for both locked and unlocked levels
+        button.onClick.AddListener(OnButtonClicked);
     }
 
     private void UpdateVisuals()
@@ -46,29 +45,13 @@ public class LevelButton : MonoBehaviour
         if (levelData.isBossLevel)
         {
             levelText.gameObject.SetActive(false);
-
-            if (isUnlocked)
-            {
-                buttonImage.sprite = levelData.bossUnlockedIcon;
-            }
-            else
-            {
-                buttonImage.sprite = levelData.bossLockedIcon;
-            }
+            buttonImage.sprite = isUnlocked ? levelData.bossUnlockedIcon : levelData.bossLockedIcon;
         }
         else
         {
             levelText.gameObject.SetActive(true);
             levelText.text = levelData.levelName;
-
-            if (isUnlocked)
-            {
-                buttonImage.sprite = levelData.levelIcon;
-            }
-            else
-            {
-                buttonImage.sprite = levelData.lockedIcon;
-            }
+            buttonImage.sprite = isUnlocked ? levelData.levelIcon : levelData.lockedIcon;
         }
 
         buttonImage.color = Color.white;
@@ -76,9 +59,36 @@ public class LevelButton : MonoBehaviour
 
     private void OnButtonClicked()
     {
-        if (LevelManager.Instance != null)
+        if (LevelManager.Instance == null) return;
+
+        if (isUnlocked)
         {
+            // Level is unlocked, load it
             LevelManager.Instance.LoadLevel(levelData.levelNumber);
+        }
+        else
+        {
+            // Level is locked, check for unlock info and show countdown
+            var unlockInfo = LevelManager.Instance.GetLevelUnlockInfo(levelData.levelNumber);
+
+            if (unlockInfo != null && !unlockInfo.isUnlocked)
+            {
+                // Show countdown UI
+                if (UIManager.Instance != null && UIManager.Instance.lockedLevelUI != null)
+                {
+                    UIManager.Instance.ToggleLockedLevelUI();
+
+                    var countdown = UIManager.Instance.lockedLevelUI.GetComponent<LockedLevelCountdown>();
+                    if (countdown != null)
+                    {
+                        countdown.ShowCountdown(unlockInfo);
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log($"Level {levelData.levelNumber} is locked (no server info available)");
+            }
         }
     }
 }
