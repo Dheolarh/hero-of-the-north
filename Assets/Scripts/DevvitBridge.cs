@@ -108,6 +108,42 @@ public class DevvitBridge : MonoBehaviour
     }
 
     /// <summary>
+    /// Called by Reddit with level unlock data and countdown timers
+    /// Message format: { "levels": [ { "levelNumber": 0, "isUnlocked": true, "unlockTime": 0, "timeUntilUnlock": 0 }, ... ] }
+    /// </summary>
+    public void ReceiveUnlockedLevels(string json)
+    {
+        try
+        {
+            UnlockedLevelsData data = JsonUtility.FromJson<UnlockedLevelsData>(json);
+
+            if (logMessages)
+            {
+                Debug.Log($"[DevvitBridge] Received unlock data for {data.levels.Length} levels");
+                
+                // Log locked levels with countdown
+                foreach (var level in data.levels)
+                {
+                    if (!level.isUnlocked)
+                    {
+                        long seconds = level.timeUntilUnlock / 1000;
+                        long hours = seconds / 3600;
+                        long days = hours / 24;
+                        Debug.Log($"  Level {level.levelNumber}: Unlocks in {days}d {hours % 24}h");
+                    }
+                }
+            }
+
+            // Notify listeners (e.g., LevelManager)
+            OnUnlockDataReceived?.Invoke(data.levels);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[DevvitBridge] Error parsing unlock data: {e.Message}");
+        }
+    }
+
+    /// <summary>
     /// Called when score submission completes (response from backend)
     /// Message format: { "success": true, "heroPoints": 850, "totalPoints": 2500, "rank": 42, "message": "..." }
     /// </summary>
@@ -193,6 +229,19 @@ public class DevvitBridge : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Request unlocked levels and countdown timers from Reddit
+    /// </summary>
+    public void RequestUnlockedLevels()
+    {
+        SendMessageToReddit("REQUEST_UNLOCKED_LEVELS", "{}");
+
+        if (logMessages)
+        {
+            Debug.Log($"[DevvitBridge] Requested unlocked levels");
+        }
+    }
+
     // ========== JAVASCRIPT INTEROP ==========
 
     /// <summary>
@@ -267,4 +316,22 @@ public class DevvitBridge : MonoBehaviour
         public int rank;
         public string message;
     }
+
+    [Serializable]
+    public class LevelUnlockInfo
+    {
+        public int levelNumber;
+        public bool isUnlocked;
+        public long unlockTime; // Unix timestamp in milliseconds
+        public long timeUntilUnlock; // Milliseconds until unlock (0 if unlocked)
+    }
+
+    [Serializable]
+    public class UnlockedLevelsData
+    {
+        public LevelUnlockInfo[] levels;
+    }
+
+    // Event for when unlock data is received
+    public System.Action<LevelUnlockInfo[]> OnUnlockDataReceived;
 }

@@ -9,6 +9,7 @@ public class UIManager : MonoBehaviour
     public GameObject gameOverUI;
     public GameObject levelCompleteUI;
     public GameObject leaderboardUI;
+    public GameObject lockedLevelUI;
     public GameObject HUD;
 
     void Awake()
@@ -34,5 +35,6 @@ public class UIManager : MonoBehaviour
     public void ToggleGameOverUI() => gameOverUI.SetActive(!gameOverUI.activeSelf);
     public void ToggleLevelCompleteUI() => levelCompleteUI.SetActive(!levelCompleteUI.activeSelf);
     public void ToggleLeaderboardUI() => leaderboardUI.SetActive(!leaderboardUI.activeSelf);
+    public void ToggleLockedLevelUI() => lockedLevelUI.SetActive(!lockedLevelUI.activeSelf);
     public void ToggleHUD() => HUD.SetActive(!HUD.activeSelf);
 }

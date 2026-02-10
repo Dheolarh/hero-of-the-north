@@ -11,6 +11,7 @@ public class LevelManager : MonoBehaviour
 
     private int currentLevelIndex = 0;
     private int highestUnlockedLevel = 1;
+    private DevvitBridge.LevelUnlockInfo[] serverUnlockData;
     public string mainMenu;
 
     public bool allowMultiJumps = false;
@@ -26,7 +27,52 @@ public class LevelManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        // Subscribe to unlock data from DevvitBridge
+        if (DevvitBridge.Instance != null)
+        {
+            DevvitBridge.Instance.OnUnlockDataReceived += OnUnlockDataReceived;
+        }
     }
+
+    void Start()
+    {
+        // Request unlock data from server on start
+        if (DevvitBridge.Instance != null)
+        {
+            DevvitBridge.Instance.RequestUnlockedLevels();
+        }
+    }
+
+    void OnDestroy()
+    {
+        // Unsubscribe from unlock data
+        if (DevvitBridge.Instance != null)
+        {
+            DevvitBridge.Instance.OnUnlockDataReceived -= OnUnlockDataReceived;
+        }
+    }
+
+    /// <summary>
+    /// Called when unlock data is received from server
+    /// </summary>
+    private void OnUnlockDataReceived(DevvitBridge.LevelUnlockInfo[] levels)
+    {
+        serverUnlockData = levels;
+
+        // Update highest unlocked level based on server data
+        highestUnlockedLevel = 0;
+        foreach (var level in levels)
+        {
+            if (level.isUnlocked)
+            {
+                highestUnlockedLevel = level.levelNumber + 1; // +1 because we track "highest + 1"
+            }
+        }
+
+        Debug.Log($"[LevelManager] Server unlock data received. Highest unlocked: Level {highestUnlockedLevel - 1}");
+    }
+    
 
     public LevelData GetLevel(int levelNumber)
     {
@@ -40,7 +86,27 @@ public class LevelManager : MonoBehaviour
 
     public bool IsLevelUnlocked(int levelNumber)
     {
+        // If we have server data, use it
+        if (serverUnlockData != null && levelNumber < serverUnlockData.Length)
+        {
+            return serverUnlockData[levelNumber].isUnlocked;
+        }
+
+        // Fallback to local tracking (for offline/editor testing)
         return levelNumber <= highestUnlockedLevel;
+    }
+
+    /// <summary>
+    /// Get unlock info for a specific level (for countdown timer)
+    /// </summary>
+    public DevvitBridge.LevelUnlockInfo GetLevelUnlockInfo(int levelNumber)
+    {
+        if (serverUnlockData != null && levelNumber < serverUnlockData.Length)
+        {
+            return serverUnlockData[levelNumber];
+        }
+
+        return null;
     }
 
     public void LoadLevel(int levelNumber)
@@ -101,8 +167,6 @@ public class LevelManager : MonoBehaviour
 
         SceneManager.LoadScene(mainMenu);
     }
-
-
-
 }
+
 
