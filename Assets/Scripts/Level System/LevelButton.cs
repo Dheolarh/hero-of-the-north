@@ -78,10 +78,16 @@ public class LevelButton : MonoBehaviour
                 {
                     UIManager.Instance.ToggleLockedLevelUI();
 
-                    var countdown = UIManager.Instance.lockedLevelUI.GetComponent<LockedLevelCountdown>();
+                    // Use GetComponentInChildren in case the script is on the child panel, not the root canvas
+                    var countdown = UIManager.Instance.lockedLevelUI.GetComponentInChildren<LockedLevelCountdown>(true);
                     if (countdown != null)
                     {
                         countdown.ShowCountdown(unlockInfo);
+                    }
+                    else
+                    {
+                        Debug.LogWarning(
+                            "[LevelButton] LockedLevelCountdown script not found in LockedLevelUI hierarchy!");
                     }
                 }
             }
