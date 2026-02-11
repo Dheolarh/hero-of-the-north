@@ -3625,6 +3625,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4000749423774657604, guid: 5be267803805b5149bce66cb7af4f02f, type: 3}
+      propertyPath: triggerLoopingSounds.Array.data[0].volume
+      value: 0.7
+      objectReference: {fileID: 0}
     - target: {fileID: 5440784464476531228, guid: 5be267803805b5149bce66cb7af4f02f, type: 3}
       propertyPath: m_LocalPosition.x
       value: -9.548336
