@@ -6,13 +6,11 @@ public class DevvitBridge : MonoBehaviour
 {
     public static DevvitBridge Instance { get; private set; }
 
-    [Header("User Identity")]
-    public string userId;
+    [Header("User Identity")] public string userId;
     public string username;
     public string avatarUrl;
 
-    [Header("Debug")]
-    public bool logMessages = true;
+    [Header("Debug")] public bool logMessages = true;
 
     void Awake()
     {
@@ -92,7 +90,8 @@ public class DevvitBridge : MonoBehaviour
 
             if (logMessages)
             {
-                Debug.Log($"[DevvitBridge] Player standing: Rank #{data.rank}, {data.totalPoints} points, {data.levelsCompleted} levels");
+                Debug.Log(
+                    $"[DevvitBridge] Player standing: Rank #{data.rank}, {data.totalPoints} points, {data.levelsCompleted} levels");
             }
 
             // Pass to LeaderboardUI to display
@@ -120,7 +119,7 @@ public class DevvitBridge : MonoBehaviour
             if (logMessages)
             {
                 Debug.Log($"[DevvitBridge] Received unlock data for {data.levels.Length} levels");
-                
+
                 // Log locked levels with countdown
                 foreach (var level in data.levels)
                 {
@@ -157,13 +156,14 @@ public class DevvitBridge : MonoBehaviour
             {
                 if (logMessages)
                 {
-                    Debug.Log($"[DevvitBridge] Score submitted! Hero Points: {response.heroPoints}, Total: {response.totalPoints}, Rank: #{response.rank}");
+                    Debug.Log(
+                        $"[DevvitBridge] Score submitted! Hero Points: {response.heroPoints}, Total: {response.totalPoints}, Rank: #{response.rank}");
                     if (!string.IsNullOrEmpty(response.message))
                     {
                         Debug.Log($"[DevvitBridge] Message: {response.message}");
                     }
                 }
-                
+
                 // Optionally trigger UI update or achievement notification here
                 // Example: EventManager.TriggerEvent("ScoreUpdated", response);
             }

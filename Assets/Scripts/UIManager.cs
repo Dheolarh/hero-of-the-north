@@ -96,21 +96,34 @@ public class UIManager : MonoBehaviour
 
     private IEnumerator AnimateShow(GameObject panel)
     {
-        // If the object is a Canvas, animate its first child (the actual panel)
-        Transform targetTransform = panel.transform;
-        if (panel.GetComponent<Canvas>() != null && panel.transform.childCount > 0)
+        // Collect targets: if Canvas, get all immediate children. If not, get self.
+        System.Collections.Generic.List<Transform> targets = new System.Collections.Generic.List<Transform>();
+
+        if (panel.GetComponent<Canvas>() != null)
         {
-            targetTransform = panel.transform.GetChild(0);
+            foreach (Transform child in panel.transform)
+            {
+                targets.Add(child);
+            }
+        }
+        else
+        {
+            targets.Add(panel.transform);
         }
 
-        targetTransform.localScale = Vector3.zero;
+        // Set initial scale
+        foreach (var t in targets)
+        {
+            if (t != null) t.localScale = Vector3.zero;
+        }
 
         float duration = 0.3f;
         float elapsed = 0f;
 
+        // Scale up with overshoot (bounce)
         while (elapsed < duration)
         {
-            elapsed += Time.unscaledDeltaTime; // Use unscaled time so it works when paused
+            elapsed += Time.unscaledDeltaTime;
             float progress = elapsed / duration;
 
             float scale;
@@ -127,24 +140,42 @@ public class UIManager : MonoBehaviour
                 scale = Mathf.Lerp(1.1f, 1.0f, subProgress);
             }
 
-            targetTransform.localScale = Vector3.one * scale;
+            foreach (var t in targets)
+            {
+                if (t != null) t.localScale = Vector3.one * scale;
+            }
+
             yield return null;
         }
 
-        targetTransform.localScale = Vector3.one;
+        foreach (var t in targets)
+        {
+            if (t != null) t.localScale = Vector3.one;
+        }
+
         activeCoroutines.Remove(panel);
     }
 
     private IEnumerator AnimateHide(GameObject panel)
     {
-        // If the object is a Canvas, animate its first child
-        Transform targetTransform = panel.transform;
-        if (panel.GetComponent<Canvas>() != null && panel.transform.childCount > 0)
+        System.Collections.Generic.List<Transform> targets = new System.Collections.Generic.List<Transform>();
+
+        if (panel.GetComponent<Canvas>() != null)
         {
-            targetTransform = panel.transform.GetChild(0);
+            foreach (Transform child in panel.transform)
+            {
+                targets.Add(child);
+            }
+        }
+        else
+        {
+            targets.Add(panel.transform);
         }
 
-        Vector3 initialScale = targetTransform.localScale;
+        // Store initial scales? Assuming they are 1 is safer for consistent hide.
+        // Or read from first target?
+        Vector3 initialScale = Vector3.one;
+        if (targets.Count > 0 && targets[0] != null) initialScale = targets[0].localScale;
 
         float duration = 0.2f;
         float elapsed = 0f;
@@ -156,18 +187,21 @@ public class UIManager : MonoBehaviour
 
             // Smooth step down
             float scale = Mathf.Lerp(initialScale.x, 0f, Mathf.SmoothStep(0f, 1f, progress));
-            targetTransform.localScale = Vector3.one * scale;
+
+            foreach (var t in targets)
+            {
+                if (t != null) t.localScale = Vector3.one * scale;
+            }
+
             yield return null;
         }
 
-        targetTransform.localScale = Vector3.zero;
+        foreach (var t in targets)
+        {
+            if (t != null) t.localScale = Vector3.zero;
+        }
+
         panel.SetActive(false);
-
-        // Reset scale so it's ready for next show (important if we want to show it again)
-        // Actually, ShowAnimate sets it to 0 at start, so it's fine.
-        // But let's reset to 1 just in case logic changes? 
-        // No, leave it zero to avoid flash. ShowAnimate handles it.
-
         activeCoroutines.Remove(panel);
     }
 }

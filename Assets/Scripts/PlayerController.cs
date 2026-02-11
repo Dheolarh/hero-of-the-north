@@ -93,10 +93,18 @@ public class PlayerController : MonoBehaviour
                 playerTransform.Translate(Vector3.right * moveDirection * speed * Time.deltaTime);
                 playerSprite.flipX = (moveDirection < 0);
                 PlayAnimation("isWalking");
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayWalkingSound();
+                }
             }
             else
             {
                 PlayAnimation("isIdle");
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.StopWalkingSound();
+                }
             }
         }
         else
@@ -124,11 +132,19 @@ public class PlayerController : MonoBehaviour
             playerRigidbody.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             PlayAnimation("isJumping");
             isGrounded = false;
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySfx("Jump");
+            }
         }
         else if (isJumping && isMultiJump)
         {
             playerRigidbody.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             PlayAnimation("isJumping");
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySfx("Jump");
+            }
         }
     }
 
@@ -169,6 +185,20 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Player is Dead");
             GameManager.Instance.isGameOver = true;
             PlayAnimation("isDead");
+            
+            // Stop all sounds except background music and play death sound
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopAllSoundsExceptMusic();
+                AudioManager.Instance.PlaySfx("Death");
+            }
+            
+            // Stop camera shake if active
+            if (CameraShake.Instance != null && CameraShake.Instance.IsShaking())
+            {
+                CameraShake.Instance.StopShake();
+            }
+            
             StartCoroutine(StopCameraAfterDelay(1f));
             StartCoroutine(GameOver());
         }
@@ -180,6 +210,12 @@ public class PlayerController : MonoBehaviour
         {
             isGrounded = false;
             isJumping = true;
+            
+            // Stop walking sound immediately when leaving ground
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopWalkingSound();
+            }
         }
     }
 
@@ -198,6 +234,11 @@ public class PlayerController : MonoBehaviour
         {
             isGrounded = false;
             isJumping = true;
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopLoopingSound();
+            }
         }
     }
 

@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8301130135178228895
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5440784464476531228}
+  - component: {fileID: 4000749423774657604}
+  m_Layer: 0
+  m_Name: Audio Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5440784464476531228
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8301130135178228895}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -9.548336, y: 1.767565, z: -0.0060218666}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4000749423774657604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8301130135178228895}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65e82e897be1077459c68e73f1ba0af3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  oneShotSounds:
+  - name: ButtonClick
+    clip: {fileID: 8300000, guid: c63d39ffde8a777488d5efbe48871de5, type: 3}
+    volume: 0.5
+    pitch: 1
+  - name: Jump
+    clip: {fileID: 8300000, guid: ef379c84c76e4c04491ed3ced43adbef, type: 3}
+    volume: 1
+    pitch: 3
+  - name: GameOver
+    clip: {fileID: 8300000, guid: 8b9bbe45bc0449a4288d9a8d6638d3e1, type: 3}
+    volume: 1
+    pitch: 1
+  - name: Ally
+    clip: {fileID: 8300000, guid: 61f66a47603215b40b0e13275ef499b1, type: 3}
+    volume: 1
+    pitch: 3
+  - name: Teleport
+    clip: {fileID: 8300000, guid: 4d702ed843982424ba06b2f26bfc14cd, type: 3}
+    volume: 0.5
+    pitch: 0.5
+  - name: Death
+    clip: {fileID: 8300000, guid: 989230167cc08b34fbd25ff365144fed, type: 3}
+    volume: 0.2
+    pitch: 0.3
+  - name: Crumble
+    clip: {fileID: 8300000, guid: d6ade061c326e284495ac00742512d3d, type: 3}
+    volume: 0.2
+    pitch: 0.3
+  walkingSounds:
+  - name: Walk
+    clip: {fileID: 8300000, guid: bd12b664999c22246b294c45c15daa12, type: 3}
+    volume: 1
+    pitch: 0.5
+  triggerLoopingSounds:
+  - name: Boulder
+    clip: {fileID: 8300000, guid: a1a41952b94d04c41ac3532f667b89e2, type: 3}
+    volume: 0.3
+    pitch: 0.5
+  backgroundMusic:
+  - name: Background
+    clip: {fileID: 8300000, guid: 2e54780e04c73824f8e698aee41c908e, type: 3}
+    volume: 1
+    pitch: 1
+  masterVolume: 1
+  sfxVolume: 1
+  musicVolume: 0.5

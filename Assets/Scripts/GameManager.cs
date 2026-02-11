@@ -48,6 +48,15 @@ public class GameManager : MonoBehaviour
     public void GameOver()
     {
         Debug.Log("Game Over!");
+        
+        // Stop all sounds except background music
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopAllSoundsExceptMusic();
+            AudioManager.Instance.PlaySfx("GameOver");
+        }
+        UIManager.Instance.ToggleGameOverUI();
+        
         LevelManager.Instance.RestartLevel();
     }
 

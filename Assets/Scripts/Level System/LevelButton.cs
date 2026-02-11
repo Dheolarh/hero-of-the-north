@@ -59,6 +59,12 @@ public class LevelButton : MonoBehaviour
 
     private void OnButtonClicked()
     {
+        // Play button click sound
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySfx("ButtonClick");
+        }
+
         if (LevelManager.Instance == null) return;
 
         if (isUnlocked)
@@ -71,29 +77,41 @@ public class LevelButton : MonoBehaviour
             // Level is locked, check for unlock info and show countdown
             var unlockInfo = LevelManager.Instance.GetLevelUnlockInfo(levelData.levelNumber);
 
-            if (unlockInfo != null && !unlockInfo.isUnlocked)
+            if (unlockInfo != null)
             {
-                // Show countdown UI
-                if (UIManager.Instance != null && UIManager.Instance.lockedLevelUI != null)
+                if (!unlockInfo.isUnlocked)
                 {
-                    UIManager.Instance.ToggleLockedLevelUI();
+                    // Show countdown UI
+                    if (UIManager.Instance != null && UIManager.Instance.lockedLevelUI != null)
+                    {
+                        UIManager.Instance.ToggleLockedLevelUI();
 
-                    // Use GetComponentInChildren in case the script is on the child panel, not the root canvas
-                    var countdown = UIManager.Instance.lockedLevelUI.GetComponentInChildren<LockedLevelCountdown>(true);
-                    if (countdown != null)
-                    {
-                        countdown.ShowCountdown(unlockInfo);
+                        // Use GetComponentInChildren in case the script is on the child panel, not the root canvas
+                        var countdown =
+                            UIManager.Instance.lockedLevelUI.GetComponentInChildren<LockedLevelCountdown>(true);
+                        if (countdown != null)
+                        {
+                            countdown.ShowCountdown(unlockInfo);
+                        }
+                        else
+                        {
+                            Debug.LogWarning(
+                                "[LevelButton] LockedLevelCountdown script not found in LockedLevelUI hierarchy!");
+                        }
                     }
-                    else
-                    {
-                        Debug.LogWarning(
-                            "[LevelButton] LockedLevelCountdown script not found in LockedLevelUI hierarchy!");
-                    }
+                }
+                else
+                {
+                    // Should trigger success load logic, but if we are here it means isUnlocked was false locally but true on server? 
+                    // Or sync issue.
+                    Debug.Log($"[LevelButton] Level {levelData.levelNumber} is unlocked on server.");
+                    LevelManager.Instance.LoadLevel(levelData.levelNumber);
                 }
             }
             else
             {
-                Debug.Log($"Level {levelData.levelNumber} is locked (no server info available)");
+                Debug.LogWarning(
+                    $"[LevelButton] Level {levelData.levelNumber} is locked but NO server info available (unlockInfo is null). Check Devvit connection.");
             }
         }
     }

@@ -74,15 +74,15 @@ function unityShowBanner(msg: string, type: UnityBannerType): void {
 }
 
 const buildUrl = "Build";
-const loaderUrl = buildUrl + "/SampleGame.loader.js";
+const loaderUrl = buildUrl + "/Build.loader.js";
 const config: UnityConfig = {
   arguments: [],
-  dataUrl: buildUrl + "/SampleGame.data.unityweb",
-  frameworkUrl: buildUrl + "/SampleGame.framework.js",
-  codeUrl: buildUrl + "/SampleGame.wasm.unityweb",
+  dataUrl: buildUrl + "/Build.data.unityweb",
+  frameworkUrl: buildUrl + "/Build.framework.js",
+  codeUrl: buildUrl + "/Build.wasm.unityweb",
   streamingAssetsUrl: "StreamingAssets",
-  companyName: "DefaultCompany",
-  productName: "SampleGame",
+  companyName: "OsirisXStudios",
+  productName: "Hero of the North",
   productVersion: "0.1.0",
   showBanner: unityShowBanner,
   // errorHandler: function(err, url, line) {
