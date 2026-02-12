@@ -21,6 +21,15 @@ public class CameraFollow : MonoBehaviour
 
     private bool isFollowing = true;
 
+    private Vector3 logicalPosition;
+    private CameraShake cameraShake;
+
+    void Start()
+    {
+        cameraShake = GetComponent<CameraShake>();
+        logicalPosition = transform.position;
+    }
+
     void LateUpdate()
     {
         if (player == null || !isFollowing) return;
@@ -28,19 +37,27 @@ public class CameraFollow : MonoBehaviour
         Vector3 desiredPosition = player.position + offset;
 
         Vector3 targetPosition = new Vector3(
-            followX ? desiredPosition.x : transform.position.x,
-            followY ? desiredPosition.y : transform.position.y,
-            followZ ? desiredPosition.z : transform.position.z
+            followX ? desiredPosition.x : logicalPosition.x,
+            followY ? desiredPosition.y : logicalPosition.y,
+            followZ ? desiredPosition.z : logicalPosition.z
         );
 
         if (useSmoothing)
         {
-            transform.position = Vector3.Lerp(transform.position, targetPosition, smoothSpeed * Time.deltaTime);
+            logicalPosition = Vector3.Lerp(logicalPosition, targetPosition, smoothSpeed * Time.deltaTime);
         }
         else
         {
-            transform.position = targetPosition;
+            logicalPosition = targetPosition;
         }
+
+        Vector3 finalPosition = logicalPosition;
+        if (cameraShake != null)
+        {
+            finalPosition += cameraShake.CurrentShakeOffset;
+        }
+
+        transform.position = finalPosition;
     }
 
     public void StopFollowing()

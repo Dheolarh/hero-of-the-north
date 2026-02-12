@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -139,7 +140,7 @@ public class LevelManager : MonoBehaviour
         {
             ScoreManager.Instance.IncrementRetryCount();
         }
-
+        UIManager.Instance.HidePanels();
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -147,7 +148,8 @@ public class LevelManager : MonoBehaviour
     {
         GameManager.Instance.isGameOver = false;
         GameManager.Instance.isLevelCompleted = true;
-
+        AudioManager.Instance.PlaySfx("Success");
+        GameManager.Instance.PauseGame();
         if (ScoreManager.Instance != null)
         {
             ScoreManager.Instance.CalculateHeroPoints();
@@ -164,7 +166,14 @@ public class LevelManager : MonoBehaviour
                 );
             }
         }
+        UIManager.Instance.ToggleLevelCompleteUI();
+        StartCoroutine(AfterLevelComplete());
+    }
 
+    IEnumerator AfterLevelComplete()
+    {
+        yield return new WaitForSecondsRealtime(2f);
+        UIManager.Instance.HidePanels();
         SceneManager.LoadScene(mainMenu);
     }
 }

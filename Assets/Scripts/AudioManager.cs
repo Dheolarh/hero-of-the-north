@@ -242,6 +242,23 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    public void SetLoopingSoundVolume(string soundName, float volume)
+    {
+        Sound s = System.Array.Find(triggerLoopingSounds, sound => sound.name == soundName);
+        if (s == null) return;
+
+        // Find the source playing this sound and adjust volume
+        foreach (AudioSource source in loopingSourcePool)
+        {
+            if (source.clip == s.clip && source.isPlaying)
+            {
+                // Calculate final volume based on Master and SFX settings
+                float finalVolume = Mathf.Clamp01(volume) * sfxVolume * masterVolume;
+                source.volume = finalVolume;
+            }
+        }
+    }
+
     // ========== WALKING SOUND (DEDICATED) ==========
 
     public void PlayWalkingSound()

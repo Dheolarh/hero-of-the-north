@@ -167,10 +167,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    IEnumerator GameOver()
+    IEnumerator RestartGame()
     {
         yield return new WaitForSeconds(2f);
-        GameManager.Instance.GameOver();
+        LevelManager.Instance.RestartLevel();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -200,7 +200,8 @@ public class PlayerController : MonoBehaviour
             }
             
             StartCoroutine(StopCameraAfterDelay(1f));
-            StartCoroutine(GameOver());
+            GameManager.Instance.GameOver();
+            StartCoroutine(RestartGame());
         }
     }
 

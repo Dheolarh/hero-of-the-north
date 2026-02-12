@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using System.Collections;
+using TMPro;
 
 
 public class UIManager : MonoBehaviour
@@ -34,18 +35,70 @@ public class UIManager : MonoBehaviour
         if (sceneName == "Menu") HUD.SetActive(false);
     }
 
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            // Only toggle pause if not in other menus
+            if (!gameOverUI.activeSelf && !levelCompleteUI.activeSelf)
+            {
+                TogglePauseMenu();
+            }
+        }
+    }
+
+
+
     private Dictionary<GameObject, Coroutine> activeCoroutines =
         new Dictionary<GameObject, Coroutine>();
 
-    public void TogglePauseMenu() => TogglePanel(pauseMenu);
-    public void ToggleGameOverUI() => TogglePanel(gameOverUI);
-    public void ToggleLevelCompleteUI() => TogglePanel(levelCompleteUI);
-    public void ToggleLeaderboardUI() => TogglePanel(leaderboardUI);
-    public void ToggleLockedLevelUI() => TogglePanel(lockedLevelUI);
-
-    // HUD should be constant/instant
-    public void ToggleHUD()
+    public void TogglePauseMenu()
     {
+        AudioManager.Instance.PlaySfx("ButtonClick");
+        if (GameManager.Instance.isPaused)
+        {
+            Debug.Log("[UIManager] TogglePauseMenu: Resuming game...");
+            GameManager.Instance.ResumeGame();
+        }
+        else
+        {
+            Debug.Log("[UIManager] TogglePauseMenu: Pausing game...");
+            GameManager.Instance.PauseGame();
+            ShowPanel(pauseMenu);
+            SetHUDActive(false);
+        }
+    }
+
+    public void ToggleGameOverUI()
+    {
+        TogglePanel(gameOverUI);
+        if (gameOverUI.activeSelf) 
+        {
+            Debug.Log("[UIManager] Game Over UI opened. Hiding HUD.");
+            SetHUDActive(false);
+        }
+    }
+
+    public void ToggleLevelCompleteUI()
+    {
+        TogglePanel(levelCompleteUI);
+        if (levelCompleteUI.activeSelf) 
+        {
+            Debug.Log("[UIManager] Level Complete UI opened. Hiding HUD.");
+            SetHUDActive(false);
+        }
+    }
+
+    public void SetHUDActive(bool active)
+    {
+        if (HUD == null) 
+        {
+            Debug.LogError("[UIManager] HUD reference is NULL!");
+            return;
+        }
+        
+        Debug.Log($"[UIManager] SetHUDActive called. Active: {active}");
+
         if (activeCoroutines.ContainsKey(HUD))
         {
             StopCoroutine(activeCoroutines[HUD]);
@@ -53,7 +106,23 @@ public class UIManager : MonoBehaviour
         }
 
         HUD.transform.localScale = Vector3.one;
-        HUD.SetActive(!HUD.activeSelf);
+        HUD.SetActive(active);
+    }
+
+    public void ToggleLeaderboardUI() => TogglePanel(leaderboardUI);
+    public void ToggleLockedLevelUI() => TogglePanel(lockedLevelUI);
+
+ 
+
+    
+
+    public void ClosePauseMenu()
+    {
+        if (pauseMenu.activeSelf)
+        {
+            HidePanel(pauseMenu);
+            SetHUDActive(true);
+        }
     }
 
     private void TogglePanel(GameObject panel)
@@ -203,5 +272,14 @@ public class UIManager : MonoBehaviour
 
         panel.SetActive(false);
         activeCoroutines.Remove(panel);
+    }
+
+    public void HidePanels()
+    {
+        if(pauseMenu != null && pauseMenu.activeSelf) pauseMenu.SetActive(false);
+        if(gameOverUI != null && gameOverUI.activeSelf) gameOverUI.SetActive(false);
+        if(levelCompleteUI != null && levelCompleteUI.activeSelf) levelCompleteUI.SetActive(false);
+        if(leaderboardUI != null && leaderboardUI.activeSelf) leaderboardUI.SetActive(false);
+        if(lockedLevelUI != null && lockedLevelUI.activeSelf) lockedLevelUI.SetActive(false);
     }
 }

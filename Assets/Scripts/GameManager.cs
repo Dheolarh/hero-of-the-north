@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,7 +11,7 @@ public class GameManager : MonoBehaviour
     public bool isPaused = false;
     public bool isGameOver= false;
     public bool isLevelCompleted = false;
-    [SerializeField] ScrollRect levelRect;
+
 
     void Awake()
     {
@@ -26,10 +27,23 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void Start()
+    void OnEnable()
     {
-        StartCoroutine(ResetScrollPosition());
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
+
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Time.timeScale = 1f;
+        isPaused = false;
+    }
+
+
 
     // ========== GAME STATE METHODS ==========
 
@@ -43,36 +57,30 @@ public class GameManager : MonoBehaviour
     {
         isPaused = false;
         Time.timeScale = 1f;
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.ClosePauseMenu();
+        }
     }
 
     public void GameOver()
     {
         Debug.Log("Game Over!");
-        
-        // Stop all sounds except background music
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.StopAllSoundsExceptMusic();
             AudioManager.Instance.PlaySfx("GameOver");
         }
         UIManager.Instance.ToggleGameOverUI();
-        
-        LevelManager.Instance.RestartLevel();
     }
+
 
     public void QuitGame()
     {
-        Debug.Log("Quitting game...");
-        Application.Quit();
+        string mainMenu = LevelManager.Instance.mainMenu;
+        UIManager.Instance.HidePanels();
+        SceneManager.LoadScene(mainMenu);
     }
 
-    private IEnumerator ResetScrollPosition()
-    {
-        yield return new WaitForEndOfFrame();
-        
-        if (levelRect != null)
-        {
-            levelRect.verticalNormalizedPosition = 1f; // 1 = top, 0 = bottom
-        }
-    }
+
 }

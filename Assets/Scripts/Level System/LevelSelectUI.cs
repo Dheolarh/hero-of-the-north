@@ -9,10 +9,24 @@ public class LevelSelectUI : MonoBehaviour
 
     private List<LevelButton> levelButtons = new List<LevelButton>();
 
+    [SerializeField] private UnityEngine.UI.ScrollRect scrollRect;
+
     void Start()
     {
         PopulateLevelGrid();
+        ResetScrollPosition();
     }
+
+    private void ResetScrollPosition()
+    {
+        if (scrollRect != null)
+        {
+            // Ensure layout generates before setting position
+            Canvas.ForceUpdateCanvases();
+            scrollRect.verticalNormalizedPosition = 1f; // 1 = Top
+        }
+    }
+
     
     private void PopulateLevelGrid()
     {

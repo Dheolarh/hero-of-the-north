@@ -7,11 +7,37 @@ public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager Instance { get; private set; }
 
+    // Events for observer pattern
+    public event System.Action<int> OnAlliesSavedChanged;
+    public event System.Action<int> OnRetryCountChanged;
+
     [Header("Current Level Stats")]
     public int currentLevelNumber;
-    public int alliesSaved;
+    
+    private int _alliesSaved;
+    public int alliesSaved
+    {
+        get => _alliesSaved;
+        set
+        {
+            _alliesSaved = value;
+            OnAlliesSavedChanged?.Invoke(_alliesSaved);
+        }
+    }
+    
     public float timeSpent;
-    public int retryCount;
+    
+    private int _retryCount;
+    public int retryCount
+    {
+        get => _retryCount;
+        set
+        {
+            _retryCount = value;
+            OnRetryCountChanged?.Invoke(_retryCount);
+        }
+    }
+    
     public int heroPoints;
 
     void Awake()

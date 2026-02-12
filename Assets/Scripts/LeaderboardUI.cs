@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class LeaderboardUI : MonoBehaviour
 {
@@ -58,6 +59,7 @@ public class LeaderboardUI : MonoBehaviour
             RefreshLeaderboard();
         }
 #endif
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     /// <summary>
@@ -135,7 +137,7 @@ public class LeaderboardUI : MonoBehaviour
         Debug.Log($"[LeaderboardUI] Displayed {entries.Length} leaderboard entries (Top 3 + {entries.Length - 3} dynamic)");
         
         // Reset scroll position to top after layout recalculates
-        StartCoroutine(ResetScrollPosition());
+        ResetScroll();
     }
 
     /// <summary>
@@ -277,6 +279,23 @@ public class LeaderboardUI : MonoBehaviour
         {
             scrollRect.verticalNormalizedPosition = 1f; // 1 = top, 0 = bottom
         }
+    }
+
+
+    void ResetScroll()
+    {
+        StartCoroutine(ResetScrollPosition());
+    }
+
+
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        ResetScroll();
     }
 
     /// <summary>

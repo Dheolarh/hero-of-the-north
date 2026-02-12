@@ -90,13 +90,7 @@ public class CollisionsAndTriggers : MonoBehaviour
     public string audioClipName;
     public bool loopAudio;
 
-    [Header("Camera Shake Settings")]
-    public bool enableCameraShake;
-    public float shakeIntensity = 0.3f;
-    public float shakeFrequency = 10f;
-    public string shakeAudioClipName;
-    public GameObject stopShakeTrigger;
-    public GameObject objectThatStopsShake;
+
 
     void Start()
     {
@@ -360,11 +354,9 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        Debug.Log($"[CollisionsAndTriggers] OnTriggerEnter2D called! Other: {other.gameObject.name}, Tag: {other.tag}, This GameObject: {gameObject.name}");
-        
+        Debug.Log($"[CollisionsAndTriggers] OnTriggerEnter2D called! Other: {other.gameObject.name}, Tag: {other.tag}, This GameObject: {gameObject.name}");        
         if (other.CompareTag("Player"))
         {
-            Debug.Log($"[CollisionsAndTriggers] Player entered trigger! TriggerType: {triggerType}, EnableCameraShake: {enableCameraShake}");
             switch (triggerType)
             {
                 case TriggerType.ContinousMotion:
@@ -424,30 +416,7 @@ public class CollisionsAndTriggers : MonoBehaviour
                 }
             }
 
-            // Handle camera shake
-            if (enableCameraShake)
-            {
-                if (CameraShake.Instance != null)
-                {
-                    CameraShake.Instance.StartShake(shakeIntensity, shakeFrequency, shakeAudioClipName);
-                    Debug.Log($"[CollisionsAndTriggers] Camera shake started! Intensity: {shakeIntensity}, Frequency: {shakeFrequency}");
 
-                    if (stopShakeTrigger != null && objectThatStopsShake != null)
-                    {
-                        ShakeStopTrigger stopTrigger = stopShakeTrigger.GetComponent<ShakeStopTrigger>();
-                        if (stopTrigger == null)
-                        {
-                            stopTrigger = stopShakeTrigger.AddComponent<ShakeStopTrigger>();
-                        }
-                        stopTrigger.objectThatStopsShake = objectThatStopsShake;
-                        Debug.Log("[CollisionsAndTriggers] Shake stop trigger configured!");
-                    }
-                }
-                else
-                {
-                    Debug.LogError("[CollisionsAndTriggers] CameraShake.Instance is NULL! Make sure CameraShake component is attached to Main Camera!");
-                }
-            }
         }
     }
 
