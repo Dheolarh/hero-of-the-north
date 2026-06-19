@@ -44,9 +44,6 @@ public class TextModifier : MonoBehaviour
     {
         if (targetText != null)
         {
-            // Ensure we have the latest text if it changed while disabled
-            // But if text is modified externally, we might want to preserve that content?
-            // For now, let's just make sure we capture it.
              if (string.IsNullOrEmpty(originalText)) originalText = targetText.text;
         }
 

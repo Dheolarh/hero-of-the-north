@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Collections;
 using TMPro;
 
-
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
@@ -48,8 +47,6 @@ public class UIManager : MonoBehaviour
             }
         }
     }
-
-
 
     private Dictionary<GameObject, Coroutine> activeCoroutines =
         new Dictionary<GameObject, Coroutine>();
@@ -95,6 +92,16 @@ public class UIManager : MonoBehaviour
     {
         if (HUD == null) 
         {
+            // Try to find HUD component dynamically in the scene (including inactive GameObjects)
+            HUD HUDComponent = FindFirstObjectByType<HUD>(FindObjectsInactive.Include);
+            if (HUDComponent != null)
+            {
+                HUD = HUDComponent.gameObject;
+            }
+        }
+
+        if (HUD == null)
+        {
             Debug.LogError("[UIManager] HUD reference is NULL!");
             return;
         }
@@ -113,10 +120,6 @@ public class UIManager : MonoBehaviour
 
     public void ToggleLeaderboardUI() => TogglePanel(leaderboardUI);
     public void ToggleLockedLevelUI() => TogglePanel(lockedLevelUI);
-
- 
-
-    
 
     public void ClosePauseMenu()
     {

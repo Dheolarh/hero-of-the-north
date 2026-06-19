@@ -86,8 +86,13 @@ public class GameManager : MonoBehaviour
     {
         string mainMenu = LevelManager.Instance.mainMenu;
         UIManager.Instance.HidePanels();
+        
+        // Reset Time.timeScale to 1f and pause states before loading the scene to prevent editor/thread freeze
+        Debug.Log("[GameManager] QuitGame: Resetting timeScale to 1f and isPaused to false before loading Main Menu.");
+        Time.timeScale = 1f;
+        isPaused = false;
+        isLevelCompleted = false;
+
         SceneManager.LoadScene(mainMenu);
     }
-
-
 }

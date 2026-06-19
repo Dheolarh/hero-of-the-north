@@ -233,23 +233,29 @@ public class LevelManager : MonoBehaviour
     {
         if (GameManager.Instance.isLevelCompleted) return;
 
+        Debug.Log("[LevelManager] CompleteLevel called.");
+
         GameManager.Instance.isGameOver      = false;
         GameManager.Instance.isLevelCompleted = true;
 
         if (AudioManager.Instance != null)
         {
+            Debug.Log("[LevelManager] Stopping sounds and playing Success SFX.");
             AudioManager.Instance.StopAllSoundsExceptMusic();
             AudioManager.Instance.PlaySfx("Success");
         }
 
+        Debug.Log("[LevelManager] Pausing game.");
         GameManager.Instance.PauseGame();
 
         if (ScoreManager.Instance != null)
         {
+            Debug.Log("[LevelManager] Calculating Hero Points.");
             ScoreManager.Instance.CalculateHeroPoints();
 
             if (DevvitBridge.Instance != null)
             {
+                Debug.Log("[LevelManager] Sending level complete score to DevvitBridge.");
                 DevvitBridge.Instance.SendLevelComplete(
                     ScoreManager.Instance.currentLevelNumber,
                     ScoreManager.Instance.alliesSaved,
@@ -260,13 +266,18 @@ public class LevelManager : MonoBehaviour
             }
         }
 
+        Debug.Log("[LevelManager] Showing Level Complete UI.");
         UIManager.Instance.ToggleLevelCompleteUI();
+        
+        Debug.Log("[LevelManager] Starting AfterLevelComplete coroutine.");
         StartCoroutine(AfterLevelComplete());
     }
 
     private IEnumerator AfterLevelComplete()
     {
+        Debug.Log("[LevelManager] AfterLevelComplete: Waiting 2 seconds in real-time...");
         yield return new WaitForSecondsRealtime(2f);
+        Debug.Log("[LevelManager] AfterLevelComplete: 2 seconds passed. Calling ReturnToMenu.");
         ReturnToMenu();
     }
 
@@ -275,15 +286,28 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     public void ReturnToMenu()
     {
+        Debug.Log("[LevelManager] ReturnToMenu: Hiding panels.");
         UIManager.Instance.HidePanels();
 
         if (_currentLevelInstance != null)
         {
+            Debug.Log($"[LevelManager] ReturnToMenu: Destroying level instance {_currentLevelInstance.name}.");
             Destroy(_currentLevelInstance);
             _currentLevelInstance = null;
         }
 
         _currentLevelData = null;
+
+        // Reset Time.timeScale to 1f and pause states before loading the scene to prevent editor/thread freeze
+        Debug.Log("[LevelManager] ReturnToMenu: Resetting timeScale to 1f and isPaused to false before loading Main Menu.");
+        Time.timeScale = 1f;
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.isPaused = false;
+            GameManager.Instance.isLevelCompleted = false;
+        }
+
+        Debug.Log($"[LevelManager] ReturnToMenu: Loading Main Menu scene: {mainMenu}");
         SceneManager.LoadScene(mainMenu);
     }
 }

@@ -67,6 +67,7 @@ public class LockedLevelCountdown : MonoBehaviour
         {
             // Level should be unlocked now
             countdownText.text = "Unlocking...";
+            isActive = false; // Stop updating and spamming requests every frame
             
             // Request fresh unlock data from server
             if (DevvitBridge.Instance != null)
