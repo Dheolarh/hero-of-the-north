@@ -21,6 +21,7 @@ public class PlayerJumpingState : PlayerStateBase
     public override void Enter()
     {
         ctx.PlayAnimation("isJumping");
+        ctx.ResetPlayerRotation();
 
         if (_applyImpulse)
         {
@@ -34,6 +35,8 @@ public class PlayerJumpingState : PlayerStateBase
 
     public override void Update()
     {
+        ctx.ResetPlayerRotation();
+
         // ── Multi-jump ────────────────────────────────────────────────────
         if (ctx.JumpRequested)
         {
