@@ -22,7 +22,13 @@ public class HUD : MonoBehaviour
             ScoreManager.Instance.OnAlliesSavedChanged += UpdateAllyCounter;
             ScoreManager.Instance.OnRetryCountChanged += UpdateRetryCounter;
         }
-        pauseButton.onClick.AddListener(UIManager.Instance.TogglePauseMenu);
+
+        if (pauseButton != null && UIManager.Instance != null)
+        {
+            // Remove first to be absolutely safe, then add
+            pauseButton.onClick.RemoveListener(UIManager.Instance.TogglePauseMenu);
+            pauseButton.onClick.AddListener(UIManager.Instance.TogglePauseMenu);
+        }
     }
 
     void OnDisable()
@@ -31,6 +37,11 @@ public class HUD : MonoBehaviour
         {
             ScoreManager.Instance.OnAlliesSavedChanged -= UpdateAllyCounter;
             ScoreManager.Instance.OnRetryCountChanged -= UpdateRetryCounter;
+        }
+
+        if (pauseButton != null && UIManager.Instance != null)
+        {
+            pauseButton.onClick.RemoveListener(UIManager.Instance.TogglePauseMenu);
         }
     }
 

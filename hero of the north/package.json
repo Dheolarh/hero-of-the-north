@@ -9,7 +9,7 @@
     "deploy": "npm run type-check && npm run lint && npm run test && devvit upload",
     "dev": "devvit playtest",
     "launch": "npm run deploy && devvit publish",
-    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "login": "devvit login",
     "prettier": "prettier --write .",
     "test": "vitest run",
@@ -19,10 +19,10 @@
     "node": ">=22.12.0"
   },
   "dependencies": {
-    "@devvit/start": "0.12.11",
-    "@devvit/web": "0.12.11",
+    "@devvit/start": "^0.13.0",
+    "@devvit/web": "^0.13.0",
     "@hono/node-server": "^1.19.9",
-    "devvit": "0.12.11",
+    "devvit": "^0.13.0",
     "hono": "4.11.7"
   },
   "devDependencies": {

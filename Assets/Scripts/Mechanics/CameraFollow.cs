@@ -21,6 +21,7 @@ public class CameraFollow : MonoBehaviour
 
     private bool isFollowing = true;
 
+    private LevelCameraSettings activeSettings;
     private Vector3 logicalPosition;
     private CameraShake cameraShake;
 
@@ -34,17 +35,25 @@ public class CameraFollow : MonoBehaviour
     {
         if (player == null || !isFollowing) return;
 
-        Vector3 desiredPosition = player.position + offset;
+        // Read settings dynamically from activeSettings if available, falling back to local defaults
+        bool currentFollowX = activeSettings != null ? activeSettings.followX : followX;
+        bool currentFollowY = activeSettings != null ? activeSettings.followY : followY;
+        Vector3 currentOffset = activeSettings != null ? activeSettings.offset : offset;
+        bool currentUseSmoothing = activeSettings != null ? activeSettings.useSmoothing : useSmoothing;
+        float currentSmoothSpeed = activeSettings != null ? activeSettings.smoothSpeed : smoothSpeed;
+        float currentFixedY = activeSettings != null ? activeSettings.fixedYHeight : (player.position.y + currentOffset.y);
+
+        Vector3 desiredPosition = player.position + currentOffset;
 
         Vector3 targetPosition = new Vector3(
-            followX ? desiredPosition.x : logicalPosition.x,
-            followY ? desiredPosition.y : logicalPosition.y,
+            currentFollowX ? desiredPosition.x : logicalPosition.x,
+            currentFollowY ? desiredPosition.y : currentFixedY,
             followZ ? desiredPosition.z : logicalPosition.z
         );
 
-        if (useSmoothing)
+        if (currentUseSmoothing)
         {
-            logicalPosition = Vector3.Lerp(logicalPosition, targetPosition, smoothSpeed * Time.deltaTime);
+            logicalPosition = Vector3.Lerp(logicalPosition, targetPosition, currentSmoothSpeed * Time.deltaTime);
         }
         else
         {
@@ -68,5 +77,40 @@ public class CameraFollow : MonoBehaviour
     public void StartFollowing()
     {
         isFollowing = true;
+    }
+
+    public void SetTarget(Transform newTarget)
+    {
+        player = newTarget;
+        activeSettings = null;
+
+        if (newTarget != null)
+        {
+            // Find level-specific settings in the spawned prefab hierarchy
+            activeSettings = newTarget.GetComponentInParent<LevelCameraSettings>();
+            if (activeSettings == null)
+            {
+                // Fallback: search the active scene
+                activeSettings = FindFirstObjectByType<LevelCameraSettings>();
+            }
+
+            if (activeSettings != null)
+            {
+                bool currentFollowX = activeSettings.followX;
+                bool currentFollowY = activeSettings.followY;
+                Vector3 currentOffset = activeSettings.offset;
+                float currentFixedY = activeSettings.fixedYHeight;
+
+                float startX = currentFollowX ? (newTarget.position.x + currentOffset.x) : activeSettings.transform.position.x + currentOffset.x;
+                float startY = currentFollowY ? (newTarget.position.y + currentOffset.y) : currentFixedY;
+                logicalPosition = new Vector3(startX, startY, newTarget.position.z + currentOffset.z);
+            }
+            else
+            {
+                logicalPosition = newTarget.position + offset;
+            }
+
+            isFollowing = true;
+        }
     }
 }

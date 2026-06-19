@@ -32,7 +32,9 @@ public class UIManager : MonoBehaviour
     void Start()
     {
         string sceneName = SceneManager.GetActiveScene().name;
-        if (sceneName == "Menu") HUD.SetActive(false);
+        // Hide HUD on the menu — LevelManager.SpawnLevel() re-enables it when a level loads
+        if (sceneName == "Main" && HUD != null)
+            HUD.SetActive(false);
     }
 
     void Update()

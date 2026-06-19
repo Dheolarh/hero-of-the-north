@@ -10,12 +10,27 @@ public class LevelManager : MonoBehaviour
     [Header("Level Configuration")]
     [SerializeField] private List<LevelData> allLevels = new List<LevelData>();
 
-    private int currentLevelIndex = 0;
-    private int highestUnlockedLevel = 1;
-    private DevvitBridge.LevelUnlockInfo[] serverUnlockData;
-    public string mainMenu;
+    [Header("Scene Names")]
+    public string mainMenu = "Main";
+    [Tooltip("The dedicated empty scene for gameplay. Keep game UI here, separate from Main menu UI.")]
+    public string gameScene = "Game";
 
-    public bool allowMultiJumps = false;
+    // ── Runtime state ──────────────────────────────────────────────────────
+    private int          _currentLevelIndex = 0;
+    private int          _highestUnlockedLevel = 1;
+    private LevelData    _currentLevelData;
+    private GameObject   _currentLevelInstance;
+
+    private DevvitBridge.LevelUnlockInfo[] _serverUnlockData;
+
+    /// <summary>The LevelData for the level currently loaded/playing.</summary>
+    public LevelData CurrentLevelData => _currentLevelData;
+
+    // ── Events ─────────────────────────────────────────────────────────────
+    /// <summary>Fired when DevvitBridge receives unlock data from the server.</summary>
+    public System.Action<DevvitBridge.LevelUnlockInfo[]> OnUnlockDataReceived;
+
+    // ── Lifecycle ──────────────────────────────────────────────────────────
 
     void Awake()
     {
@@ -27,134 +42,210 @@ public class LevelManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
         }
 
-        // Subscribe to unlock data from DevvitBridge
         if (DevvitBridge.Instance != null)
-        {
-            DevvitBridge.Instance.OnUnlockDataReceived += OnUnlockDataReceived;
-        }
+            DevvitBridge.Instance.OnUnlockDataReceived += OnServerUnlockDataReceived;
+    }
+
+    void OnEnable()  => SceneManager.sceneLoaded += OnSceneLoaded;
+    void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
+
+    void OnDestroy()
+    {
+        if (DevvitBridge.Instance != null)
+            DevvitBridge.Instance.OnUnlockDataReceived -= OnServerUnlockDataReceived;
     }
 
     void Start()
     {
-        // Request unlock data from server on start
         if (DevvitBridge.Instance != null)
-        {
             DevvitBridge.Instance.RequestUnlockedLevels();
-        }
-    }
-
-    void OnDestroy()
-    {
-        // Unsubscribe from unlock data
-        if (DevvitBridge.Instance != null)
-        {
-            DevvitBridge.Instance.OnUnlockDataReceived -= OnUnlockDataReceived;
-        }
     }
 
     /// <summary>
-    /// Called when unlock data is received from server
+    /// When the Game scene finishes loading, automatically spawn the queued level prefab.
     /// </summary>
-    private void OnUnlockDataReceived(DevvitBridge.LevelUnlockInfo[] levels)
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        serverUnlockData = levels;
+        if (scene.name == gameScene && _currentLevelData != null)
+            SpawnLevel();
+    }
 
-        // Update highest unlocked level based on server data
-        highestUnlockedLevel = 0;
+    // ── Server unlock data ─────────────────────────────────────────────────
+
+    private void OnServerUnlockDataReceived(DevvitBridge.LevelUnlockInfo[] levels)
+    {
+        _serverUnlockData = levels;
+
+        _highestUnlockedLevel = 0;
         foreach (var level in levels)
         {
             if (level.isUnlocked)
-            {
-                highestUnlockedLevel = level.levelNumber + 1; // +1 because we track "highest + 1"
-            }
+                _highestUnlockedLevel = level.levelNumber + 1;
         }
 
-        Debug.Log($"[LevelManager] Server unlock data received. Highest unlocked: Level {highestUnlockedLevel - 1}");
+        Debug.Log($"[LevelManager] Unlock data received. Highest unlocked: Level {_highestUnlockedLevel - 1}");
     }
-    
+
+    // ── Public queries ─────────────────────────────────────────────────────
 
     public LevelData GetLevel(int levelNumber)
-    {
-        return allLevels.Find(level => level.levelNumber == levelNumber);
-    }
+        => allLevels.Find(l => l.levelNumber == levelNumber);
 
-    public List<LevelData> GetAllLevels()
-    {
-        return allLevels;
-    }
+    public List<LevelData> GetAllLevels() => allLevels;
 
     public bool IsLevelUnlocked(int levelNumber)
     {
-        // If we have server data, use it
-        if (serverUnlockData != null && levelNumber < serverUnlockData.Length)
-        {
-            return serverUnlockData[levelNumber].isUnlocked;
-        }
+        if (_serverUnlockData != null && levelNumber < _serverUnlockData.Length)
+            return _serverUnlockData[levelNumber].isUnlocked;
 
-        // Fallback to local tracking (for offline/editor testing)
-        return levelNumber <= highestUnlockedLevel;
+        return levelNumber <= _highestUnlockedLevel;
     }
 
-    /// <summary>
-    /// Get unlock info for a specific level (for countdown timer)
-    /// </summary>
     public DevvitBridge.LevelUnlockInfo GetLevelUnlockInfo(int levelNumber)
     {
-        if (serverUnlockData != null && levelNumber < serverUnlockData.Length)
-        {
-            return serverUnlockData[levelNumber];
-        }
-
+        if (_serverUnlockData != null && levelNumber < _serverUnlockData.Length)
+            return _serverUnlockData[levelNumber];
         return null;
     }
 
+    // ── Level loading ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Load a level by number. Loads the Game scene (if not already in it),
+    /// then instantiates the level's prefab.
+    /// </summary>
     public void LoadLevel(int levelNumber)
     {
-        GameManager.Instance.isGameOver = false;
         LevelData level = GetLevel(levelNumber);
-        if (level != null && IsLevelUnlocked(levelNumber))
+
+        if (level == null)
         {
-            currentLevelIndex = levelNumber;
+            Debug.LogWarning($"[LevelManager] Level {levelNumber} not found in allLevels list!");
+            return;
+        }
 
-            // Reset score stats for new level
-            if (ScoreManager.Instance != null)
-            {
-                ScoreManager.Instance.ResetForNewLevel(levelNumber);
-            }
+        if (!IsLevelUnlocked(levelNumber))
+        {
+            Debug.LogWarning($"[LevelManager] Level {levelNumber} is locked!");
+            return;
+        }
 
-            SceneManager.LoadScene(level.sceneName);
+        if (level.levelPrefab == null)
+        {
+            Debug.LogError($"[LevelManager] Level {levelNumber} ({level.levelName}) has no prefab assigned!");
+            return;
+        }
+
+        // Reset state
+        GameManager.Instance.isGameOver      = false;
+        GameManager.Instance.isLevelCompleted = false;
+
+        _currentLevelIndex = levelNumber;
+        _currentLevelData  = level;
+
+        if (ScoreManager.Instance != null)
+            ScoreManager.Instance.ResetForNewLevel(levelNumber);
+
+        // Load the Game scene — SpawnLevel() fires automatically in OnSceneLoaded
+        if (SceneManager.GetActiveScene().name == gameScene)
+            SpawnLevel();   // already in Game scene (e.g. restarting from Game scene somehow)
+        else
+            SceneManager.LoadScene(gameScene);
+    }
+
+    /// <summary>
+    /// Restart the current level — destroys and re-instantiates the prefab
+    /// WITHOUT reloading the scene (much faster than a full scene load).
+    /// </summary>
+    public void RestartLevel()
+    {
+        if (_currentLevelData == null)
+        {
+            Debug.LogWarning("[LevelManager] RestartLevel called but no level is loaded!");
+            return;
+        }
+
+        GameManager.Instance.isGameOver      = false;
+        GameManager.Instance.isLevelCompleted = false;
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.StopAllSoundsExceptMusic();
+
+        if (ScoreManager.Instance != null)
+            ScoreManager.Instance.IncrementRetryCount();
+
+        UIManager.Instance.HidePanels();
+
+        SpawnLevel(); // Re-instantiate prefab in place
+    }
+
+    /// <summary>
+    /// Instantiates the current level's prefab, wires the camera to the spawned player.
+    /// Destroys the previous instance if one exists.
+    /// </summary>
+    private void SpawnLevel()
+    {
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.StopAllSoundsExceptMusic();
+
+        // Destroy previous level instance
+        if (_currentLevelInstance != null)
+        {
+            Destroy(_currentLevelInstance);
+            _currentLevelInstance = null;
+        }
+
+        // Spawn new level
+        _currentLevelInstance = Instantiate(_currentLevelData.levelPrefab);
+        _currentLevelInstance.name = $"Level_{_currentLevelData.levelNumber}_{_currentLevelData.levelName}";
+
+        // Wire camera to the player inside the spawned prefab
+        PlayerController player = _currentLevelInstance.GetComponentInChildren<PlayerController>();
+        if (player != null)
+        {
+            CameraFollow cam = FindFirstObjectByType<CameraFollow>();
+            if (cam != null)
+                cam.SetTarget(player.transform);
+            else
+                Debug.LogWarning("[LevelManager] No CameraFollow found in scene!");
         }
         else
         {
-            Debug.LogWarning($"Level {levelNumber} is locked or doesn't exist!");
+            Debug.LogWarning("[LevelManager] No PlayerController found inside level prefab!");
         }
-    }
 
-    public void RestartLevel()
-    {
-        GameManager.Instance.isGameOver = false;
-
-        if (ScoreManager.Instance != null)
+        // Show HUD
+        if (UIManager.Instance != null)
         {
-            ScoreManager.Instance.IncrementRetryCount();
+            UIManager.Instance.HidePanels();
+            UIManager.Instance.SetHUDActive(true);
         }
-        UIManager.Instance.HidePanels();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+
+        Debug.Log($"[LevelManager] Spawned: Level {_currentLevelData.levelNumber} — {_currentLevelData.levelName}");
     }
+
+    // ── Level completion ───────────────────────────────────────────────────
 
     public void CompleteLevel()
     {
-        GameManager.Instance.isGameOver = false;
+        GameManager.Instance.isGameOver      = false;
         GameManager.Instance.isLevelCompleted = true;
-        AudioManager.Instance.PlaySfx("Success");
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopAllSoundsExceptMusic();
+            AudioManager.Instance.PlaySfx("Success");
+        }
+
         GameManager.Instance.PauseGame();
+
         if (ScoreManager.Instance != null)
         {
             ScoreManager.Instance.CalculateHeroPoints();
 
-            // Send score data to Reddit backend
             if (DevvitBridge.Instance != null)
             {
                 DevvitBridge.Instance.SendLevelComplete(
@@ -166,16 +257,31 @@ public class LevelManager : MonoBehaviour
                 );
             }
         }
+
         UIManager.Instance.ToggleLevelCompleteUI();
         StartCoroutine(AfterLevelComplete());
     }
 
-    IEnumerator AfterLevelComplete()
+    private IEnumerator AfterLevelComplete()
     {
         yield return new WaitForSecondsRealtime(2f);
+        ReturnToMenu();
+    }
+
+    /// <summary>
+    /// Destroys the current level instance and returns to the main menu scene.
+    /// </summary>
+    public void ReturnToMenu()
+    {
         UIManager.Instance.HidePanels();
+
+        if (_currentLevelInstance != null)
+        {
+            Destroy(_currentLevelInstance);
+            _currentLevelInstance = null;
+        }
+
+        _currentLevelData = null;
         SceneManager.LoadScene(mainMenu);
     }
 }
-
-

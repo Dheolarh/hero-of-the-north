@@ -29,7 +29,6 @@ const LEVEL_CONFIG: Record<number, { maxAllies: number; minTime: number }> = {
 
 const DEFAULT_MAX_ALLIES = 50;
 const DEFAULT_MIN_TIME = 10; // Relaxed min time
-const MAX_REASONABLE_TIME = 3600; // 1 hour max per level
 
 /**
  * Calculate hero points (Server Authoritative)

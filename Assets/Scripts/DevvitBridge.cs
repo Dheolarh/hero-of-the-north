@@ -1,16 +1,25 @@
 using System;
-using System.Runtime.InteropServices;
+using System.Collections;
+using System.Text;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class DevvitBridge : MonoBehaviour
 {
     public static DevvitBridge Instance { get; private set; }
 
-    [Header("User Identity")] public string userId;
+    [Header("User Identity (populated from server)")]
+    public string userId;
     public string username;
     public string avatarUrl;
 
-    [Header("Debug")] public bool logMessages = true;
+    [Header("Debug")]
+    public bool logMessages = true;
+
+    // Event for when unlock data is received (subscribed to by LevelManager)
+    public System.Action<LevelUnlockInfo[]> OnUnlockDataReceived;
+
+    // ========== LIFECYCLE ==========
 
     void Awake()
     {
@@ -25,115 +34,73 @@ public class DevvitBridge : MonoBehaviour
         }
     }
 
-    // ========== RECEIVING DATA FROM REDDIT ==========
+    void Start()
+    {
+        // On start, fetch user identity and level unlock data from the server.
+        // In the Unity Editor these will fail gracefully (no Devvit server running locally).
+        StartCoroutine(FetchUserIdentity());
+        StartCoroutine(FetchUnlockedLevels());
+    }
+
+    // ========== FETCHING DATA FROM REDDIT ==========
 
     /// <summary>
-    /// Called by Reddit when user identity is available
-    /// Message format: { "userId": "t2_abc123", "username": "Player1", "avatarUrl": "https://..." }
+    /// GET /api/user/me — fetches the authenticated Reddit user's identity.
+    /// The server resolves userId from the Reddit session, so this is spoofing-proof.
     /// </summary>
-    public void ReceiveUserData(string json)
+    private IEnumerator FetchUserIdentity()
     {
+        using UnityWebRequest req = UnityWebRequest.Get("/api/user/me");
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[DevvitBridge] Could not fetch user identity: {req.error} (expected in Editor)");
+            yield break;
+        }
+
         try
         {
-            UserData data = JsonUtility.FromJson<UserData>(json);
-            userId = data.userId;
+            UserData data = JsonUtility.FromJson<UserData>(req.downloadHandler.text);
+            userId   = data.userId;
             username = data.username;
             avatarUrl = data.avatarUrl;
 
             if (logMessages)
-            {
-                Debug.Log($"[DevvitBridge] User identity received: {username} ({userId})");
-            }
+                Debug.Log($"[DevvitBridge] User identity: {username} ({userId})");
         }
         catch (Exception e)
         {
-            Debug.LogError($"[DevvitBridge] Error parsing user data: {e.Message}");
+            Debug.LogError($"[DevvitBridge] Error parsing user identity: {e.Message}");
         }
     }
 
     /// <summary>
-    /// Called by Reddit with top 50 leaderboard data
-    /// Message format: { "entries": [ { "rank": 1, "username": "...", "avatarUrl": "...", "totalPoints": 1000 }, ... ] }
+    /// GET /api/levels/all-info — fetches unlock status and countdown timers for all levels.
     /// </summary>
-    public void ReceiveLeaderboard(string json)
+    public void RequestUnlockedLevels()
     {
-        try
-        {
-            LeaderboardData data = JsonUtility.FromJson<LeaderboardData>(json);
-
-            if (logMessages)
-            {
-                Debug.Log($"[DevvitBridge] Leaderboard received: {data.entries.Length} players");
-            }
-
-            // Pass to LeaderboardUI to display
-            if (LeaderboardUI.Instance != null)
-            {
-                LeaderboardUI.Instance.DisplayLeaderboard(data.entries);
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[DevvitBridge] Error parsing leaderboard: {e.Message}");
-        }
+        StartCoroutine(FetchUnlockedLevels());
     }
 
-    /// <summary>
-    /// Called by Reddit with current player's standing
-    /// Message format: { "rank": 42, "totalPoints": 550, "levelsCompleted": 3 }
-    /// </summary>
-    public void ReceivePlayerStanding(string json)
+    private IEnumerator FetchUnlockedLevels()
     {
+        using UnityWebRequest req = UnityWebRequest.Get("/api/levels/all-info");
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[DevvitBridge] Could not fetch level unlock data: {req.error}");
+            yield break;
+        }
+
         try
         {
-            PlayerStanding data = JsonUtility.FromJson<PlayerStanding>(json);
+            UnlockedLevelsData data = JsonUtility.FromJson<UnlockedLevelsData>(req.downloadHandler.text);
 
             if (logMessages)
-            {
-                Debug.Log(
-                    $"[DevvitBridge] Player standing: Rank #{data.rank}, {data.totalPoints} points, {data.levelsCompleted} levels");
-            }
-
-            // Pass to LeaderboardUI to display
-            if (LeaderboardUI.Instance != null)
-            {
-                LeaderboardUI.Instance.UpdatePlayerStanding(data);
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[DevvitBridge] Error parsing player standing: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Called by Reddit with level unlock data and countdown timers
-    /// Message format: { "levels": [ { "levelNumber": 0, "isUnlocked": true, "unlockTime": 0, "timeUntilUnlock": 0 }, ... ] }
-    /// </summary>
-    public void ReceiveUnlockedLevels(string json)
-    {
-        try
-        {
-            UnlockedLevelsData data = JsonUtility.FromJson<UnlockedLevelsData>(json);
-
-            if (logMessages)
-            {
                 Debug.Log($"[DevvitBridge] Received unlock data for {data.levels.Length} levels");
 
-                // Log locked levels with countdown
-                foreach (var level in data.levels)
-                {
-                    if (!level.isUnlocked)
-                    {
-                        long seconds = level.timeUntilUnlock / 1000;
-                        long hours = seconds / 3600;
-                        long days = hours / 24;
-                        Debug.Log($"  Level {level.levelNumber}: Unlocks in {days}d {hours % 24}h");
-                    }
-                }
-            }
-
-            // Notify listeners (e.g., LevelManager)
             OnUnlockDataReceived?.Invoke(data.levels);
         }
         catch (Exception e)
@@ -143,10 +110,143 @@ public class DevvitBridge : MonoBehaviour
     }
 
     /// <summary>
-    /// Called when score submission completes (response from backend)
-    /// Message format: { "success": true, "heroPoints": 850, "totalPoints": 2500, "rank": 42, "message": "..." }
+    /// GET /api/leaderboard/top — fetches top 50 leaderboard entries.
     /// </summary>
-    public void OnScoreSubmitted(string json)
+    public void RequestLeaderboard()
+    {
+        StartCoroutine(FetchLeaderboard());
+    }
+
+    private IEnumerator FetchLeaderboard()
+    {
+        using UnityWebRequest req = UnityWebRequest.Get("/api/leaderboard/top");
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[DevvitBridge] Could not fetch leaderboard: {req.error}");
+            yield break;
+        }
+
+        try
+        {
+            LeaderboardData data = JsonUtility.FromJson<LeaderboardData>(req.downloadHandler.text);
+
+            if (logMessages)
+                Debug.Log($"[DevvitBridge] Leaderboard received: {data.entries.Length} players");
+
+            if (LeaderboardUI.Instance != null)
+                LeaderboardUI.Instance.DisplayLeaderboard(data.entries);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[DevvitBridge] Error parsing leaderboard: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// GET /api/leaderboard/standing/me — fetches the current player's rank and points.
+    /// </summary>
+    public void RequestPlayerStanding()
+    {
+        StartCoroutine(FetchPlayerStanding());
+    }
+
+    private IEnumerator FetchPlayerStanding()
+    {
+        // Use /me endpoint so the server uses context.userId (no userId in URL needed)
+        using UnityWebRequest req = UnityWebRequest.Get("/api/leaderboard/standing/me");
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[DevvitBridge] Could not fetch player standing: {req.error}");
+            yield break;
+        }
+
+        try
+        {
+            PlayerStandingResponse resp = JsonUtility.FromJson<PlayerStandingResponse>(req.downloadHandler.text);
+
+            if (resp.found)
+            {
+                if (logMessages)
+                    Debug.Log($"[DevvitBridge] Player standing: Rank #{resp.standing.rank}, {resp.standing.totalPoints} pts");
+
+                if (LeaderboardUI.Instance != null)
+                    LeaderboardUI.Instance.UpdatePlayerStanding(resp.standing);
+            }
+            else
+            {
+                if (logMessages)
+                    Debug.Log("[DevvitBridge] Player has no standing yet (no levels completed)");
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[DevvitBridge] Error parsing player standing: {e.Message}");
+        }
+    }
+
+    // ========== SENDING DATA TO REDDIT ==========
+
+    /// <summary>
+    /// POST /api/score/submit — submits level completion data.
+    /// The server uses context.userId for authentication — no userId sent from client.
+    /// </summary>
+    public void SendLevelComplete(int levelNumber, int allies, float time, int retries, int points)
+    {
+        // Only send game data — server resolves userId from the Reddit session
+        LevelCompleteData data = new LevelCompleteData
+        {
+            levelNumber = levelNumber,
+            alliesSaved = allies,
+            timeSpent   = time,
+            retryCount  = retries
+            // Note: heroPoints intentionally omitted — server recalculates it for security
+        };
+
+        if (logMessages)
+            Debug.Log($"[DevvitBridge] Submitting score: Level {levelNumber}, {allies} allies, {time:F1}s, {retries} retries");
+
+        StartCoroutine(PostScoreSubmission(data));
+    }
+
+    private IEnumerator PostScoreSubmission(LevelCompleteData data)
+    {
+        string json = JsonUtility.ToJson(data);
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+
+        using UnityWebRequest req = new UnityWebRequest("/api/score/submit", "POST");
+        req.uploadHandler   = new UploadHandlerRaw(bodyRaw);
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.SetRequestHeader("Content-Type", "application/json");
+
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[DevvitBridge] Score submission failed: {req.error}");
+            OnScoreSubmitted(JsonUtility.ToJson(new ScoreSubmissionResponse
+            {
+                success = false,
+                message = req.error
+            }));
+            yield break;
+        }
+
+        if (logMessages)
+            Debug.Log($"[DevvitBridge] Score submitted. Response: {req.downloadHandler.text}");
+
+        OnScoreSubmitted(req.downloadHandler.text);
+    }
+
+    // ========== RESPONSE HANDLERS ==========
+
+    /// <summary>
+    /// Called internally when score submission completes.
+    /// </summary>
+    private void OnScoreSubmitted(string json)
     {
         try
         {
@@ -155,21 +255,11 @@ public class DevvitBridge : MonoBehaviour
             if (response.success)
             {
                 if (logMessages)
-                {
-                    Debug.Log(
-                        $"[DevvitBridge] Score submitted! Hero Points: {response.heroPoints}, Total: {response.totalPoints}, Rank: #{response.rank}");
-                    if (!string.IsNullOrEmpty(response.message))
-                    {
-                        Debug.Log($"[DevvitBridge] Message: {response.message}");
-                    }
-                }
-
-                // Optionally trigger UI update or achievement notification here
-                // Example: EventManager.TriggerEvent("ScoreUpdated", response);
+                    Debug.Log($"[DevvitBridge] Score accepted! Hero Points: {response.heroPoints}, Total: {response.totalPoints}, Rank: #{response.rank}");
             }
             else
             {
-                Debug.LogWarning($"[DevvitBridge] Score submission failed: {response.message}");
+                Debug.LogWarning($"[DevvitBridge] Score rejected: {response.message}");
             }
         }
         catch (Exception e)
@@ -177,92 +267,6 @@ public class DevvitBridge : MonoBehaviour
             Debug.LogError($"[DevvitBridge] Error parsing score response: {e.Message}");
         }
     }
-
-    // ========== SENDING DATA TO REDDIT ==========
-
-    /// <summary>
-    /// Send level completion data to Reddit backend
-    /// </summary>
-    public void SendLevelComplete(int levelNumber, int allies, float time, int retries, int points)
-    {
-        LevelCompleteData data = new LevelCompleteData
-        {
-            levelNumber = levelNumber,
-            alliesSaved = allies,
-            timeSpent = time,
-            retryCount = retries,
-            heroPoints = points
-        };
-
-        string json = JsonUtility.ToJson(data);
-        SendMessageToReddit("LEVEL_COMPLETE", json);
-
-        if (logMessages)
-        {
-            Debug.Log($"[DevvitBridge] Sent level complete: Level {levelNumber}, {points} points");
-        }
-    }
-
-    /// <summary>
-    /// Request top 50 leaderboard from Reddit
-    /// </summary>
-    public void RequestLeaderboard()
-    {
-        SendMessageToReddit("REQUEST_LEADERBOARD", "{}");
-
-        if (logMessages)
-        {
-            Debug.Log($"[DevvitBridge] Requested leaderboard");
-        }
-    }
-
-    /// <summary>
-    /// Request current player's standing from Reddit
-    /// </summary>
-    public void RequestPlayerStanding()
-    {
-        SendMessageToReddit("REQUEST_PLAYER_STANDING", "{}");
-
-        if (logMessages)
-        {
-            Debug.Log($"[DevvitBridge] Requested player standing");
-        }
-    }
-
-    /// <summary>
-    /// Request unlocked levels and countdown timers from Reddit
-    /// </summary>
-    public void RequestUnlockedLevels()
-    {
-        SendMessageToReddit("REQUEST_UNLOCKED_LEVELS", "{}");
-
-        if (logMessages)
-        {
-            Debug.Log($"[DevvitBridge] Requested unlocked levels");
-        }
-    }
-
-    // ========== JAVASCRIPT INTEROP ==========
-
-    /// <summary>
-    /// Send message to Reddit parent window (WebGL only)
-    /// </summary>
-    private void SendMessageToReddit(string messageType, string data)
-    {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        // In WebGL build, send message to parent window (Reddit)
-        string message = $"{{\"type\":\"{messageType}\",\"data\":{data}}}";
-        SendToParent(message);
-#else
-        // In Unity Editor, just log for testing
-        Debug.Log($"[DevvitBridge] Would send to Reddit: {messageType} - {data}");
-#endif
-    }
-
-#if UNITY_WEBGL && !UNITY_EDITOR
-    [DllImport("__Internal")]
-    private static extern void SendToParent(string message);
-#endif
 
     // ========== DATA STRUCTURES ==========
 
@@ -277,10 +281,11 @@ public class DevvitBridge : MonoBehaviour
     [Serializable]
     public class LeaderboardEntry
     {
-        public int rank;
+        public int    rank;
         public string username;
+        public string userId;
         public string avatarUrl;
-        public int totalPoints;
+        public int    totalPoints;
     }
 
     [Serializable]
@@ -298,32 +303,39 @@ public class DevvitBridge : MonoBehaviour
     }
 
     [Serializable]
+    public class PlayerStandingResponse
+    {
+        public bool           found;
+        public PlayerStanding standing;
+    }
+
+    [Serializable]
     public class LevelCompleteData
     {
-        public int levelNumber;
-        public int alliesSaved;
+        public int   levelNumber;
+        public int   alliesSaved;
         public float timeSpent;
-        public int retryCount;
-        public int heroPoints;
+        public int   retryCount;
+        // heroPoints NOT sent — server recalculates to prevent cheating
     }
 
     [Serializable]
     public class ScoreSubmissionResponse
     {
-        public bool success;
-        public int heroPoints;
-        public int totalPoints;
-        public int rank;
+        public bool   success;
+        public int    heroPoints;
+        public int    totalPoints;
+        public int    rank;
         public string message;
     }
 
     [Serializable]
     public class LevelUnlockInfo
     {
-        public int levelNumber;
+        public int  levelNumber;
         public bool isUnlocked;
-        public long unlockTime; // Unix timestamp in milliseconds
-        public long timeUntilUnlock; // Milliseconds until unlock (0 if unlocked)
+        public long unlockTime;       // Unix ms timestamp when this level unlocks
+        public long timeUntilUnlock;  // Milliseconds remaining (0 if already unlocked)
     }
 
     [Serializable]
@@ -331,7 +343,4 @@ public class DevvitBridge : MonoBehaviour
     {
         public LevelUnlockInfo[] levels;
     }
-
-    // Event for when unlock data is received
-    public System.Action<LevelUnlockInfo[]> OnUnlockDataReceived;
 }

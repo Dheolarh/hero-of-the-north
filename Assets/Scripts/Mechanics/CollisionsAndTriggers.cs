@@ -322,9 +322,9 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void ApplyFallSpeedMultiplier()
     {
-        if (modifyRigidbody.velocity.y < 0)
+        if (modifyRigidbody.linearVelocity.y < 0)
         {
-            modifyRigidbody.velocity += Vector2.up * Physics2D.gravity.y * (fallSpeedMultiplier - 1) * Time.deltaTime;
+            modifyRigidbody.linearVelocity += Vector2.up * Physics2D.gravity.y * (fallSpeedMultiplier - 1) * Time.deltaTime;
         }
     }
 

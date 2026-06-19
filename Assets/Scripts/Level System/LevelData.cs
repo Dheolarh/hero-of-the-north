@@ -4,16 +4,23 @@ using UnityEngine;
 public class LevelData : ScriptableObject
 {
     [Header("Level Info")]
-    public int levelNumber;
-    public string sceneName;
+    public int    levelNumber;
     public string levelName;
-    public bool isBossLevel = false; // Check if this is a boss level
-    
-    [Header("UI")]
-    public Sprite levelIcon; 
+    public bool   isBossLevel = false;
+
+    [Header("Level Prefab")]
+    [Tooltip("The root prefab for this level (tilemap, platforms, enemies, player, goal trigger, etc.)")]
+    public GameObject levelPrefab;
+
+    [Header("Level Settings")]
+    [Tooltip("Allow the player to double-jump in this level")]
+    public bool allowMultiJumps = false;
+
+    [Header("UI Icons")]
+    public Sprite levelIcon;
     public Sprite lockedIcon;
-    
+
     [Header("Boss Level UI")]
-    public Sprite bossUnlockedIcon; // Icon for unlocked boss levels
-    public Sprite bossLockedIcon;   // Icon for locked boss levels
+    public Sprite bossUnlockedIcon;
+    public Sprite bossLockedIcon;
 }

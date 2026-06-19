@@ -5,11 +5,12 @@
     "dir": "dist/client",
     "entrypoints": {
       "default": {
-        "inline": true,
-        "entry": "splash.html"
+        "entry": "splash.html",
+        "height": "regular"
       },
       "game": {
-        "entry": "index.html"
+        "entry": "index.html",
+        "height": "tall"
       }
     }
   },

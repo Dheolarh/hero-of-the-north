@@ -41,6 +41,13 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         isPaused = false;
+        isGameOver = false;
+        isLevelCompleted = false;
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopAllSoundsExceptMusic();
+        }
     }
 
 

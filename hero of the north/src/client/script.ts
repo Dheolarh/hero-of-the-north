@@ -22,7 +22,6 @@ type UnityInstance = {
   Quit: () => Promise<void>;
 };
 
-// Declare Unity loader function that will be loaded from external script
 declare function createUnityInstance(
   canvas: HTMLCanvasElement,
   config: UnityConfig,
@@ -35,24 +34,12 @@ if (!canvas) {
   throw new Error("Unity canvas element not found");
 }
 
-// Shows a temporary message banner/ribbon for a few seconds, or
-// a permanent error message on top of the canvas if type=='error'.
-// If type=='warning', a yellow highlight color is used.
-// Modify or remove this function to customize the visually presented
-// way that non-critical warnings and error messages are presented to the
-// user.
 function unityShowBanner(msg: string, type: UnityBannerType): void {
   const warningBanner = document.querySelector<HTMLElement>("#unity-warning");
 
   if (!warningBanner) {
     console.error("Warning banner element not found");
     return;
-  }
-
-  const banner = warningBanner; // Create a const reference for closure
-
-  function updateBannerVisibility(): void {
-    banner.style.display = banner.children.length ? 'block' : 'none';
   }
 
   const div = document.createElement('div');
@@ -67,216 +54,79 @@ function unityShowBanner(msg: string, type: UnityBannerType): void {
     }
     setTimeout(() => {
       warningBanner.removeChild(div);
-      updateBannerVisibility();
+      warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
     }, 5000);
   }
-  updateBannerVisibility();
+
+  warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
 }
 
 const buildUrl = "Build";
-const loaderUrl = buildUrl + "/Build.loader.js";
 const config: UnityConfig = {
   arguments: [],
-  dataUrl: buildUrl + "/Build.data.unityweb",
-  frameworkUrl: buildUrl + "/Build.framework.js",
-  codeUrl: buildUrl + "/Build.wasm.unityweb",
+  dataUrl:            buildUrl + "/Build.data",
+  frameworkUrl:       buildUrl + "/Build.framework.js",
+  codeUrl:            buildUrl + "/Build.wasm",
   streamingAssetsUrl: "StreamingAssets",
-  companyName: "OsirisXStudios",
-  productName: "Hero of the North",
-  productVersion: "0.1.0",
-  showBanner: unityShowBanner,
-  // errorHandler: function(err, url, line) {
-  //    alert("error " + err + " occurred at line " + line);
-  //    // Return 'true' if you handled this error and don't want Unity
-  //    // to process it further, 'false' otherwise.
-  //    return true;
-  // },
+  companyName:        "OsirisXStudios",
+  productName:        "Hero of the North",
+  productVersion:     "0.1.0",
+  showBanner:         unityShowBanner,
 };
 
-// By default, Unity keeps WebGL canvas render target size matched with
-// the DOM size of the canvas element (scaled by window.devicePixelRatio)
-// Set this to false if you want to decouple this synchronization from
-// happening inside the engine, and you would instead like to size up
-// the canvas DOM size and WebGL render target sizes yourself.
-// config.matchWebGLToCanvasSize = false;
-
-// If you would like all file writes inside Unity Application.persistentDataPath
-// directory to automatically persist so that the contents are remembered when
-// the user revisits the site the next time, uncomment the following line:
-// config.autoSyncPersistentDataPath = true;
-// This autosyncing is currently not the default behavior to avoid regressing
-// existing user projects that might rely on the earlier manual
-// JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-// expected to change.
-
+// Mobile: fill the whole browser client area
 if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-  // Mobile device style: fill the whole browser client area with the game canvas:
-
   const meta = document.createElement('meta');
-  meta.name = 'viewport';
+  meta.name    = 'viewport';
   meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
   document.getElementsByTagName('head')[0]?.appendChild(meta);
 
   const container = document.querySelector<HTMLElement>("#unity-container");
-  if (container) {
-    container.className = "unity-mobile";
-  }
+  if (container) container.className = "unity-mobile";
   canvas.className = "unity-mobile";
 
-  // To lower canvas resolution on mobile devices to gain some
-  // performance, uncomment the following line:
-  // config.devicePixelRatio = 1;
-
 } else {
-  // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-  canvas.style.width = "100%";
+  // Desktop: fill the window
+  canvas.style.width  = "100%";
   canvas.style.height = "100%";
 
   const container = document.querySelector<HTMLElement>("#unity-container");
   if (container) {
-    container.style.width = "100%";
-    container.style.height = "100%";
+    container.style.width    = "100%";
+    container.style.height   = "100%";
     container.style.position = "fixed";
-    container.style.left = "0";
-    container.style.top = "0";
+    container.style.left     = "0";
+    container.style.top      = "0";
     container.style.transform = "none";
   }
 }
 
+// Show loading bar
 const loadingBar = document.querySelector<HTMLElement>("#unity-loading-bar");
-if (loadingBar) {
-  loadingBar.style.display = "block";
-}
+if (loadingBar) loadingBar.style.display = "block";
 
-// ... (previous code) ...
-
-// Define message types
-interface UnityMessage {
-  type: string;
-  data: any;
-}
-
-// Global function to receive messages from Unity (via .jslib)
-(window as any).sendToDevvit = async (messageJson: string) => {
-  console.log('[Devvit Client] Received from Unity:', messageJson);
-
-  try {
-    const message: UnityMessage = JSON.parse(messageJson);
-    const { type, data } = message;
-
-    if (!unityGame) {
-      console.error('[Devvit Client] Unity instance not ready');
-      return;
-    }
-
-    switch (type) {
-      case 'REQUEST_UNLOCKED_LEVELS':
-        try {
-          const res = await fetch('/api/levels/all-info');
-          const json = await res.json();
-          unityGame.SendMessage('DevvitBridge', 'ReceiveUnlockedLevels', JSON.stringify(json));
-        } catch (e) {
-          console.error('Error fetching levels:', e);
-        }
-        break;
-
-      case 'LEVEL_COMPLETE':
-        try {
-          const userRes = await fetch('/api/user/me');
-          const user = await userRes.json();
-
-          if (!user.userId) {
-            console.error('User not authenticated');
-            return;
-          }
-
-          const res = await fetch('/api/score/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: user.userId,
-              username: user.username,
-              avatarUrl: user.avatarUrl || '', // Pass avatarUrl
-              ...data
-            })
-          });
-          const json = await res.json();
-          unityGame.SendMessage('DevvitBridge', 'OnScoreSubmitted', JSON.stringify(json));
-        } catch (e) {
-          console.error('Error submitting score:', e);
-        }
-        break;
-
-      case 'REQUEST_LEADERBOARD':
-        try {
-          const res = await fetch('/api/leaderboard/top');
-          const json = await res.json();
-          // Unity expects { entries: [...] }
-          unityGame.SendMessage('DevvitBridge', 'ReceiveLeaderboard', JSON.stringify(json));
-        } catch (e) { console.error(e); }
-        break;
-
-      case 'REQUEST_PLAYER_STANDING':
-        try {
-          // We need userId first
-          const userRes = await fetch('/api/user/me');
-          const user = await userRes.json();
-          if (user.userId) {
-            const res = await fetch(`/api/leaderboard/standing/${user.userId}`);
-            const json = await res.json();
-            if (json.found) {
-              unityGame.SendMessage('DevvitBridge', 'ReceivePlayerStanding', JSON.stringify(json.standing));
-            }
-          }
-        } catch (e) { console.error(e); }
-        break;
-
-      case 'REQUEST_USER_IDENTITY': // Use this if Unity requests it explicitly
-      default:
-        // Also auto-fetch user identity on load if possible, or just handle this request
-        try {
-          const res = await fetch('/api/user/me');
-          const json = await res.json();
-          unityGame.SendMessage('DevvitBridge', 'ReceiveUserData', JSON.stringify(json));
-        } catch (e) { console.error(e); }
-        break;
-    }
-  } catch (e) {
-    console.error('[Devvit Client] Error processing message:', e);
-  }
-};
-
-let unityGame: UnityInstance | null = null;
-
+// Load and launch Unity
 const script = document.createElement("script");
-script.src = loaderUrl;
+script.src = buildUrl + "/Build.loader.js";
+
 script.onload = () => {
   createUnityInstance(canvas, config, (progress: number) => {
-    const progressBarFull = document.querySelector<HTMLElement>("#unity-progress-bar-full");
-    if (progressBarFull) {
-      progressBarFull.style.width = 100 * progress + "%";
-    }
+    const bar = document.querySelector<HTMLElement>("#unity-progress-bar-full");
+    if (bar) bar.style.width = `${100 * progress}%`;
+
   }).then((unityInstance: UnityInstance) => {
-    unityGame = unityInstance; // Save instance
+    // Hide loading bar
+    if (loadingBar) loadingBar.style.display = "none";
 
-    // ... loading bar hiding ...
-    const loadingBar = document.querySelector<HTMLElement>("#unity-loading-bar");
-    if (loadingBar) {
-      loadingBar.style.display = "none";
-    }
-
+    // Wire up fullscreen button
     const fullscreenButton = document.querySelector<HTMLElement>("#unity-fullscreen-button");
     if (fullscreenButton) {
-      fullscreenButton.onclick = () => {
-        unityInstance.SetFullscreen(1);
-      };
+      fullscreenButton.onclick = () => unityInstance.SetFullscreen(1);
     }
 
-    // Initial fetch of user data when Unity is ready
-    setTimeout(() => {
-      (window as any).sendToDevvit(JSON.stringify({ type: 'REQUEST_USER_IDENTITY', data: {} }));
-      (window as any).sendToDevvit(JSON.stringify({ type: 'REQUEST_UNLOCKED_LEVELS', data: {} }));
-    }, 2000); // Wait a bit for Unity to initialize scripts
+    // Unity uses UnityWebRequest to call /api/... directly.
+    // No message routing needed here — DevvitBridge.cs handles everything via HTTP.
+    console.log("[Devvit] Unity loaded. DevvitBridge will handle all API communication via UnityWebRequest.");
 
   }).catch((message: unknown) => {
     alert(message);

@@ -287,6 +287,8 @@ public class AudioManager : MonoBehaviour
 
     public void StopAllSoundsExceptMusic()
     {
+        StopSceneAudioSourcesExceptMusic();
+
         // Stop walking sound
         walkingSource.Stop();
 
@@ -311,6 +313,18 @@ public class AudioManager : MonoBehaviour
         }
 
         Debug.Log("[AudioManager] Stopped all sounds except background music");
+    }
+
+    private void StopSceneAudioSourcesExceptMusic()
+    {
+        AudioSource[] audioSources = FindObjectsByType<AudioSource>();
+        foreach (AudioSource source in audioSources)
+        {
+            if (source != null && source != bgMusicSource)
+            {
+                source.Stop();
+            }
+        }
     }
 
     // ========== BACKGROUND MUSIC ==========
