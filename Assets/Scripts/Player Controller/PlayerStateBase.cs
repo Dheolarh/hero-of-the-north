@@ -32,6 +32,9 @@ public abstract class PlayerStateBase
     /// <summary>Forwarded from PlayerController.OnCollisionEnter2D.</summary>
     public virtual void OnCollisionEnter2D(UnityEngine.Collision2D collision) { }
 
+    /// <summary>Forwarded from PlayerController.OnCollisionStay2D.</summary>
+    public virtual void OnCollisionStay2D(UnityEngine.Collision2D collision) { }
+
     /// <summary>Forwarded from PlayerController.OnCollisionExit2D.</summary>
     public virtual void OnCollisionExit2D(UnityEngine.Collision2D collision) { }
 }

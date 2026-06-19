@@ -25,6 +25,9 @@ public class PlayerStateMachine
     public void OnCollisionEnter2D(UnityEngine.Collision2D collision)
         => _current?.OnCollisionEnter2D(collision);
 
+    public void OnCollisionStay2D(UnityEngine.Collision2D collision)
+        => _current?.OnCollisionStay2D(collision);
+
     public void OnCollisionExit2D(UnityEngine.Collision2D collision)
         => _current?.OnCollisionExit2D(collision);
 }

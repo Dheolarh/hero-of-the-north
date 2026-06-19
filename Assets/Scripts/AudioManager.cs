@@ -261,7 +261,7 @@ public class AudioManager : MonoBehaviour
 
     // ========== WALKING SOUND (DEDICATED) ==========
 
-    public void PlayWalkingSound()
+    public void PlayWalkingSound(float currentSpeed = 3f)
     {
         Sound s = System.Array.Find(walkingSounds, sound => sound.name == "Walk");
         if (s == null)
@@ -275,9 +275,22 @@ public class AudioManager : MonoBehaviour
         {
             walkingSource.clip = s.clip;
             walkingSource.volume = s.volume * sfxVolume * masterVolume;
-            walkingSource.pitch = s.pitch;
+            
+            // Scale pitch based on speed (base speed is 3f)
+            float speedRatio = currentSpeed / 3.0f;
+            walkingSource.pitch = Mathf.Clamp(s.pitch * speedRatio, 0.5f, 2.5f);
+            
             walkingSource.Play();
         }
+    }
+
+    public void SetWalkingSoundSpeed(float currentSpeed)
+    {
+        Sound s = System.Array.Find(walkingSounds, sound => sound.name == "Walk");
+        if (s == null) return;
+
+        float speedRatio = currentSpeed / 3.0f;
+        walkingSource.pitch = Mathf.Clamp(s.pitch * speedRatio, 0.5f, 2.5f);
     }
 
     public void StopWalkingSound()

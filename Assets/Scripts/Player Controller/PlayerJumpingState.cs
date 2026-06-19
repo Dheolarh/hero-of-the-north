@@ -44,6 +44,10 @@ public class PlayerJumpingState : PlayerStateBase
             if (ctx.IsMultiJump && !_hasDoubleJumped)
             {
                 _hasDoubleJumped = true;
+                
+                // Reset vertical velocity so upward momentum doesn't stack and multiply the jump height
+                ctx.PlayerRigidbody.linearVelocity = new UnityEngine.Vector2(ctx.PlayerRigidbody.linearVelocity.x, 0f);
+
                 ctx.PlayerRigidbody.AddForce(
                     UnityEngine.Vector2.up * ctx.JumpForce, UnityEngine.ForceMode2D.Impulse);
                 ctx.PlayAnimation("isJumping");
@@ -66,9 +70,13 @@ public class PlayerJumpingState : PlayerStateBase
 
     public override void OnTriggerEnter2D(UnityEngine.Collider2D other)
     {
-        if (other.CompareTag("Floor"))
+        if (other.CompareTag("Floor") || other.CompareTag("PlatformGround"))
         {
-            ctx.StateMachine.ChangeState(new PlayerIdleState(ctx));
+            // Only land if the player is falling or stationary (not moving upwards)
+            if (ctx.PlayerRigidbody.linearVelocity.y <= 0.1f)
+            {
+                ctx.StateMachine.ChangeState(new PlayerIdleState(ctx));
+            }
         }
         else if (other.CompareTag("Death"))
         {
@@ -78,9 +86,30 @@ public class PlayerJumpingState : PlayerStateBase
 
     public override void OnCollisionEnter2D(UnityEngine.Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("PlatformGround"))
+        CheckLanding(collision);
+    }
+
+    public override void OnCollisionStay2D(UnityEngine.Collision2D collision)
+    {
+        CheckLanding(collision);
+    }
+
+    private void CheckLanding(UnityEngine.Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("PlatformGround") || collision.gameObject.CompareTag("Floor"))
         {
-            ctx.StateMachine.ChangeState(new PlayerIdleState(ctx));
+            // Only land if we hit the top of the platform/ground (contact normal points upwards)
+            if (collision.contactCount > 0)
+            {
+                foreach (var contact in collision.contacts)
+                {
+                    if (contact.normal.y > 0.7f)
+                    {
+                        ctx.StateMachine.ChangeState(new PlayerIdleState(ctx));
+                        break;
+                    }
+                }
+            }
         }
     }
 }

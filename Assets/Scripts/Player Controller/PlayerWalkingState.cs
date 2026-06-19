@@ -10,12 +10,15 @@ public class PlayerWalkingState : PlayerStateBase
     {
         ctx.PlayAnimation("isWalking");
         if (AudioManager.Instance != null)
-            AudioManager.Instance.PlayWalkingSound();
+            AudioManager.Instance.PlayWalkingSound(ctx.Speed);
     }
 
     public override void Update()
     {
         ctx.ResetPlayerRotation();
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.SetWalkingSoundSpeed(ctx.Speed);
 
         float dir = ctx.InputDirection;
 
@@ -59,13 +62,13 @@ public class PlayerWalkingState : PlayerStateBase
     // Walking off a ledge (no jump pressed)
     public override void OnTriggerExit2D(UnityEngine.Collider2D other)
     {
-        if (other.CompareTag("Floor"))
+        if (other.CompareTag("Floor") || other.CompareTag("PlatformGround"))
             ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx, applyImpulse: false));
     }
 
     public override void OnCollisionExit2D(UnityEngine.Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("PlatformGround"))
+        if (collision.gameObject.CompareTag("PlatformGround") || collision.gameObject.CompareTag("Floor"))
             ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx, applyImpulse: false));
     }
 }

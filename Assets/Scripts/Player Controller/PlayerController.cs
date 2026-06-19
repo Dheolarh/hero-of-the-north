@@ -99,6 +99,9 @@ public class PlayerController : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
         => StateMachine.OnCollisionEnter2D(collision);
 
+    private void OnCollisionStay2D(Collision2D collision)
+        => StateMachine.OnCollisionStay2D(collision);
+
     private void OnCollisionExit2D(Collision2D collision)
         => StateMachine.OnCollisionExit2D(collision);
 

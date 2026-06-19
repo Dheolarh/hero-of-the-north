@@ -231,6 +231,8 @@ public class LevelManager : MonoBehaviour
 
     public void CompleteLevel()
     {
+        if (GameManager.Instance.isLevelCompleted) return;
+
         GameManager.Instance.isGameOver      = false;
         GameManager.Instance.isLevelCompleted = true;
 

@@ -41,13 +41,13 @@ public class PlayerIdleState : PlayerStateBase
     // Walking off a ledge (no jump pressed)
     public override void OnTriggerExit2D(UnityEngine.Collider2D other)
     {
-        if (other.CompareTag("Floor"))
+        if (other.CompareTag("Floor") || other.CompareTag("PlatformGround"))
             ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx, applyImpulse: false));
     }
 
     public override void OnCollisionExit2D(UnityEngine.Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("PlatformGround"))
+        if (collision.gameObject.CompareTag("PlatformGround") || collision.gameObject.CompareTag("Floor"))
             ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx, applyImpulse: false));
     }
 }
