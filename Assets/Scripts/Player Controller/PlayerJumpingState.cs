@@ -6,7 +6,7 @@
 public class PlayerJumpingState : PlayerStateBase
 {
     private readonly bool _applyImpulse;
-    private bool _hasDoubleJumped = false;
+    private int _midAirJumpsPerformed = 0;
 
     /// <param name="applyImpulse">
     /// Pass <c>true</c> when the player pressed Jump.
@@ -41,9 +41,9 @@ public class PlayerJumpingState : PlayerStateBase
         if (ctx.JumpRequested)
         {
             ctx.JumpRequested = false;
-            if (ctx.IsMultiJump && !_hasDoubleJumped)
+            if (_midAirJumpsPerformed < ctx.MaxMultiJumps)
             {
-                _hasDoubleJumped = true;
+                _midAirJumpsPerformed++;
                 
                 // Reset vertical velocity so upward momentum doesn't stack and multiply the jump height
                 ctx.PlayerRigidbody.linearVelocity = new UnityEngine.Vector2(ctx.PlayerRigidbody.linearVelocity.x, 0f);

@@ -21,6 +21,11 @@ public class HUD : MonoBehaviour
         {
             ScoreManager.Instance.OnAlliesSavedChanged += UpdateAllyCounter;
             ScoreManager.Instance.OnRetryCountChanged += UpdateRetryCounter;
+
+            // Immediately sync display to current values — events only fire on future
+            // changes, so if values changed while HUD was hidden they would be stale
+            UpdateAllyCounter(ScoreManager.Instance.alliesSaved);
+            UpdateRetryCounter(ScoreManager.Instance.retryCount);
         }
 
         if (pauseButton != null && UIManager.Instance != null)

@@ -17,7 +17,7 @@ public class PlayerController : MonoBehaviour
     // ── Shared data properties (read / written by states) ─────────────────
     public float Speed     => speed;
     public float JumpForce => jumpForce;
-    public bool  IsMultiJump { get; private set; }
+    public int   MaxMultiJumps { get; private set; }
 
     public float InputDirection { get; private set; }
 
@@ -26,6 +26,12 @@ public class PlayerController : MonoBehaviour
     // ── UI button flags (set by the UI, read via MoveDirection) ───────────
     private bool _uiMoveLeft;
     private bool _uiMoveRight;
+
+    // Tracks whether we've already applied the level-complete freeze
+    private bool _levelCompleteFrozen = false;
+
+    // Cached collider — disabled on level complete so death objects pass through
+    private Collider2D _playerCollider;
 
     // ── State machine ──────────────────────────────────────────────────────
     public PlayerStateMachine StateMachine { get; private set; }
@@ -39,9 +45,10 @@ public class PlayerController : MonoBehaviour
         PlayerSprite     = GetComponent<SpriteRenderer>();
         PlayerAnimation  = GetComponent<Animator>();
         CameraFollow     = Camera.main.GetComponent<CameraFollow>();
+        _playerCollider  = GetComponent<Collider2D>();
 
         if (LevelManager.Instance != null)
-            IsMultiJump = LevelManager.Instance.CurrentLevelData?.allowMultiJumps ?? false;
+            MaxMultiJumps = LevelManager.Instance.CurrentLevelData?.multiJumpCount ?? 0;
 
         // Boot the state machine into Idle
         StateMachine = new PlayerStateMachine();
@@ -51,6 +58,31 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         if (GameManager.Instance.isGameOver) return;
+        if (GameManager.Instance.isLevelCompleted)
+        {
+            if (!_levelCompleteFrozen)
+            {
+                _levelCompleteFrozen = true;
+
+                // Switch to idle animation
+                PlayAnimation("isIdle");
+
+                // Stop all audio (walking sound etc.)
+                if (AudioManager.Instance != null)
+                    AudioManager.Instance.StopWalkingSound();
+
+                // Disable collider so death objects (spikes, traps) pass through
+                if (_playerCollider != null)
+                    _playerCollider.enabled = false;
+            }
+
+            // Zero velocity and input every frame so gravity/momentum doesn't move them
+            PlayerRigidbody.linearVelocity = Vector2.zero;
+            PlayerRigidbody.gravityScale   = 0f;
+            InputDirection = 0f;
+            JumpRequested  = false;
+            return;
+        }
 
         // Compute shared input once per frame so states can read it
         InputDirection = 0f;

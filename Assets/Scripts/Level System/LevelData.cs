@@ -13,8 +13,8 @@ public class LevelData : ScriptableObject
     public GameObject levelPrefab;
 
     [Header("Level Settings")]
-    [Tooltip("Allow the player to double-jump in this level")]
-    public bool allowMultiJumps = false;
+    [Tooltip("The number of extra jumps (multi-jumps) the player can perform in mid-air (e.g., 1 for double jump, 2 for triple jump)")]
+    public int multiJumpCount = 0;
 
     [Header("UI Icons")]
     public Sprite levelIcon;

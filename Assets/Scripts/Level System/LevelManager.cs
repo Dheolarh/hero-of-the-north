@@ -69,8 +69,18 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name == gameScene && _currentLevelData != null)
-            SpawnLevel();
+        Debug.Log($"[LevelManager] OnSceneLoaded: Loaded scene '{scene.name}', currentLevelData={(_currentLevelData != null ? _currentLevelData.levelName : "null")}");
+        if (scene.name == gameScene)
+        {
+            if (_currentLevelData != null)
+            {
+                SpawnLevel();
+            }
+            else
+            {
+                Debug.LogWarning("[LevelManager] OnSceneLoaded: _currentLevelData is NULL, cannot spawn level!");
+            }
+        }
     }
 
     // ── Server unlock data ─────────────────────────────────────────────────
@@ -168,6 +178,10 @@ public class LevelManager : MonoBehaviour
             return;
         }
 
+        // Always reset time scale — if the player retried from the pause menu,
+        // timeScale is still 0 and the game would appear frozen after restart
+        Time.timeScale = 1f;
+        GameManager.Instance.isPaused        = false;
         GameManager.Instance.isGameOver      = false;
         GameManager.Instance.isLevelCompleted = false;
 
@@ -240,22 +254,16 @@ public class LevelManager : MonoBehaviour
 
         if (AudioManager.Instance != null)
         {
-            Debug.Log("[LevelManager] Stopping sounds and playing Success SFX.");
             AudioManager.Instance.StopAllSoundsExceptMusic();
             AudioManager.Instance.PlaySfx("Success");
         }
 
-        Debug.Log("[LevelManager] Pausing game.");
-        GameManager.Instance.PauseGame();
-
         if (ScoreManager.Instance != null)
         {
-            Debug.Log("[LevelManager] Calculating Hero Points.");
             ScoreManager.Instance.CalculateHeroPoints();
 
             if (DevvitBridge.Instance != null)
             {
-                Debug.Log("[LevelManager] Sending level complete score to DevvitBridge.");
                 DevvitBridge.Instance.SendLevelComplete(
                     ScoreManager.Instance.currentLevelNumber,
                     ScoreManager.Instance.alliesSaved,
@@ -266,40 +274,40 @@ public class LevelManager : MonoBehaviour
             }
         }
 
-        Debug.Log("[LevelManager] Showing Level Complete UI.");
-        UIManager.Instance.ToggleLevelCompleteUI();
-        
-        Debug.Log("[LevelManager] Starting AfterLevelComplete coroutine.");
+        // Show Survived panel and hide HUD — timeScale stays at 1 (no PauseGame) to
+        // avoid the LoadScene freeze that happens when timeScale is 0 during scene load.
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetHUDActive(false);
+            UIManager.Instance.ToggleLevelCompleteUI();
+        }
+
+        // Wait 2 seconds in real time then async-load the main menu
         StartCoroutine(AfterLevelComplete());
     }
 
     private IEnumerator AfterLevelComplete()
     {
-        Debug.Log("[LevelManager] AfterLevelComplete: Waiting 2 seconds in real-time...");
         yield return new WaitForSecondsRealtime(2f);
-        Debug.Log("[LevelManager] AfterLevelComplete: 2 seconds passed. Calling ReturnToMenu.");
         ReturnToMenu();
     }
 
     /// <summary>
     /// Destroys the current level instance and returns to the main menu scene.
+    /// Uses async loading to avoid blocking the main thread (sync LoadScene froze the editor
+    /// on large scenes like Main.unity).
     /// </summary>
     public void ReturnToMenu()
     {
-        Debug.Log("[LevelManager] ReturnToMenu: Hiding panels.");
-        UIManager.Instance.HidePanels();
+        Debug.Log("[LevelManager] ReturnToMenu: Starting async return to menu.");
+        StartCoroutine(ReturnToMenuAsync());
+    }
 
-        if (_currentLevelInstance != null)
-        {
-            Debug.Log($"[LevelManager] ReturnToMenu: Destroying level instance {_currentLevelInstance.name}.");
-            Destroy(_currentLevelInstance);
-            _currentLevelInstance = null;
-        }
-
+    private IEnumerator ReturnToMenuAsync()
+    {
         _currentLevelData = null;
 
-        // Reset Time.timeScale to 1f and pause states before loading the scene to prevent editor/thread freeze
-        Debug.Log("[LevelManager] ReturnToMenu: Resetting timeScale to 1f and isPaused to false before loading Main Menu.");
+        // Reset time and pause states BEFORE loading
         Time.timeScale = 1f;
         if (GameManager.Instance != null)
         {
@@ -307,7 +315,20 @@ public class LevelManager : MonoBehaviour
             GameManager.Instance.isLevelCompleted = false;
         }
 
-        Debug.Log($"[LevelManager] ReturnToMenu: Loading Main Menu scene: {mainMenu}");
-        SceneManager.LoadScene(mainMenu);
+        // Use async load — this keeps the engine alive and responsive during the scene load
+        // We keep the current level and UI visible as a buffer until the Main menu is ready.
+        Debug.Log($"[LevelManager] ReturnToMenu: Async loading Main Menu scene: {mainMenu}");
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(mainMenu);
+        asyncLoad.allowSceneActivation = true;
+
+        while (!asyncLoad.isDone)
+        {
+            yield return null;
+        }
+
+        // Clean up references now that the scene has transitioned
+        _currentLevelInstance = null;
+
+        Debug.Log("[LevelManager] ReturnToMenu: Main Menu scene fully loaded.");
     }
 }

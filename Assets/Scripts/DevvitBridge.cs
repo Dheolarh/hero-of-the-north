@@ -50,6 +50,14 @@ public class DevvitBridge : MonoBehaviour
     /// </summary>
     private IEnumerator FetchUserIdentity()
     {
+#if UNITY_EDITOR
+        userId = "editor_user";
+        username = "EditorPlayer";
+        avatarUrl = "";
+        if (logMessages)
+            Debug.Log($"[DevvitBridge] [Editor Mock] User identity set: {username}");
+        yield break;
+#else
         using UnityWebRequest req = UnityWebRequest.Get("/api/user/me");
         yield return req.SendWebRequest();
 
@@ -73,6 +81,7 @@ public class DevvitBridge : MonoBehaviour
         {
             Debug.LogError($"[DevvitBridge] Error parsing user identity: {e.Message}");
         }
+#endif
     }
 
     /// <summary>
@@ -85,6 +94,24 @@ public class DevvitBridge : MonoBehaviour
 
     private IEnumerator FetchUnlockedLevels()
     {
+#if UNITY_EDITOR
+        if (logMessages)
+            Debug.Log("[DevvitBridge] [Editor Mock] Mocking unlocked levels.");
+
+        LevelUnlockInfo[] mockLevels = new LevelUnlockInfo[32];
+        for (int i = 0; i < mockLevels.Length; i++)
+        {
+            mockLevels[i] = new LevelUnlockInfo
+            {
+                levelNumber = i,
+                isUnlocked = true,
+                unlockTime = 0,
+                timeUntilUnlock = 0
+            };
+        }
+        OnUnlockDataReceived?.Invoke(mockLevels);
+        yield break;
+#else
         using UnityWebRequest req = UnityWebRequest.Get("/api/levels/all-info");
         yield return req.SendWebRequest();
 
@@ -107,6 +134,7 @@ public class DevvitBridge : MonoBehaviour
         {
             Debug.LogError($"[DevvitBridge] Error parsing unlock data: {e.Message}");
         }
+#endif
     }
 
     /// <summary>
@@ -119,6 +147,25 @@ public class DevvitBridge : MonoBehaviour
 
     private IEnumerator FetchLeaderboard()
     {
+#if UNITY_EDITOR
+        if (logMessages)
+            Debug.Log("[DevvitBridge] [Editor Mock] Mocking leaderboard top entries.");
+        LeaderboardEntry[] mockEntries = new LeaderboardEntry[5];
+        for (int i = 0; i < 5; i++)
+        {
+            mockEntries[i] = new LeaderboardEntry
+            {
+                rank = i + 1,
+                username = $"Player_{i + 1}",
+                userId = $"user_{i + 1}",
+                avatarUrl = "",
+                totalPoints = 1000 - (i * 100)
+            };
+        }
+        if (LeaderboardUI.Instance != null)
+            LeaderboardUI.Instance.DisplayLeaderboard(mockEntries);
+        yield break;
+#else
         using UnityWebRequest req = UnityWebRequest.Get("/api/leaderboard/top");
         yield return req.SendWebRequest();
 
@@ -142,6 +189,7 @@ public class DevvitBridge : MonoBehaviour
         {
             Debug.LogError($"[DevvitBridge] Error parsing leaderboard: {e.Message}");
         }
+#endif
     }
 
     /// <summary>
@@ -154,6 +202,20 @@ public class DevvitBridge : MonoBehaviour
 
     private IEnumerator FetchPlayerStanding()
     {
+#if UNITY_EDITOR
+        if (logMessages)
+            Debug.Log("[DevvitBridge] [Editor Mock] Mocking player standing.");
+        if (LeaderboardUI.Instance != null)
+        {
+            LeaderboardUI.Instance.UpdatePlayerStanding(new PlayerStanding
+            {
+                rank = 12,
+                totalPoints = 450,
+                levelsCompleted = 3
+            });
+        }
+        yield break;
+#else
         // Use /me endpoint so the server uses context.userId (no userId in URL needed)
         using UnityWebRequest req = UnityWebRequest.Get("/api/leaderboard/standing/me");
         yield return req.SendWebRequest();
@@ -186,6 +248,7 @@ public class DevvitBridge : MonoBehaviour
         {
             Debug.LogError($"[DevvitBridge] Error parsing player standing: {e.Message}");
         }
+#endif
     }
 
     // ========== SENDING DATA TO REDDIT ==========
@@ -214,6 +277,20 @@ public class DevvitBridge : MonoBehaviour
 
     private IEnumerator PostScoreSubmission(LevelCompleteData data)
     {
+#if UNITY_EDITOR
+        if (logMessages)
+            Debug.Log("[DevvitBridge] [Editor Mock] Mocking score submission success.");
+        
+        OnScoreSubmitted(JsonUtility.ToJson(new ScoreSubmissionResponse
+        {
+            success = true,
+            heroPoints = data.alliesSaved * 100 + 200,
+            totalPoints = 1500,
+            rank = 5,
+            message = "Success (Editor Mock)"
+        }));
+        yield break;
+#else
         string json = JsonUtility.ToJson(data);
         byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
 
@@ -239,6 +316,7 @@ public class DevvitBridge : MonoBehaviour
             Debug.Log($"[DevvitBridge] Score submitted. Response: {req.downloadHandler.text}");
 
         OnScoreSubmitted(req.downloadHandler.text);
+#endif
     }
 
     // ========== RESPONSE HANDLERS ==========
