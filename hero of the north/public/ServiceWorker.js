@@ -1,9 +1,9 @@
 const cacheName = "OsirisXStudios-Hero of the North-0.1";
 const contentToCache = [
-    "Build/Build.loader.js",
-    "Build/Build.framework.js",
-    "Build/Build.data",
-    "Build/Build.wasm",
+    "Build/SampleGame.loader.js",
+    "Build/SampleGame.framework.js",
+    "Build/SampleGame.data",
+    "Build/SampleGame.wasm",
     "TemplateData/style.css"
 
 ];

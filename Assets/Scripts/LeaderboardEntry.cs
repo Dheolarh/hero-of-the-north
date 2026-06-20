@@ -54,6 +54,7 @@ public class LeaderboardEntry : MonoBehaviour
         if (avatarImage != null && avatar != null)
         {
             avatarImage.sprite = avatar;
+            avatarImage.color = Color.white;
         }
     }
 }

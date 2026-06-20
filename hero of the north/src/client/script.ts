@@ -64,9 +64,9 @@ function unityShowBanner(msg: string, type: UnityBannerType): void {
 const buildUrl = "Build";
 const config: UnityConfig = {
   arguments: [],
-  dataUrl:            buildUrl + "/Build.data",
-  frameworkUrl:       buildUrl + "/Build.framework.js",
-  codeUrl:            buildUrl + "/Build.wasm",
+  dataUrl:            buildUrl + "/SampleGame.data",
+  frameworkUrl:       buildUrl + "/SampleGame.framework.js",
+  codeUrl:            buildUrl + "/SampleGame.wasm",
   streamingAssetsUrl: "StreamingAssets",
   companyName:        "OsirisXStudios",
   productName:        "Hero of the North",
@@ -101,9 +101,9 @@ if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
   }
 }
 
-// Show loading bar
-const loadingBar = document.querySelector<HTMLElement>("#unity-loading-bar");
-if (loadingBar) loadingBar.style.display = "block";
+// Show loading screen
+const loadingScreen = document.querySelector<HTMLElement>("#unity-loading-screen");
+if (loadingScreen) loadingScreen.style.display = "flex";
 
 // Load and launch Unity
 const script = document.createElement("script");
@@ -111,12 +111,12 @@ script.src = buildUrl + "/Build.loader.js";
 
 script.onload = () => {
   createUnityInstance(canvas, config, (progress: number) => {
-    const bar = document.querySelector<HTMLElement>("#unity-progress-bar-full");
-    if (bar) bar.style.width = `${100 * progress}%`;
+    const percentageText = document.querySelector<HTMLElement>("#loading-percentage");
+    if (percentageText) percentageText.textContent = `${Math.round(100 * progress)}%`;
 
   }).then((unityInstance: UnityInstance) => {
-    // Hide loading bar
-    if (loadingBar) loadingBar.style.display = "none";
+    // Hide loading screen
+    if (loadingScreen) loadingScreen.style.display = "none";
 
     // Wire up fullscreen button
     const fullscreenButton = document.querySelector<HTMLElement>("#unity-fullscreen-button");

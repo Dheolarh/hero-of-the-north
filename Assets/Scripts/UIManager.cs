@@ -1,9 +1,9 @@
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
@@ -97,9 +97,12 @@ public class UIManager : MonoBehaviour
     private bool IsManagerGameObject(GameObject go)
     {
         if (go == null) return false;
-        return go.GetComponent<LevelManager>() != null || 
-               go.GetComponent<GameManager>() != null || 
-               go.GetComponent<UIManager>() != null || 
+        return go.GetComponent<LevelManager>() != null ||
+
+               go.GetComponent<GameManager>() != null ||
+
+               go.GetComponent<UIManager>() != null ||
+
                go.GetComponent<AudioManager>() != null;
     }
 
@@ -113,7 +116,8 @@ public class UIManager : MonoBehaviour
         if (IsManagerGameObject(lockedLevelUI)) lockedLevelUI = null;
 
         UIPanel[] panels = FindObjectsByType<UIPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        
+
+
         foreach (var panel in panels)
         {
             if (panel == null) continue;
@@ -223,7 +227,8 @@ public class UIManager : MonoBehaviour
     {
         if (gameOverUI == null) return;
         TogglePanel(gameOverUI);
-        if (gameOverUI.activeSelf) 
+        if (gameOverUI.activeSelf)
+
         {
             Debug.Log("[UIManager] Game Over UI opened. Hiding HUD.");
             SetHUDActive(false);
@@ -234,7 +239,8 @@ public class UIManager : MonoBehaviour
     {
         if (levelCompleteUI == null) return;
         TogglePanel(levelCompleteUI);
-        if (levelCompleteUI.activeSelf) 
+        if (levelCompleteUI.activeSelf)
+
         {
             Debug.Log("[UIManager] Level Complete UI opened. Hiding HUD.");
             SetHUDActive(false);
@@ -243,7 +249,8 @@ public class UIManager : MonoBehaviour
 
     public void SetHUDActive(bool active)
     {
-        if (HUD == null) 
+        if (HUD == null)
+
         {
             // Try to find HUD component dynamically in the scene (including inactive GameObjects)
             HUD HUDComponent = FindFirstObjectByType<HUD>(FindObjectsInactive.Include);
@@ -258,7 +265,8 @@ public class UIManager : MonoBehaviour
             Debug.LogError("[UIManager] HUD reference is NULL!");
             return;
         }
-        
+
+
         Debug.Log($"[UIManager] SetHUDActive called. Active: {active}");
 
         if (activeCoroutines.ContainsKey(HUD))
@@ -448,10 +456,10 @@ public class UIManager : MonoBehaviour
 
     public void HidePanels()
     {
-        if(pauseMenu != null && pauseMenu.activeSelf) pauseMenu.SetActive(false);
-        if(gameOverUI != null && gameOverUI.activeSelf) gameOverUI.SetActive(false);
-        if(levelCompleteUI != null && levelCompleteUI.activeSelf) levelCompleteUI.SetActive(false);
-        if(leaderboardUI != null && leaderboardUI.activeSelf) leaderboardUI.SetActive(false);
-        if(lockedLevelUI != null && lockedLevelUI.activeSelf) lockedLevelUI.SetActive(false);
+        if (pauseMenu != null && pauseMenu.activeSelf) pauseMenu.SetActive(false);
+        if (gameOverUI != null && gameOverUI.activeSelf) gameOverUI.SetActive(false);
+        if (levelCompleteUI != null && levelCompleteUI.activeSelf) levelCompleteUI.SetActive(false);
+        if (leaderboardUI != null && leaderboardUI.activeSelf) leaderboardUI.SetActive(false);
+        if (lockedLevelUI != null && lockedLevelUI.activeSelf) lockedLevelUI.SetActive(false);
     }
 }

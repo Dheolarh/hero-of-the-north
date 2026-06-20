@@ -208,6 +208,7 @@ public class LeaderboardUI : MonoBehaviour
 
                 // Set it
                 playerHeroImage.sprite = sprite;
+                playerHeroImage.color = Color.white;
             }
             else
             {

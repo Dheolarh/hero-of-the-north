@@ -57,12 +57,12 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/Build.loader.js";
+      var loaderUrl = buildUrl + "/SampleGame.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/Build.data",
-        frameworkUrl: buildUrl + "/Build.framework.js",
-        codeUrl: buildUrl + "/Build.wasm",
+        dataUrl: buildUrl + "/SampleGame.data",
+        frameworkUrl: buildUrl + "/SampleGame.framework.js",
+        codeUrl: buildUrl + "/SampleGame.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "OsirisXStudios",
         productName: "Hero of the North",
@@ -92,7 +92,7 @@
       }
 
 
-      canvas.style.background = "url('" + buildUrl + "/Build.jpg') center / cover";
+      canvas.style.background = "url('" + buildUrl + "/SampleGame.jpg') center / cover";
       loadingBar.style.display = "block";
 
       var script = document.createElement("script");
