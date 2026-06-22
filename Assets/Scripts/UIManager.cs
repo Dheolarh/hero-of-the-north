@@ -13,6 +13,7 @@ public class UIManager : MonoBehaviour
     public GameObject levelCompleteUI;
     public GameObject leaderboardUI;
     public GameObject lockedLevelUI;
+    public GameObject editModeUI;
     public GameObject HUD;
 
     void Awake()
@@ -114,6 +115,7 @@ public class UIManager : MonoBehaviour
         if (IsManagerGameObject(levelCompleteUI)) levelCompleteUI = null;
         if (IsManagerGameObject(leaderboardUI)) leaderboardUI = null;
         if (IsManagerGameObject(lockedLevelUI)) lockedLevelUI = null;
+        if (IsManagerGameObject(editModeUI)) editModeUI = null;
 
         UIPanel[] panels = FindObjectsByType<UIPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
@@ -461,5 +463,6 @@ public class UIManager : MonoBehaviour
         if (levelCompleteUI != null && levelCompleteUI.activeSelf) levelCompleteUI.SetActive(false);
         if (leaderboardUI != null && leaderboardUI.activeSelf) leaderboardUI.SetActive(false);
         if (lockedLevelUI != null && lockedLevelUI.activeSelf) lockedLevelUI.SetActive(false);
+        if (editModeUI != null && editModeUI.activeSelf) editModeUI.SetActive(false);
     }
 }
