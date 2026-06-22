@@ -67,6 +67,13 @@ public class LevelButton : MonoBehaviour
 
         if (LevelManager.Instance == null) return;
 
+        // If the level has no prefab assigned, it is not created yet
+        if (levelData.levelPrefab == null)
+        {
+            Debug.LogWarning($"[LevelButton] Level {levelData.levelNumber} ({levelData.levelName}) is not created yet (no prefab assigned).");
+            return;
+        }
+
         if (isUnlocked)
         {
             // Level is unlocked, load it

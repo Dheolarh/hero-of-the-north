@@ -11,10 +11,48 @@ public class LevelSelectUI : MonoBehaviour
 
     [SerializeField] private UnityEngine.UI.ScrollRect scrollRect;
 
+    private bool isSubscribed = false;
+
+    void OnEnable()
+    {
+        SubscribeToUnlockEvent();
+    }
+
+    void OnDisable()
+    {
+        UnsubscribeFromUnlockEvent();
+    }
+
     void Start()
     {
+        SubscribeToUnlockEvent();
         PopulateLevelGrid();
         ResetScrollPosition();
+    }
+
+    private void SubscribeToUnlockEvent()
+    {
+        if (isSubscribed) return;
+        if (LevelManager.Instance != null)
+        {
+            LevelManager.Instance.OnUnlockDataReceived += OnUnlockDataReceived;
+            isSubscribed = true;
+        }
+    }
+
+    private void UnsubscribeFromUnlockEvent()
+    {
+        if (!isSubscribed) return;
+        if (LevelManager.Instance != null)
+        {
+            LevelManager.Instance.OnUnlockDataReceived -= OnUnlockDataReceived;
+            isSubscribed = false;
+        }
+    }
+
+    private void OnUnlockDataReceived(DevvitBridge.LevelUnlockInfo[] levels)
+    {
+        RefreshUI();
     }
 
     private void ResetScrollPosition()

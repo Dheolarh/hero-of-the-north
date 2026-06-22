@@ -97,6 +97,9 @@ public class LevelManager : MonoBehaviour
         }
 
         Debug.Log($"[LevelManager] Unlock data received. Highest unlocked: Level {_highestUnlockedLevel - 1}");
+
+        // Notify subscribers (like LevelSelectUI) that new unlock data has been received
+        OnUnlockDataReceived?.Invoke(levels);
     }
 
     // ── Public queries ─────────────────────────────────────────────────────
@@ -108,6 +111,11 @@ public class LevelManager : MonoBehaviour
 
     public bool IsLevelUnlocked(int levelNumber)
     {
+        // If the level has no prefab assigned, it is not created/ready yet
+        LevelData level = GetLevel(levelNumber);
+        if (level == null || level.levelPrefab == null)
+            return false;
+
         if (_serverUnlockData != null && levelNumber < _serverUnlockData.Length)
             return _serverUnlockData[levelNumber].isUnlocked;
 

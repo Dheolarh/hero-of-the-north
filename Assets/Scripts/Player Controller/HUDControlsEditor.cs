@@ -52,6 +52,65 @@ public class HUDControlsEditor : MonoBehaviour
         {
             controlsPanelImage.color = normalPanelColor;
         }
+
+        // Resolve cross-scene reference issues by binding events programmatically at runtime
+        BindEditControlsButton();
+        BindSaveCancelButtons();
+    }
+
+    private void BindEditControlsButton()
+    {
+        if (UIManager.Instance == null || UIManager.Instance.pauseMenu == null)
+        {
+            Debug.LogWarning("[HUDControlsEditor] UIManager or PauseMenu not found. Cannot bind Edit Controls button.");
+            return;
+        }
+
+        // Search for a button named "EditControls" or "Edit Controls" inside the PauseMenu (including inactive)
+        Button[] buttons = UIManager.Instance.pauseMenu.GetComponentsInChildren<Button>(true);
+        Button editBtn = null;
+        foreach (var btn in buttons)
+        {
+            if (btn.gameObject.name == "EditControls" || btn.gameObject.name == "Edit Controls")
+            {
+                editBtn = btn;
+                break;
+            }
+        }
+
+        if (editBtn != null)
+        {
+            editBtn.onClick.RemoveListener(EnterEditMode);
+            editBtn.onClick.AddListener(EnterEditMode);
+            Debug.Log("[HUDControlsEditor] Programmatically bound Edit Controls button click event.");
+        }
+        else
+        {
+            Debug.LogWarning("[HUDControlsEditor] Could not find a button named 'EditControls' or 'Edit Controls' inside the Pause Menu.");
+        }
+    }
+
+    private void BindSaveCancelButtons()
+    {
+        if (editModeUIPanel == null) return;
+
+        // Search for buttons named "Save"/"SaveButton" or "Cancel"/"CancelButton" inside the EditModeUI panel
+        Button[] buttons = editModeUIPanel.GetComponentsInChildren<Button>(true);
+        foreach (var btn in buttons)
+        {
+            if (btn.gameObject.name == "Save" || btn.gameObject.name == "SaveButton")
+            {
+                btn.onClick.RemoveListener(SaveEditMode);
+                btn.onClick.AddListener(SaveEditMode);
+                Debug.Log("[HUDControlsEditor] Programmatically bound Save button click event.");
+            }
+            else if (btn.gameObject.name == "Cancel" || btn.gameObject.name == "CancelButton")
+            {
+                btn.onClick.RemoveListener(CancelEditMode);
+                btn.onClick.AddListener(CancelEditMode);
+                Debug.Log("[HUDControlsEditor] Programmatically bound Cancel button click event.");
+            }
+        }
     }
 
     /// <summary>

@@ -19,11 +19,21 @@ public class MobileControlsManager : MonoBehaviour
         return _player;
     }
 
-    public void OnMoveLeftDown()  { if (GetPlayer() != null) GetPlayer().MoveLeft(); }
-    public void OnMoveLeftUp()    { if (GetPlayer() != null) GetPlayer().StopMoveLeft(); }
+    private bool CanSendInput()
+    {
+        // Block all gameplay inputs if we are currently editing the HUD layout
+        if (HUDControlsEditor.Instance != null && HUDControlsEditor.Instance.IsEditMode)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public void OnMoveLeftDown()  { if (CanSendInput() && GetPlayer() != null) GetPlayer().MoveLeft(); }
+    public void OnMoveLeftUp()    { if (CanSendInput() && GetPlayer() != null) GetPlayer().StopMoveLeft(); }
     
-    public void OnMoveRightDown() { if (GetPlayer() != null) GetPlayer().MoveRight(); }
-    public void OnMoveRightUp()   { if (GetPlayer() != null) GetPlayer().StopMoveRight(); }
+    public void OnMoveRightDown() { if (CanSendInput() && GetPlayer() != null) GetPlayer().MoveRight(); }
+    public void OnMoveRightUp()   { if (CanSendInput() && GetPlayer() != null) GetPlayer().StopMoveRight(); }
     
-    public void OnJumpDown()      { if (GetPlayer() != null) GetPlayer().Jump(); }
+    public void OnJumpDown()      { if (CanSendInput() && GetPlayer() != null) GetPlayer().Jump(); }
 }

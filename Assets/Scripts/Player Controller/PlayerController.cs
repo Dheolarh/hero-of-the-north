@@ -86,10 +86,20 @@ public class PlayerController : MonoBehaviour
 
         // Compute shared input once per frame so states can read it
         InputDirection = 0f;
-        if (Input.GetKey(KeyCode.LeftArrow)  || _uiMoveLeft)  InputDirection -= 1f;
-        if (Input.GetKey(KeyCode.RightArrow) || _uiMoveRight) InputDirection += 1f;
+        if (HUDControlsEditor.Instance == null || !HUDControlsEditor.Instance.IsEditMode)
+        {
+            if (Input.GetKey(KeyCode.LeftArrow)  || _uiMoveLeft)  InputDirection -= 1f;
+            if (Input.GetKey(KeyCode.RightArrow) || _uiMoveRight) InputDirection += 1f;
 
-        if (Input.GetKeyDown(KeyCode.Space)) JumpRequested = true;
+            if (Input.GetKeyDown(KeyCode.Space)) JumpRequested = true;
+        }
+        else
+        {
+            // Reset any UI button flags if we entered edit mode while dragging
+            _uiMoveLeft = false;
+            _uiMoveRight = false;
+            JumpRequested = false;
+        }
 
         StateMachine.Update();
     }
