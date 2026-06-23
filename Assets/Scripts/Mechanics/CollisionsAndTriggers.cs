@@ -67,6 +67,8 @@ public class CollisionsAndTriggers : MonoBehaviour
     [Header("One-Time Movement Settings")]
     public Vector2 targetPosition;
     public float targetMoveSpeed;
+    [Tooltip("If true, movement and teleportation will use local coordinates relative to the parent object instead of global world coordinates.")]
+    public bool useLocalCoordinates = false;
 
     [Header("Teleport Settings")]
     public Vector2 teleportPosition;
@@ -76,7 +78,11 @@ public class CollisionsAndTriggers : MonoBehaviour
     public float fallSpeedMultiplier;
     public bool applyOnEnter = true;
     public bool resetOnExit = false;
-
+    
+    [Header("Delay Settings")]
+    [Tooltip("Delay in seconds before the trap activates after being triggered.")]
+    public float triggerDelay = 0f;
+    
     private bool isMovingToTarget = false;
     private Rigidbody2D modifyRigidbody;
     private float originalGravityScale;
@@ -142,15 +148,31 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             if (obj == null) continue;
 
-            Vector2 currentPos = obj.transform.position;
-            Vector2 newPos = Vector2.MoveTowards(currentPos, targetPosition, targetMoveSpeed * Time.deltaTime);
-            obj.transform.position = newPos;
-
-            // Check if reached target (using first object as reference)
-            if (obj == objectsToTrigger[0] && Vector2.Distance(currentPos, targetPosition) < 0.01f)
+            if (useLocalCoordinates)
             {
-                obj.transform.position = targetPosition;
-                isMovingToTarget = false;
+                Vector2 currentPos = obj.transform.localPosition;
+                Vector2 newPos = Vector2.MoveTowards(currentPos, targetPosition, targetMoveSpeed * Time.deltaTime);
+                obj.transform.localPosition = new Vector3(newPos.x, newPos.y, obj.transform.localPosition.z);
+
+                // Check if reached target (using first object as reference)
+                if (obj == objectsToTrigger[0] && Vector2.Distance(currentPos, targetPosition) < 0.01f)
+                {
+                    obj.transform.localPosition = new Vector3(targetPosition.x, targetPosition.y, obj.transform.localPosition.z);
+                    isMovingToTarget = false;
+                }
+            }
+            else
+            {
+                Vector2 currentPos = obj.transform.position;
+                Vector2 newPos = Vector2.MoveTowards(currentPos, targetPosition, targetMoveSpeed * Time.deltaTime);
+                obj.transform.position = new Vector3(newPos.x, newPos.y, obj.transform.position.z);
+
+                // Check if reached target (using first object as reference)
+                if (obj == objectsToTrigger[0] && Vector2.Distance(currentPos, targetPosition) < 0.01f)
+                {
+                    obj.transform.position = new Vector3(targetPosition.x, targetPosition.y, obj.transform.position.z);
+                    isMovingToTarget = false;
+                }
             }
         }
     }
@@ -238,7 +260,14 @@ public class CollisionsAndTriggers : MonoBehaviour
             {
                 if (obj != null)
                 {
-                    obj.transform.position = teleportPosition;
+                    if (useLocalCoordinates)
+                    {
+                        obj.transform.localPosition = new Vector3(teleportPosition.x, teleportPosition.y, obj.transform.localPosition.z);
+                    }
+                    else
+                    {
+                        obj.transform.position = new Vector3(teleportPosition.x, teleportPosition.y, obj.transform.position.z);
+                    }
                 }
             }
         }
@@ -357,66 +386,82 @@ public class CollisionsAndTriggers : MonoBehaviour
         Debug.Log($"[CollisionsAndTriggers] OnTriggerEnter2D called! Other: {other.gameObject.name}, Tag: {other.tag}, This GameObject: {gameObject.name}");        
         if (other.CompareTag("Player"))
         {
-            switch (triggerType)
+            if (triggerDelay > 0f)
             {
-                case TriggerType.ContinousMotion:
-                    enableMove = true;
-                    break;
-
-                case TriggerType.RotationTrap:
-                    enableRotation = true;
-                    break;
-
-                case TriggerType.SingleMotion:
-                    StartMoveToTarget();
-                    Debug.Log("Trap triggered!");
-                    break;
-
-                case TriggerType.Teleport:
-                    Teleport();
-                    Debug.Log("Teleport triggered!");
-                    break;
-
-                case TriggerType.PhysicsModifier:
-                    if (applyOnEnter)
-                    {
-                        ModifyPhysics();
-                    }
-                    break;
-
-                case TriggerType.Ally:
-                    break;
+                StartCoroutine(TriggerSequenceWithDelay());
             }
-
-            // Handle object active toggle
-            if (setObjectActive)
+            else
             {
-                SetObjectActiveState();
+                ExecuteTriggerActions();
             }
+        }
+    }
 
-            // Handle component actions
-            if (componentAction != ComponentAction.None)
-            {
-                AddComponentToObject();
-            }
+    private IEnumerator TriggerSequenceWithDelay()
+    {
+        yield return new WaitForSeconds(triggerDelay);
+        ExecuteTriggerActions();
+    }
 
-            // Handle audio playback
-            if (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName))
-            {
-                if (AudioManager.Instance != null)
+    private void ExecuteTriggerActions()
+    {
+        switch (triggerType)
+        {
+            case TriggerType.ContinousMotion:
+                enableMove = true;
+                break;
+
+            case TriggerType.RotationTrap:
+                enableRotation = true;
+                break;
+
+            case TriggerType.SingleMotion:
+                StartMoveToTarget();
+                Debug.Log("Trap triggered!");
+                break;
+
+            case TriggerType.Teleport:
+                Teleport();
+                Debug.Log("Teleport triggered!");
+                break;
+
+            case TriggerType.PhysicsModifier:
+                if (applyOnEnter)
                 {
-                    if (loopAudio)
-                    {
-                        AudioManager.Instance.PlayLoopingSound(audioClipName);
-                    }
-                    else
-                    {
-                        AudioManager.Instance.PlaySfx(audioClipName);
-                    }
+                    ModifyPhysics();
+                }
+                break;
+
+            case TriggerType.Ally:
+                break;
+        }
+
+        // Handle object active toggle
+        if (setObjectActive)
+        {
+            SetObjectActiveState();
+        }
+
+        // Handle component actions
+        if (componentAction != ComponentAction.None)
+        {
+            AddComponentToObject();
+        }
+
+        // Handle audio playback
+        if (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName))
+        {
+            if (AudioManager.Instance != null)
+            {
+                if (loopAudio)
+                {
+                    AudioManager.Instance.PlayLoopingSound(audioClipName);
+                }
+                else
+                {
+                    AudioManager.Instance.PlaySfx(audioClipName);
                 }
             }
-
-
         }
     }
 

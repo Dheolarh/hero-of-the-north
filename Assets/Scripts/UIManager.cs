@@ -444,6 +444,18 @@ public class UIManager : MonoBehaviour
         // Activate the panel
         panel.SetActive(true);
 
+        // Reset any nested ScrollRect positions to the top
+        ScrollRect[] scrollRects = panel.GetComponentsInChildren<ScrollRect>(true);
+        foreach (var sRect in scrollRects)
+        {
+            if (sRect != null)
+            {
+                Canvas.ForceUpdateCanvases();
+                sRect.verticalNormalizedPosition = 1f;
+                sRect.horizontalNormalizedPosition = 0f;
+            }
+        }
+
         if (scrollRect != null)
         {
             // Ensure the parent panel BG is active and at full scale
@@ -686,6 +698,19 @@ public class UIManager : MonoBehaviour
 
         panel.transform.localScale = Vector3.zero;
         panel.SetActive(true);
+
+        // Reset any nested ScrollRect positions to the top
+        ScrollRect[] scrollRects = panel.GetComponentsInChildren<ScrollRect>(true);
+        foreach (var sRect in scrollRects)
+        {
+            if (sRect != null)
+            {
+                Canvas.ForceUpdateCanvases();
+                sRect.verticalNormalizedPosition = 1f;
+                sRect.horizontalNormalizedPosition = 0f;
+            }
+        }
+
         activeCoroutines[panel] = StartCoroutine(AnimateShow(panel));
     }
 

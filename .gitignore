@@ -77,3 +77,4 @@ crashlytics-build.properties
 *.log
 *.stackdump
 node_modules
+Assets/Plugins/UnityMarkdownViewer

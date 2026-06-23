@@ -111,15 +111,21 @@ public class DevvitBridge : MonoBehaviour
         if (logMessages)
             Debug.Log("[DevvitBridge] [Editor Mock] Mocking unlocked levels.");
 
+        long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         LevelUnlockInfo[] mockLevels = new LevelUnlockInfo[32];
         for (int i = 0; i < mockLevels.Length; i++)
         {
+            // Simulate: Tutorial (0) and Level 1 (1) are unlocked initially.
+            // Levels 2+ unlock every 24 hours (1 day per level).
+            bool isUnlocked = (i < 2);
+            long timeRemaining = isUnlocked ? 0 : (i - 1) * 24 * 60 * 60 * 1000;
+
             mockLevels[i] = new LevelUnlockInfo
             {
                 levelNumber = i,
-                isUnlocked = true,
-                unlockTime = 0,
-                timeUntilUnlock = 0
+                isUnlocked = isUnlocked,
+                unlockTime = now + timeRemaining,
+                timeUntilUnlock = timeRemaining
             };
         }
         OnUnlockDataReceived?.Invoke(mockLevels);

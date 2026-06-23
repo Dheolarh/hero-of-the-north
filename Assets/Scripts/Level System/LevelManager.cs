@@ -15,6 +15,10 @@ public class LevelManager : MonoBehaviour
     [Tooltip("The dedicated empty scene for gameplay. Keep game UI here, separate from Main menu UI.")]
     public string gameScene = "Game";
 
+    [Header("Testing & Debugging")]
+    [Tooltip("If true, all levels with prefabs assigned will be treated as unlocked, bypassing server lock conditions.")]
+    public bool bypassLevelLock = false;
+
     // ── Runtime state ──────────────────────────────────────────────────────
     private int          _currentLevelIndex = 0;
     private int          _highestUnlockedLevel = 1;
@@ -115,6 +119,9 @@ public class LevelManager : MonoBehaviour
         LevelData level = GetLevel(levelNumber);
         if (level == null || level.levelPrefab == null)
             return false;
+
+        if (bypassLevelLock)
+            return true;
 
         if (_serverUnlockData != null && levelNumber < _serverUnlockData.Length)
             return _serverUnlockData[levelNumber].isUnlocked;

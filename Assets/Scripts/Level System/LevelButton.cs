@@ -67,15 +67,15 @@ public class LevelButton : MonoBehaviour
 
         if (LevelManager.Instance == null) return;
 
-        // If the level has no prefab assigned, it is not created yet
-        if (levelData.levelPrefab == null)
-        {
-            Debug.LogWarning($"[LevelButton] Level {levelData.levelNumber} ({levelData.levelName}) is not created yet (no prefab assigned).");
-            return;
-        }
-
         if (isUnlocked)
         {
+            // If the level has no prefab assigned, it is not created yet
+            if (levelData.levelPrefab == null)
+            {
+                Debug.LogWarning($"[LevelButton] Level {levelData.levelNumber} ({levelData.levelName}) is not created yet (no prefab assigned).");
+                return;
+            }
+
             // Level is unlocked, load it
             LevelManager.Instance.LoadLevel(levelData.levelNumber);
         }
@@ -96,6 +96,16 @@ public class LevelButton : MonoBehaviour
                         // Use GetComponentInChildren in case the script is on the child panel, not the root canvas
                         var countdown =
                             UIManager.Instance.messagePanel.GetComponentInChildren<LockedLevelCountdown>(true);
+                        if (countdown == null)
+                        {
+                            // Fallback: search the parent Canvas of the messagePanel
+                            Canvas canvas = UIManager.Instance.messagePanel.GetComponentInParent<Canvas>(true);
+                            if (canvas != null)
+                            {
+                                countdown = canvas.GetComponentInChildren<LockedLevelCountdown>(true);
+                            }
+                        }
+
                         if (countdown != null)
                         {
                             countdown.ShowCountdown(unlockInfo);
