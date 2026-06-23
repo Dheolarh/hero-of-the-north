@@ -101,6 +101,15 @@ public class LevelSelectUI : MonoBehaviour
 
             Debug.Log($"Creating button for Level {levelData.levelNumber}: {levelData.levelName}");
             GameObject buttonObj = Instantiate(levelButtonPrefab, gridContainer);
+            
+            RectTransform rectTransform = buttonObj.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                Vector3 localPos = rectTransform.localPosition;
+                localPos.z = 0f;
+                rectTransform.localPosition = localPos;
+            }
+
             LevelButton levelButton = buttonObj.GetComponent<LevelButton>();
             
             if (levelButton != null)

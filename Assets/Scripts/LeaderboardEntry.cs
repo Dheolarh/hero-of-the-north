@@ -43,9 +43,17 @@ public class LeaderboardEntry : MonoBehaviour
         }
 
         // Set default avatar initially
-        if (avatarImage != null && defaultAvatar != null)
+        if (avatarImage != null)
         {
-            avatarImage.sprite = defaultAvatar;
+            if (defaultAvatar != null)
+            {
+                avatarImage.sprite = defaultAvatar;
+                avatarImage.color = Color.white;
+            }
+            else
+            {
+                avatarImage.color = new Color(1f, 1f, 1f, 0f);
+            }
         }
     }
 
@@ -54,7 +62,7 @@ public class LeaderboardEntry : MonoBehaviour
         if (avatarImage != null && avatar != null)
         {
             avatarImage.sprite = avatar;
-            avatarImage.color = Color.white;
+            avatarImage.color = new Color(1f, 1f, 1f, 1f);
         }
     }
 }

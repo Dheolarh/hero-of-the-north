@@ -117,6 +117,16 @@ public class LeaderboardUI : MonoBehaviour
         for (int i = 3; i < entries.Length; i++)
         {
             GameObject entryObj = Instantiate(leaderboardEntryPrefab, leaderboardContainer);
+            
+            // Reset Z position to 0 to prevent it from spawning at a clipped depth (e.g., -12000)
+            RectTransform rectTransform = entryObj.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                Vector3 localPos = rectTransform.localPosition;
+                localPos.z = 0f;
+                rectTransform.localPosition = localPos;
+            }
+
             LeaderboardEntry entryScript = entryObj.GetComponent<LeaderboardEntry>();
 
             if (entryScript != null)
@@ -166,9 +176,17 @@ public class LeaderboardUI : MonoBehaviour
         }
 
         // Set default avatar first
-        if (playerHeroImage != null && playerDefaultAvatar != null)
+        if (playerHeroImage != null)
         {
-            playerHeroImage.sprite = playerDefaultAvatar;
+            if (playerDefaultAvatar != null)
+            {
+                playerHeroImage.sprite = playerDefaultAvatar;
+                playerHeroImage.color = Color.white;
+            }
+            else
+            {
+                playerHeroImage.color = new Color(1f, 1f, 1f, 0f);
+            }
         }
 
         // Load player's avatar (will replace default if available)

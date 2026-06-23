@@ -12,7 +12,9 @@ public class UIPanel : MonoBehaviour
         GameOverUI,
         LevelCompleteUI,
         LeaderboardUI,
-        LockedLevelUI
+        LockedLevelUI,
+        TutorialPanel,
+        MessagePanel
     }
 
     [SerializeField] private PanelType panelType;

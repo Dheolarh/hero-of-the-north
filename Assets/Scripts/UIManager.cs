@@ -14,7 +14,12 @@ public class UIManager : MonoBehaviour
     public GameObject leaderboardUI;
     public GameObject lockedLevelUI;
     public GameObject editModeUI;
+    public GameObject tutorialPanel;
+    public GameObject messagePanel;
     public GameObject HUD;
+
+    [Header("Tutorial Settings")]
+    public string scrollOpenSoundName = "ScrollOpen";
 
     void Awake()
     {
@@ -22,6 +27,7 @@ public class UIManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            ResolveInspectorReferences();
             RegisterAllPanels();
         }
         else
@@ -42,6 +48,7 @@ public class UIManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        ResolveInspectorReferences();
         RegisterAllPanels();
         HidePanels();
 
@@ -50,11 +57,13 @@ public class UIManager : MonoBehaviour
             activeCoroutines.Clear();
             SetHUDActive(false);
             BindMainMenuButtons();
+            CheckFirstTimeLaunch();
         }
     }
 
     void Start()
     {
+        ResolveInspectorReferences();
         RegisterAllPanels();
         HidePanels();
 
@@ -64,6 +73,7 @@ public class UIManager : MonoBehaviour
         {
             SetHUDActive(false);
             BindMainMenuButtons();
+            CheckFirstTimeLaunch();
         }
     }
 
@@ -84,7 +94,30 @@ public class UIManager : MonoBehaviour
                 btn.onClick.AddListener(PlayButtonClickSound);
                 Debug.Log("[UIManager] Programmatically bound Leaderboard button click event.");
             }
+
+            // Bind Scroll / Story / Tutorial button
+            if ((btn.gameObject.name == "Scroll" || btn.gameObject.name == "ScrollButton" || btn.gameObject.name == "Story" || btn.gameObject.name == "StoryButton") && !btn.transform.IsChildOf(transform))
+            {
+                btn.onClick = new Button.ButtonClickedEvent();
+                btn.onClick.AddListener(ToggleTutorialPanel);
+                btn.onClick.AddListener(PlayButtonClickSound);
+                Debug.Log($"[UIManager] Programmatically bound Scroll/Story button: {btn.gameObject.name}");
+            }
+
+            // Bind Message button
+            if ((btn.gameObject.name == "MessageButton" || btn.gameObject.name == "MessageBtn" || btn.gameObject.name == "ShowMessage") && !btn.transform.IsChildOf(transform))
+            {
+                btn.onClick = new Button.ButtonClickedEvent();
+                btn.onClick.AddListener(ToggleMessagePanel);
+                btn.onClick.AddListener(PlayButtonClickSound);
+                Debug.Log($"[UIManager] Programmatically bound Message button: {btn.gameObject.name}");
+            }
         }
+
+        BindCloseButtonForPanel(tutorialPanel, CloseTutorialPanel);
+        BindCloseButtonForPanel(leaderboardUI, CloseLeaderboardUI);
+        BindCloseButtonForPanel(messagePanel, CloseMessagePanel);
+        BindCloseButtonForPanel(lockedLevelUI, CloseLockedLevelUI);
     }
 
     private void PlayButtonClickSound()
@@ -116,6 +149,8 @@ public class UIManager : MonoBehaviour
         if (IsManagerGameObject(leaderboardUI)) leaderboardUI = null;
         if (IsManagerGameObject(lockedLevelUI)) lockedLevelUI = null;
         if (IsManagerGameObject(editModeUI)) editModeUI = null;
+        if (IsManagerGameObject(tutorialPanel)) tutorialPanel = null;
+        if (IsManagerGameObject(messagePanel)) messagePanel = null;
 
         UIPanel[] panels = FindObjectsByType<UIPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
@@ -149,22 +184,30 @@ public class UIManager : MonoBehaviour
                 }
             }
 
+            GameObject targetPanelGo = ResolvePanelGameObject(panel.gameObject);
+
             switch (panel.Type)
             {
                 case UIPanel.PanelType.PauseMenu:
-                    pauseMenu = panel.gameObject;
+                    pauseMenu = targetPanelGo;
                     break;
                 case UIPanel.PanelType.GameOverUI:
-                    gameOverUI = panel.gameObject;
+                    gameOverUI = targetPanelGo;
                     break;
                 case UIPanel.PanelType.LevelCompleteUI:
-                    levelCompleteUI = panel.gameObject;
+                    levelCompleteUI = targetPanelGo;
                     break;
                 case UIPanel.PanelType.LeaderboardUI:
-                    leaderboardUI = panel.gameObject;
+                    leaderboardUI = targetPanelGo;
                     break;
                 case UIPanel.PanelType.LockedLevelUI:
-                    lockedLevelUI = panel.gameObject;
+                    lockedLevelUI = targetPanelGo;
+                    break;
+                case UIPanel.PanelType.TutorialPanel:
+                    tutorialPanel = targetPanelGo;
+                    break;
+                case UIPanel.PanelType.MessagePanel:
+                    messagePanel = targetPanelGo;
                     break;
             }
         }
@@ -177,7 +220,7 @@ public class UIManager : MonoBehaviour
             {
                 if (!IsManagerGameObject(lcd.gameObject))
                 {
-                    lockedLevelUI = lcd.gameObject;
+                    lockedLevelUI = ResolvePanelGameObject(lcd.gameObject);
                     Debug.Log($"[UIManager] Dynamic fallback: Found LockedLevelCountdown on GameObject '{lockedLevelUI.name}' and registered it as LockedLevelUI.");
                 }
                 else
@@ -187,7 +230,76 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        Debug.Log($"[UIManager] RegisterAllPanels complete: Pause={pauseMenu}, GameOver={gameOverUI}, LevelComplete={levelCompleteUI}, Leaderboard={leaderboardUI}, LockedLevel={lockedLevelUI}");
+        // Sync Locked Level UI and Message Panel since they are the same panel
+        if (lockedLevelUI == null && messagePanel != null) lockedLevelUI = messagePanel;
+        if (messagePanel == null && lockedLevelUI != null) messagePanel = lockedLevelUI;
+
+        Debug.Log($"[UIManager] RegisterAllPanels complete: Pause={pauseMenu}, GameOver={gameOverUI}, LevelComplete={levelCompleteUI}, Leaderboard={leaderboardUI}, LockedLevel={lockedLevelUI}, Tutorial={tutorialPanel}, Message={messagePanel}");
+    }
+
+    private GameObject ResolvePanelGameObject(GameObject go)
+    {
+        if (go == null) return null;
+
+        // Clean up legacy DisableOnClick component on the Canvas/object itself if present
+        var disableOnClick = go.GetComponent<DisableOnClick>();
+        if (disableOnClick != null)
+        {
+            Debug.LogWarning($"[UIManager] Found legacy DisableOnClick on Canvas/object '{go.name}' - destroying it to prevent accidental deactivation.");
+            Destroy(disableOnClick);
+        }
+
+        Canvas canvas = go.GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            Transform panelChild = go.transform.Find("Panel");
+            if (panelChild == null)
+            {
+                panelChild = go.transform.Find("Scroll");
+            }
+            if (panelChild == null)
+            {
+                UIPanel uiPanelChild = go.GetComponentInChildren<UIPanel>(true);
+                if (uiPanelChild != null && uiPanelChild.gameObject != go)
+                {
+                    panelChild = uiPanelChild.transform;
+                }
+            }
+            if (panelChild == null && go.transform.childCount > 0)
+            {
+                panelChild = go.transform.GetChild(0);
+            }
+
+            if (panelChild != null)
+            {
+                var childDisableOnClick = panelChild.GetComponent<DisableOnClick>();
+                if (childDisableOnClick != null)
+                {
+                    Debug.LogWarning($"[UIManager] Found legacy DisableOnClick on child panel '{panelChild.name}' - destroying it to prevent accidental deactivation.");
+                    Destroy(childDisableOnClick);
+                }
+
+                Debug.Log($"[UIManager] Resolved Canvas GameObject '{go.name}' to its child panel '{panelChild.name}' to avoid Canvas toggles/attachment.");
+                return panelChild.gameObject;
+            }
+        }
+        return go;
+    }
+
+    private void ResolveInspectorReferences()
+    {
+        pauseMenu = ResolvePanelGameObject(pauseMenu);
+        gameOverUI = ResolvePanelGameObject(gameOverUI);
+        levelCompleteUI = ResolvePanelGameObject(levelCompleteUI);
+        leaderboardUI = ResolvePanelGameObject(leaderboardUI);
+        lockedLevelUI = ResolvePanelGameObject(lockedLevelUI);
+        editModeUI = ResolvePanelGameObject(editModeUI);
+        tutorialPanel = ResolvePanelGameObject(tutorialPanel);
+        messagePanel = ResolvePanelGameObject(messagePanel);
+
+        // Sync Locked Level UI and Message Panel since they are the same panel
+        if (lockedLevelUI == null && messagePanel != null) lockedLevelUI = messagePanel;
+        if (messagePanel == null && lockedLevelUI != null) messagePanel = lockedLevelUI;
     }
 
     void Update()
@@ -281,8 +393,308 @@ public class UIManager : MonoBehaviour
         HUD.SetActive(active);
     }
 
-    public void ToggleLeaderboardUI() { if (leaderboardUI != null) TogglePanel(leaderboardUI); }
-    public void ToggleLockedLevelUI() { if (lockedLevelUI != null) TogglePanel(lockedLevelUI); }
+    public void ToggleLeaderboardUI()
+    {
+        if (leaderboardUI != null)
+        {
+            if (!leaderboardUI.activeSelf)
+                OpenLeaderboardUI();
+        }
+    }
+
+    public void OpenLeaderboardUI()
+    {
+        OpenUnrollingPanel(leaderboardUI, scrollOpenSoundName);
+    }
+
+    public void CloseLeaderboardUI()
+    {
+        CloseUnrollingPanel(leaderboardUI);
+    }
+
+    public void ToggleLockedLevelUI()
+    {
+        if (lockedLevelUI != null)
+        {
+            if (!lockedLevelUI.activeSelf)
+                OpenLockedLevelUI();
+        }
+    }
+
+    public void OpenLockedLevelUI()
+    {
+        OpenUnrollingPanel(lockedLevelUI, scrollOpenSoundName);
+    }
+
+    public void CloseLockedLevelUI()
+    {
+        CloseUnrollingPanel(lockedLevelUI);
+    }
+
+    public void ToggleTutorialPanel()
+    {
+        if (tutorialPanel != null)
+        {
+            if (!tutorialPanel.activeSelf)
+                OpenTutorialPanel();
+        }
+    }
+
+    public void OpenTutorialPanel()
+    {
+        OpenUnrollingPanel(tutorialPanel, scrollOpenSoundName);
+    }
+
+    public void CloseTutorialPanel()
+    {
+        CloseUnrollingPanel(tutorialPanel);
+    }
+
+    public void ToggleMessagePanel()
+    {
+        if (messagePanel != null)
+        {
+            if (!messagePanel.activeSelf)
+                OpenMessagePanel();
+        }
+    }
+
+    public void OpenMessagePanel()
+    {
+        OpenUnrollingPanel(messagePanel, scrollOpenSoundName);
+    }
+
+    public void CloseMessagePanel()
+    {
+        CloseUnrollingPanel(messagePanel);
+    }
+
+    public void OpenUnrollingPanel(GameObject panel, string openSoundName = "ScrollOpen")
+    {
+        if (panel == null) return;
+
+        // Play unroll sound effect
+        if (AudioManager.Instance != null && !string.IsNullOrEmpty(openSoundName))
+        {
+            AudioManager.Instance.PlaySfx(openSoundName);
+        }
+
+        // Ensure the parent container/Canvas is active
+        if (panel.transform.parent != null)
+        {
+            panel.transform.parent.gameObject.SetActive(true);
+        }
+
+        // Find the "Scroll" child object inside this panel
+        RectTransform scrollRect = GetScrollObjectFromPanel(panel);
+
+        if (activeCoroutines.ContainsKey(panel))
+        {
+            StopCoroutine(activeCoroutines[panel]);
+            activeCoroutines.Remove(panel);
+        }
+
+        // Activate the panel
+        panel.SetActive(true);
+
+        if (scrollRect != null)
+        {
+            // Ensure the parent panel BG is active and at full scale
+            Transform panelBG = panel.transform.Find("Panel");
+            if (panelBG != null)
+            {
+                panelBG.gameObject.SetActive(true);
+                panelBG.localScale = Vector3.one;
+            }
+
+            activeCoroutines[panel] = StartCoroutine(AnimateScrollUnroll(scrollRect, panel));
+        }
+        else
+        {
+            // Fallback to standard show animation
+            activeCoroutines[panel] = StartCoroutine(AnimateShow(panel));
+        }
+    }
+
+    public void CloseUnrollingPanel(GameObject panel)
+    {
+        if (panel == null) return;
+
+        // Play scroll sound effect on close as well
+        if (AudioManager.Instance != null && !string.IsNullOrEmpty(scrollOpenSoundName))
+        {
+            AudioManager.Instance.PlaySfx(scrollOpenSoundName);
+        }
+
+        // Find the "Scroll" child object inside this panel
+        RectTransform scrollRect = GetScrollObjectFromPanel(panel);
+
+        if (activeCoroutines.ContainsKey(panel))
+        {
+            StopCoroutine(activeCoroutines[panel]);
+            activeCoroutines.Remove(panel);
+        }
+
+        if (scrollRect != null)
+        {
+            activeCoroutines[panel] = StartCoroutine(AnimateScrollRollUp(scrollRect, panel));
+        }
+        else
+        {
+            // Fallback to standard hide animation
+            activeCoroutines[panel] = StartCoroutine(AnimateHide(panel));
+        }
+    }
+
+    private RectTransform GetScrollObjectFromPanel(GameObject panel)
+    {
+        if (panel == null) return null;
+
+        // First try to find directly under Panel/Scroll
+        Transform scrollTransform = panel.transform.Find("Panel/Scroll");
+        if (scrollTransform == null)
+        {
+            // Search all children for name "Scroll", "ScrollArea", or "ScrollPanel"
+            foreach (Transform child in panel.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == "Scroll" || child.name == "ScrollArea" || child.name == "ScrollPanel")
+                {
+                    scrollTransform = child;
+                    break;
+                }
+            }
+        }
+
+        // Fallback to "Panel" if Scroll is not found
+        if (scrollTransform == null)
+        {
+            scrollTransform = panel.transform.Find("Panel");
+        }
+
+        return scrollTransform != null ? scrollTransform.GetComponent<RectTransform>() : panel.GetComponent<RectTransform>();
+    }
+
+    private IEnumerator AnimateScrollUnroll(RectTransform scrollRect, GameObject panel)
+    {
+        // Ensure there is a RectMask2D component on the Scroll object to mask the children content
+        RectMask2D mask = scrollRect.gameObject.GetComponent<RectMask2D>();
+        if (mask == null)
+        {
+            mask = scrollRect.gameObject.AddComponent<RectMask2D>();
+        }
+
+        // Enable the mask for the duration of the unrolling animation
+        mask.enabled = true;
+
+        // Force a layout rebuild to get the true laid-out height of the panel
+        LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect);
+        float targetHeight = scrollRect.rect.height;
+        if (targetHeight <= 0f) targetHeight = 800f; // fallback
+
+        // Animate bottom padding from targetHeight to 0 to unroll top-to-bottom
+        float duration = 0.5f; // Smooth reveal duration
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float progress = elapsed / duration;
+            
+            // Smooth unrolling curve (ease out sine)
+            float t = Mathf.Sin(progress * Mathf.PI * 0.5f);
+            float currentPaddingBottom = Mathf.Lerp(targetHeight, 0f, t);
+            
+            mask.padding = new Vector4(0f, currentPaddingBottom, 0f, 0f);
+            yield return null;
+        }
+
+        mask.padding = Vector4.zero;
+        
+        // Disable the mask after animation completes so it doesn't clip nested child UI elements (like scroll entries) at runtime
+        mask.enabled = false;
+
+        activeCoroutines.Remove(panel);
+    }
+
+    private IEnumerator AnimateScrollRollUp(RectTransform scrollRect, GameObject panel)
+    {
+        RectMask2D mask = scrollRect.gameObject.GetComponent<RectMask2D>();
+        if (mask == null)
+        {
+            mask = scrollRect.gameObject.AddComponent<RectMask2D>();
+        }
+
+        // Enable the mask for the rollup animation
+        mask.enabled = true;
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect);
+        float targetHeight = scrollRect.rect.height;
+        if (targetHeight <= 0f) targetHeight = 800f; // fallback
+
+        // Animate bottom padding from 0 to targetHeight to roll up bottom-to-top
+        float duration = 0.3f; // Smooth roll up duration
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float progress = elapsed / duration;
+            
+            // Ease in quad
+            float t = progress * progress;
+            float currentPaddingBottom = Mathf.Lerp(0f, targetHeight, t);
+            
+            mask.padding = new Vector4(0f, currentPaddingBottom, 0f, 0f);
+            yield return null;
+        }
+
+        mask.padding = new Vector4(0f, targetHeight, 0f, 0f);
+        
+        // Reset padding and disable mask before disabling panel
+        mask.padding = Vector4.zero;
+        mask.enabled = false;
+        
+        panel.SetActive(false);
+        activeCoroutines.Remove(panel);
+    }
+
+    private void CheckFirstTimeLaunch()
+    {
+        // Track first time launch using PlayerPrefs
+        if (!PlayerPrefs.HasKey("HasLaunchedBefore"))
+        {
+            PlayerPrefs.SetInt("HasLaunchedBefore", 1);
+            PlayerPrefs.Save();
+
+            // Open the tutorial panel automatically on first launch
+            StartCoroutine(ShowTutorialOnFirstLaunchDelay());
+        }
+    }
+
+    private IEnumerator ShowTutorialOnFirstLaunchDelay()
+    {
+        // Wait a small moment to let the scene fully settle, then show the tutorial panel
+        yield return new WaitForSeconds(0.5f);
+        OpenTutorialPanel();
+    }
+
+    private void BindCloseButtonForPanel(GameObject panel, UnityEngine.Events.UnityAction closeAction)
+    {
+        if (panel == null) return;
+
+        // Search for buttons inside the panel (including inactive ones)
+        Button[] buttons = panel.GetComponentsInChildren<Button>(true);
+        foreach (var btn in buttons)
+        {
+            string nameLower = btn.gameObject.name.ToLower();
+            if (nameLower == "close" || nameLower == "closebutton" || nameLower == "close_btn" || nameLower == "x" || nameLower == "closetutorial" || nameLower == "closeleaderboard" || nameLower == "closemessage")
+            {
+                btn.onClick = new Button.ButtonClickedEvent();
+                btn.onClick.AddListener(closeAction);
+                Debug.Log($"[UIManager] Programmatically bound Close button for panel '{panel.name}': {btn.gameObject.name}");
+            }
+        }
+    }
 
     public void ClosePauseMenu()
     {
@@ -310,26 +722,21 @@ public class UIManager : MonoBehaviour
 
     private void ShowPanel(GameObject panel)
     {
+        if (panel == null) return;
+
         if (activeCoroutines.ContainsKey(panel))
         {
             StopCoroutine(activeCoroutines[panel]);
             activeCoroutines.Remove(panel);
         }
 
-        // Reset all target scales to zero before activating so AnimateShow
-        // always starts from a clean state (prevents panels stuck invisible
-        // if a previous AnimateHide left children at scale zero)
-        bool hasCanvas = panel.GetComponent<Canvas>() != null;
-        if (hasCanvas)
+        // Ensure the parent container/Canvas is active
+        if (panel.transform.parent != null)
         {
-            foreach (Transform child in panel.transform)
-                if (child != null) child.localScale = Vector3.zero;
-        }
-        else
-        {
-            panel.transform.localScale = Vector3.zero;
+            panel.transform.parent.gameObject.SetActive(true);
         }
 
+        panel.transform.localScale = Vector3.zero;
         panel.SetActive(true);
         activeCoroutines[panel] = StartCoroutine(AnimateShow(panel));
     }
@@ -347,26 +754,7 @@ public class UIManager : MonoBehaviour
 
     private IEnumerator AnimateShow(GameObject panel)
     {
-        // Collect targets: if Canvas, get all immediate children. If not, get self.
-        System.Collections.Generic.List<Transform> targets = new System.Collections.Generic.List<Transform>();
-
-        if (panel.GetComponent<Canvas>() != null)
-        {
-            foreach (Transform child in panel.transform)
-            {
-                targets.Add(child);
-            }
-        }
-        else
-        {
-            targets.Add(panel.transform);
-        }
-
-        // Set initial scale
-        foreach (var t in targets)
-        {
-            if (t != null) t.localScale = Vector3.zero;
-        }
+        panel.transform.localScale = Vector3.zero;
 
         float duration = 0.3f;
         float elapsed = 0f;
@@ -380,54 +768,26 @@ public class UIManager : MonoBehaviour
             float scale;
             if (progress < 0.8f)
             {
-                // 0 to 1.1
                 float subProgress = progress / 0.8f;
                 scale = Mathf.Lerp(0f, 1.1f, Mathf.SmoothStep(0f, 1f, subProgress));
             }
             else
             {
-                // 1.1 to 1.0
                 float subProgress = (progress - 0.8f) / 0.2f;
                 scale = Mathf.Lerp(1.1f, 1.0f, subProgress);
             }
 
-            foreach (var t in targets)
-            {
-                if (t != null) t.localScale = Vector3.one * scale;
-            }
-
+            panel.transform.localScale = Vector3.one * scale;
             yield return null;
         }
 
-        foreach (var t in targets)
-        {
-            if (t != null) t.localScale = Vector3.one;
-        }
-
+        panel.transform.localScale = Vector3.one;
         activeCoroutines.Remove(panel);
     }
 
     private IEnumerator AnimateHide(GameObject panel)
     {
-        System.Collections.Generic.List<Transform> targets = new System.Collections.Generic.List<Transform>();
-
-        if (panel.GetComponent<Canvas>() != null)
-        {
-            foreach (Transform child in panel.transform)
-            {
-                targets.Add(child);
-            }
-        }
-        else
-        {
-            targets.Add(panel.transform);
-        }
-
-        // Store initial scales? Assuming they are 1 is safer for consistent hide.
-        // Or read from first target?
-        Vector3 initialScale = Vector3.one;
-        if (targets.Count > 0 && targets[0] != null) initialScale = targets[0].localScale;
-
+        Vector3 initialScale = panel.transform.localScale;
         float duration = 0.2f;
         float elapsed = 0f;
 
@@ -438,31 +798,51 @@ public class UIManager : MonoBehaviour
 
             // Smooth step down
             float scale = Mathf.Lerp(initialScale.x, 0f, Mathf.SmoothStep(0f, 1f, progress));
-
-            foreach (var t in targets)
-            {
-                if (t != null) t.localScale = Vector3.one * scale;
-            }
-
+            panel.transform.localScale = Vector3.one * scale;
             yield return null;
         }
 
-        foreach (var t in targets)
-        {
-            if (t != null) t.localScale = Vector3.zero;
-        }
-
+        panel.transform.localScale = Vector3.zero;
         panel.SetActive(false);
         activeCoroutines.Remove(panel);
     }
 
     public void HidePanels()
     {
-        if (pauseMenu != null && pauseMenu.activeSelf) pauseMenu.SetActive(false);
-        if (gameOverUI != null && gameOverUI.activeSelf) gameOverUI.SetActive(false);
-        if (levelCompleteUI != null && levelCompleteUI.activeSelf) levelCompleteUI.SetActive(false);
-        if (leaderboardUI != null && leaderboardUI.activeSelf) leaderboardUI.SetActive(false);
-        if (lockedLevelUI != null && lockedLevelUI.activeSelf) lockedLevelUI.SetActive(false);
-        if (editModeUI != null && editModeUI.activeSelf) editModeUI.SetActive(false);
+        foreach (var kvp in activeCoroutines)
+        {
+            if (kvp.Value != null)
+            {
+                StopCoroutine(kvp.Value);
+            }
+        }
+        activeCoroutines.Clear();
+
+        if (pauseMenu != null) { pauseMenu.transform.localScale = Vector3.one; pauseMenu.SetActive(false); }
+        if (gameOverUI != null) { gameOverUI.transform.localScale = Vector3.one; gameOverUI.SetActive(false); }
+        if (levelCompleteUI != null) { levelCompleteUI.transform.localScale = Vector3.one; levelCompleteUI.SetActive(false); }
+        
+        ResetPanelMaskAndDisable(leaderboardUI);
+        ResetPanelMaskAndDisable(lockedLevelUI);
+        if (editModeUI != null) { editModeUI.transform.localScale = Vector3.one; editModeUI.SetActive(false); }
+        ResetPanelMaskAndDisable(tutorialPanel);
+        ResetPanelMaskAndDisable(messagePanel);
+    }
+
+    private void ResetPanelMaskAndDisable(GameObject panel)
+    {
+        if (panel == null) return;
+        panel.transform.localScale = Vector3.one;
+        RectTransform scroll = GetScrollObjectFromPanel(panel);
+        if (scroll != null)
+        {
+            RectMask2D mask = scroll.gameObject.GetComponent<RectMask2D>();
+            if (mask != null)
+            {
+                mask.padding = Vector4.zero;
+                mask.enabled = false;
+            }
+        }
+        panel.SetActive(false);
     }
 }
