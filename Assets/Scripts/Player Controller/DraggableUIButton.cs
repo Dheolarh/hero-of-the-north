@@ -14,12 +14,23 @@ public class DraggableUIButton : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     private RectTransform rectTransform;
     private Vector2 originalAnchoredPosition;
+    private Vector2 defaultPosition;
     private Canvas parentCanvas;
 
     private void Awake()
     {
-        rectTransform = GetComponent<RectTransform>();
-        parentCanvas = GetComponentInParent<Canvas>();
+        EnsureReferences();
+    }
+
+    private void EnsureReferences()
+    {
+        if (rectTransform == null)
+        {
+            rectTransform = GetComponent<RectTransform>();
+            parentCanvas = GetComponentInParent<Canvas>();
+            // Cache the default position as configured in the editor before loading PlayerPrefs
+            defaultPosition = rectTransform.anchoredPosition;
+        }
     }
 
     /// <summary>
@@ -27,6 +38,7 @@ public class DraggableUIButton : MonoBehaviour, IBeginDragHandler, IDragHandler,
     /// </summary>
     public void CacheOriginalPosition()
     {
+        EnsureReferences();
         originalAnchoredPosition = rectTransform.anchoredPosition;
     }
 
@@ -35,7 +47,23 @@ public class DraggableUIButton : MonoBehaviour, IBeginDragHandler, IDragHandler,
     /// </summary>
     public void RevertToOriginalPosition()
     {
+        EnsureReferences();
         rectTransform.anchoredPosition = originalAnchoredPosition;
+    }
+
+    /// <summary>
+    /// Resets the button position to the editor default layout position, and clears PlayerPrefs.
+    /// </summary>
+    public void ResetToDefaultPosition()
+    {
+        EnsureReferences();
+        rectTransform.anchoredPosition = defaultPosition;
+        if (!string.IsNullOrEmpty(buttonID))
+        {
+            PlayerPrefs.DeleteKey(buttonID + "_X");
+            PlayerPrefs.DeleteKey(buttonID + "_Y");
+            PlayerPrefs.Save();
+        }
     }
 
     /// <summary>
@@ -43,6 +71,7 @@ public class DraggableUIButton : MonoBehaviour, IBeginDragHandler, IDragHandler,
     /// </summary>
     public void LoadSavedPosition()
     {
+        EnsureReferences();
         if (string.IsNullOrEmpty(buttonID))
         {
             Debug.LogWarning($"[DraggableUIButton] Button ID is empty on {gameObject.name}. Cannot load position.");
@@ -64,6 +93,7 @@ public class DraggableUIButton : MonoBehaviour, IBeginDragHandler, IDragHandler,
     {
         if (string.IsNullOrEmpty(buttonID)) return;
 
+        EnsureReferences();
         PlayerPrefs.SetFloat(buttonID + "_X", rectTransform.anchoredPosition.x);
         PlayerPrefs.SetFloat(buttonID + "_Y", rectTransform.anchoredPosition.y);
         PlayerPrefs.Save();

@@ -12,7 +12,6 @@ public class UIManager : MonoBehaviour
     public GameObject gameOverUI;
     public GameObject levelCompleteUI;
     public GameObject leaderboardUI;
-    public GameObject lockedLevelUI;
     public GameObject editModeUI;
     public GameObject tutorialPanel;
     public GameObject messagePanel;
@@ -117,7 +116,6 @@ public class UIManager : MonoBehaviour
         BindCloseButtonForPanel(tutorialPanel, CloseTutorialPanel);
         BindCloseButtonForPanel(leaderboardUI, CloseLeaderboardUI);
         BindCloseButtonForPanel(messagePanel, CloseMessagePanel);
-        BindCloseButtonForPanel(lockedLevelUI, CloseLockedLevelUI);
     }
 
     private void PlayButtonClickSound()
@@ -147,7 +145,6 @@ public class UIManager : MonoBehaviour
         if (IsManagerGameObject(gameOverUI)) gameOverUI = null;
         if (IsManagerGameObject(levelCompleteUI)) levelCompleteUI = null;
         if (IsManagerGameObject(leaderboardUI)) leaderboardUI = null;
-        if (IsManagerGameObject(lockedLevelUI)) lockedLevelUI = null;
         if (IsManagerGameObject(editModeUI)) editModeUI = null;
         if (IsManagerGameObject(tutorialPanel)) tutorialPanel = null;
         if (IsManagerGameObject(messagePanel)) messagePanel = null;
@@ -200,9 +197,6 @@ public class UIManager : MonoBehaviour
                 case UIPanel.PanelType.LeaderboardUI:
                     leaderboardUI = targetPanelGo;
                     break;
-                case UIPanel.PanelType.LockedLevelUI:
-                    lockedLevelUI = targetPanelGo;
-                    break;
                 case UIPanel.PanelType.TutorialPanel:
                     tutorialPanel = targetPanelGo;
                     break;
@@ -212,29 +206,7 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        // Fallback for LockedLevelUI in case the component is on a child object
-        if (lockedLevelUI == null)
-        {
-            LockedLevelCountdown lcd = FindFirstObjectByType<LockedLevelCountdown>(FindObjectsInactive.Include);
-            if (lcd != null)
-            {
-                if (!IsManagerGameObject(lcd.gameObject))
-                {
-                    lockedLevelUI = ResolvePanelGameObject(lcd.gameObject);
-                    Debug.Log($"[UIManager] Dynamic fallback: Found LockedLevelCountdown on GameObject '{lockedLevelUI.name}' and registered it as LockedLevelUI.");
-                }
-                else
-                {
-                    Debug.LogWarning($"[UIManager] Safeguard: Found LockedLevelCountdown on Manager GameObject '{lcd.gameObject.name}' - skipped assignment to prevent deactivating the manager! Please check where the LockedLevelCountdown script is attached in the scene.");
-                }
-            }
-        }
-
-        // Sync Locked Level UI and Message Panel since they are the same panel
-        if (lockedLevelUI == null && messagePanel != null) lockedLevelUI = messagePanel;
-        if (messagePanel == null && lockedLevelUI != null) messagePanel = lockedLevelUI;
-
-        Debug.Log($"[UIManager] RegisterAllPanels complete: Pause={pauseMenu}, GameOver={gameOverUI}, LevelComplete={levelCompleteUI}, Leaderboard={leaderboardUI}, LockedLevel={lockedLevelUI}, Tutorial={tutorialPanel}, Message={messagePanel}");
+        Debug.Log($"[UIManager] RegisterAllPanels complete: Pause={pauseMenu}, GameOver={gameOverUI}, LevelComplete={levelCompleteUI}, Leaderboard={leaderboardUI}, Tutorial={tutorialPanel}, Message={messagePanel}");
     }
 
     private GameObject ResolvePanelGameObject(GameObject go)
@@ -292,14 +264,9 @@ public class UIManager : MonoBehaviour
         gameOverUI = ResolvePanelGameObject(gameOverUI);
         levelCompleteUI = ResolvePanelGameObject(levelCompleteUI);
         leaderboardUI = ResolvePanelGameObject(leaderboardUI);
-        lockedLevelUI = ResolvePanelGameObject(lockedLevelUI);
         editModeUI = ResolvePanelGameObject(editModeUI);
         tutorialPanel = ResolvePanelGameObject(tutorialPanel);
         messagePanel = ResolvePanelGameObject(messagePanel);
-
-        // Sync Locked Level UI and Message Panel since they are the same panel
-        if (lockedLevelUI == null && messagePanel != null) lockedLevelUI = messagePanel;
-        if (messagePanel == null && lockedLevelUI != null) messagePanel = lockedLevelUI;
     }
 
     void Update()
@@ -307,8 +274,8 @@ public class UIManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             // Only toggle pause if not in other menus
-            bool goActive = gameOverUI != null && gameOverUI.activeSelf;
-            bool lcActive = levelCompleteUI != null && levelCompleteUI.activeSelf;
+            bool goActive = gameOverUI != null && gameOverUI.activeInHierarchy;
+            bool lcActive = levelCompleteUI != null && levelCompleteUI.activeInHierarchy;
             if (!goActive && !lcActive)
             {
                 TogglePauseMenu();
@@ -341,8 +308,7 @@ public class UIManager : MonoBehaviour
     {
         if (gameOverUI == null) return;
         TogglePanel(gameOverUI);
-        if (gameOverUI.activeSelf)
-
+        if (gameOverUI.activeInHierarchy)
         {
             Debug.Log("[UIManager] Game Over UI opened. Hiding HUD.");
             SetHUDActive(false);
@@ -353,8 +319,7 @@ public class UIManager : MonoBehaviour
     {
         if (levelCompleteUI == null) return;
         TogglePanel(levelCompleteUI);
-        if (levelCompleteUI.activeSelf)
-
+        if (levelCompleteUI.activeInHierarchy)
         {
             Debug.Log("[UIManager] Level Complete UI opened. Hiding HUD.");
             SetHUDActive(false);
@@ -397,7 +362,7 @@ public class UIManager : MonoBehaviour
     {
         if (leaderboardUI != null)
         {
-            if (!leaderboardUI.activeSelf)
+            if (!leaderboardUI.activeInHierarchy)
                 OpenLeaderboardUI();
         }
     }
@@ -412,30 +377,11 @@ public class UIManager : MonoBehaviour
         CloseUnrollingPanel(leaderboardUI);
     }
 
-    public void ToggleLockedLevelUI()
-    {
-        if (lockedLevelUI != null)
-        {
-            if (!lockedLevelUI.activeSelf)
-                OpenLockedLevelUI();
-        }
-    }
-
-    public void OpenLockedLevelUI()
-    {
-        OpenUnrollingPanel(lockedLevelUI, scrollOpenSoundName);
-    }
-
-    public void CloseLockedLevelUI()
-    {
-        CloseUnrollingPanel(lockedLevelUI);
-    }
-
     public void ToggleTutorialPanel()
     {
         if (tutorialPanel != null)
         {
-            if (!tutorialPanel.activeSelf)
+            if (!tutorialPanel.activeInHierarchy)
                 OpenTutorialPanel();
         }
     }
@@ -454,7 +400,7 @@ public class UIManager : MonoBehaviour
     {
         if (messagePanel != null)
         {
-            if (!messagePanel.activeSelf)
+            if (!messagePanel.activeInHierarchy)
                 OpenMessagePanel();
         }
     }
@@ -479,10 +425,11 @@ public class UIManager : MonoBehaviour
             AudioManager.Instance.PlaySfx(openSoundName);
         }
 
-        // Ensure the parent container/Canvas is active
-        if (panel.transform.parent != null)
+        // Ensure the parent Canvas is active
+        Canvas parentCanvas = panel.GetComponentInParent<Canvas>(true);
+        if (parentCanvas != null)
         {
-            panel.transform.parent.gameObject.SetActive(true);
+            parentCanvas.gameObject.SetActive(true);
         }
 
         // Find the "Scroll" child object inside this panel
@@ -698,7 +645,7 @@ public class UIManager : MonoBehaviour
 
     public void ClosePauseMenu()
     {
-        if (pauseMenu != null && pauseMenu.activeSelf)
+        if (pauseMenu != null && pauseMenu.activeInHierarchy)
         {
             HidePanel(pauseMenu);
             SetHUDActive(true);
@@ -709,7 +656,7 @@ public class UIManager : MonoBehaviour
     {
         if (panel == null) return;
 
-        bool isActive = panel.activeSelf;
+        bool isActive = panel.activeInHierarchy;
         if (isActive)
         {
             HidePanel(panel);
@@ -730,10 +677,11 @@ public class UIManager : MonoBehaviour
             activeCoroutines.Remove(panel);
         }
 
-        // Ensure the parent container/Canvas is active
-        if (panel.transform.parent != null)
+        // Ensure the parent Canvas is active
+        Canvas parentCanvas = panel.GetComponentInParent<Canvas>(true);
+        if (parentCanvas != null)
         {
-            panel.transform.parent.gameObject.SetActive(true);
+            parentCanvas.gameObject.SetActive(true);
         }
 
         panel.transform.localScale = Vector3.zero;
@@ -823,7 +771,6 @@ public class UIManager : MonoBehaviour
         if (levelCompleteUI != null) { levelCompleteUI.transform.localScale = Vector3.one; levelCompleteUI.SetActive(false); }
         
         ResetPanelMaskAndDisable(leaderboardUI);
-        ResetPanelMaskAndDisable(lockedLevelUI);
         if (editModeUI != null) { editModeUI.transform.localScale = Vector3.one; editModeUI.SetActive(false); }
         ResetPanelMaskAndDisable(tutorialPanel);
         ResetPanelMaskAndDisable(messagePanel);

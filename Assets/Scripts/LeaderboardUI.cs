@@ -70,6 +70,7 @@ public class LeaderboardUI : MonoBehaviour
         if (DevvitBridge.Instance != null)
         {
             SetLoadingState(true, "Loading leaderboard...");
+            DevvitBridge.Instance.RequestUserIdentity();
             DevvitBridge.Instance.RequestLeaderboard();
             DevvitBridge.Instance.RequestPlayerStanding();
         }
@@ -162,12 +163,7 @@ public class LeaderboardUI : MonoBehaviour
 
         if (playerRankText != null)
         {
-            playerRankText.text = $"#{standing.rank}";
-        }
-
-        if (playerHeroName != null && DevvitBridge.Instance != null)
-        {
-            playerHeroName.text = DevvitBridge.Instance.username;
+            playerRankText.text = $"{standing.rank}";
         }
 
         if (playerPointsText != null)
@@ -175,10 +171,29 @@ public class LeaderboardUI : MonoBehaviour
             playerPointsText.text = $"{standing.totalPoints}";
         }
 
-        // Set default avatar first
-        if (playerHeroImage != null)
+        UpdatePlayerStandingNameAndAvatar();
+
+        Debug.Log($"[LeaderboardUI] Updated player standing: Rank {standing.rank}, {standing.totalPoints} pts");
+    }
+
+    /// <summary>
+    /// Explicitly updates the player name and avatar on the player standing panel.
+    /// Called when DevvitBridge fetches the user details (e.g. on scene load or refresh).
+    /// </summary>
+    public void UpdatePlayerStandingNameAndAvatar()
+    {
+        if (playerHeroName != null && DevvitBridge.Instance != null)
         {
-            if (playerDefaultAvatar != null)
+            playerHeroName.text = DevvitBridge.Instance.username;
+        }
+
+        if (playerHeroImage != null && DevvitBridge.Instance != null)
+        {
+            if (!string.IsNullOrEmpty(DevvitBridge.Instance.avatarUrl))
+            {
+                StartCoroutine(LoadPlayerAvatar(DevvitBridge.Instance.avatarUrl));
+            }
+            else if (playerDefaultAvatar != null)
             {
                 playerHeroImage.sprite = playerDefaultAvatar;
                 playerHeroImage.color = Color.white;
@@ -188,14 +203,6 @@ public class LeaderboardUI : MonoBehaviour
                 playerHeroImage.color = new Color(1f, 1f, 1f, 0f);
             }
         }
-
-        // Load player's avatar (will replace default if available)
-        if (playerHeroImage != null && DevvitBridge.Instance != null && !string.IsNullOrEmpty(DevvitBridge.Instance.avatarUrl))
-        {
-            StartCoroutine(LoadPlayerAvatar(DevvitBridge.Instance.avatarUrl));
-        }
-
-        Debug.Log($"[LeaderboardUI] Updated player standing: Rank #{standing.rank}, {standing.totalPoints} pts");
     }
 
     private IEnumerator LoadPlayerAvatar(string url)

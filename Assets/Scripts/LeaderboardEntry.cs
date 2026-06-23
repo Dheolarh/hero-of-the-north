@@ -17,7 +17,7 @@ public class LeaderboardEntry : MonoBehaviour
     {
         if (rankText != null)
         {
-            rankText.text = $"#{rank}";
+            rankText.text = $"{rank}";
         }
         else
         {

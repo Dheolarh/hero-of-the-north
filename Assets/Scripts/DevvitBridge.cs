@@ -76,12 +76,25 @@ public class DevvitBridge : MonoBehaviour
 
             if (logMessages)
                 Debug.Log($"[DevvitBridge] User identity: {username} ({userId})");
+
+            if (LeaderboardUI.Instance != null)
+            {
+                LeaderboardUI.Instance.UpdatePlayerStandingNameAndAvatar();
+            }
         }
         catch (Exception e)
         {
             Debug.LogError($"[DevvitBridge] Error parsing user identity: {e.Message}");
         }
 #endif
+    }
+
+    /// <summary>
+    /// Explicitly request the user identity details from Reddit.
+    /// </summary>
+    public void RequestUserIdentity()
+    {
+        StartCoroutine(FetchUserIdentity());
     }
 
     /// <summary>
@@ -233,7 +246,7 @@ public class DevvitBridge : MonoBehaviour
             if (resp.found)
             {
                 if (logMessages)
-                    Debug.Log($"[DevvitBridge] Player standing: Rank #{resp.standing.rank}, {resp.standing.totalPoints} pts");
+                    Debug.Log($"[DevvitBridge] Player standing: Rank {resp.standing.rank}, {resp.standing.totalPoints} pts");
 
                 if (LeaderboardUI.Instance != null)
                     LeaderboardUI.Instance.UpdatePlayerStanding(resp.standing);
@@ -333,7 +346,7 @@ public class DevvitBridge : MonoBehaviour
             if (response.success)
             {
                 if (logMessages)
-                    Debug.Log($"[DevvitBridge] Score accepted! Hero Points: {response.heroPoints}, Total: {response.totalPoints}, Rank: #{response.rank}");
+                    Debug.Log($"[DevvitBridge] Score accepted! Hero Points: {response.heroPoints}, Total: {response.totalPoints}, Rank: {response.rank}");
             }
             else
             {

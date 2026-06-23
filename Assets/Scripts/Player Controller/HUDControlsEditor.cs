@@ -94,7 +94,7 @@ public class HUDControlsEditor : MonoBehaviour
     {
         if (editModeUIPanel == null) return;
 
-        // Search for buttons named "Save"/"SaveButton" or "Cancel"/"CancelButton" inside the EditModeUI panel
+        // Search for buttons named "Save"/"SaveButton", "Cancel"/"CancelButton", or "Reset"/"ResetButton" inside the EditModeUI panel
         Button[] buttons = editModeUIPanel.GetComponentsInChildren<Button>(true);
         foreach (var btn in buttons)
         {
@@ -109,6 +109,12 @@ public class HUDControlsEditor : MonoBehaviour
                 btn.onClick.RemoveListener(CancelEditMode);
                 btn.onClick.AddListener(CancelEditMode);
                 Debug.Log("[HUDControlsEditor] Programmatically bound Cancel button click event.");
+            }
+            else if (btn.gameObject.name == "Reset" || btn.gameObject.name == "ResetButton")
+            {
+                btn.onClick.RemoveListener(ResetAllToDefault);
+                btn.onClick.AddListener(ResetAllToDefault);
+                Debug.Log("[HUDControlsEditor] Programmatically bound Reset button click event.");
             }
         }
     }
@@ -175,6 +181,18 @@ public class HUDControlsEditor : MonoBehaviour
         }
 
         ExitEditModeVisuals();
+    }
+
+    /// <summary>
+    /// Resets all draggable UI buttons to their default layout positions.
+    /// </summary>
+    public void ResetAllToDefault()
+    {
+        foreach (var btn in draggableButtons)
+        {
+            btn.ResetToDefaultPosition();
+        }
+        Debug.Log("[HUDControlsEditor] Reset all draggable buttons to their default layout positions.");
     }
 
     private void ExitEditModeVisuals()
