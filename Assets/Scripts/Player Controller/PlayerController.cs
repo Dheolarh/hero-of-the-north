@@ -88,10 +88,10 @@ public class PlayerController : MonoBehaviour
         InputDirection = 0f;
         if (HUDControlsEditor.Instance == null || !HUDControlsEditor.Instance.IsEditMode)
         {
-            if (Input.GetKey(KeyCode.LeftArrow)  || _uiMoveLeft)  InputDirection -= 1f;
-            if (Input.GetKey(KeyCode.RightArrow) || _uiMoveRight) InputDirection += 1f;
+            if (Input.GetKey(KeyCode.LeftArrow)  || Input.GetKey(KeyCode.A) || _uiMoveLeft)  InputDirection -= 1f;
+            if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D) || _uiMoveRight) InputDirection += 1f;
 
-            if (Input.GetKeyDown(KeyCode.Space)) JumpRequested = true;
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) JumpRequested = true;
         }
         else
         {
@@ -119,6 +119,29 @@ public class PlayerController : MonoBehaviour
     {
         if (PlayerTransform.rotation != Quaternion.identity)
             PlayerTransform.rotation = Quaternion.identity;
+    }
+
+    public bool IsGrounded()
+    {
+        if (_playerCollider == null) return false;
+
+        Bounds bounds = _playerCollider.bounds;
+        Vector2 checkPosition = new Vector2(bounds.center.x, bounds.min.y + 0.05f);
+        float checkRadius = 0.15f;
+
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(checkPosition, checkRadius);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            var col = colliders[i];
+            if (col != null && col != _playerCollider)
+            {
+                if (col.CompareTag("Floor") || col.CompareTag("PlatformGround"))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // ── UI button API (unchanged — wired to UI buttons in the Inspector) ───

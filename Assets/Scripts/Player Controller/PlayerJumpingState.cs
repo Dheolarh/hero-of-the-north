@@ -37,6 +37,13 @@ public class PlayerJumpingState : PlayerStateBase
     {
         ctx.ResetPlayerRotation();
 
+        // ── Grounded check fallback ───────────────────────────────────────
+        if (ctx.PlayerRigidbody.linearVelocity.y <= 0.1f && ctx.IsGrounded())
+        {
+            ctx.StateMachine.ChangeState(new PlayerIdleState(ctx));
+            return;
+        }
+
         // ── Multi-jump ────────────────────────────────────────────────────
         if (ctx.JumpRequested)
         {
@@ -103,7 +110,7 @@ public class PlayerJumpingState : PlayerStateBase
             {
                 foreach (var contact in collision.contacts)
                 {
-                    if (contact.normal.y > 0.7f)
+                    if (contact.normal.y > 0.5f)
                     {
                         ctx.StateMachine.ChangeState(new PlayerIdleState(ctx));
                         break;

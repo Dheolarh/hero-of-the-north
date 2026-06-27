@@ -11,6 +11,12 @@ public class CameraShakeTrigger : MonoBehaviour
     public GameObject stopShakeTrigger;
     public GameObject objectThatStopsShake;
 
+    [Header("Distance-Based Settings")]
+    [Tooltip("If set, the shake and audio volume will dynamically scale based on how close the player is to this object. If null, falls back to Object That Stops Shake.")]
+    public GameObject shakeSource;
+    [Tooltip("The maximum distance from the shake source where shaking and sound are still felt.")]
+    public float maxShakeDistance = 20f;
+
     private bool hasTriggered = false;
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -28,7 +34,10 @@ public class CameraShakeTrigger : MonoBehaviour
     {
         if (CameraShake.Instance != null)
         {
-            CameraShake.Instance.StartShake(shakeIntensity, shakeFrequency, shakeAudioClipName);
+            GameObject source = shakeSource != null ? shakeSource : objectThatStopsShake;
+            Transform sourceTransform = source != null ? source.transform : null;
+
+            CameraShake.Instance.StartShake(shakeIntensity, shakeFrequency, shakeAudioClipName, sourceTransform, maxShakeDistance);
             Debug.Log($"[CameraShakeTrigger] Shake started via Trigger Zone: {gameObject.name}");
 
             // Configure Stop Trigger if provided

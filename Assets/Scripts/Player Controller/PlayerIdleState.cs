@@ -17,6 +17,13 @@ public class PlayerIdleState : PlayerStateBase
     {
         ctx.ResetPlayerRotation();
 
+        // ── Transition: walk off ledge ─────────────────────────────────────
+        if (!ctx.IsGrounded())
+        {
+            ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx, applyImpulse: false));
+            return;
+        }
+
         // ── Transition: jump ───────────────────────────────────────────────
         if (ctx.JumpRequested)
         {
@@ -36,18 +43,5 @@ public class PlayerIdleState : PlayerStateBase
     {
         if (other.CompareTag("Death"))
             ctx.StateMachine.ChangeState(new PlayerDeadState(ctx));
-    }
-
-    // Walking off a ledge (no jump pressed)
-    public override void OnTriggerExit2D(UnityEngine.Collider2D other)
-    {
-        if (other.CompareTag("Floor") || other.CompareTag("PlatformGround"))
-            ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx, applyImpulse: false));
-    }
-
-    public override void OnCollisionExit2D(UnityEngine.Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("PlatformGround") || collision.gameObject.CompareTag("Floor"))
-            ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx, applyImpulse: false));
     }
 }

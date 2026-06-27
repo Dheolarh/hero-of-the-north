@@ -260,7 +260,7 @@ public class LevelManager : MonoBehaviour
 
     public void CompleteLevel()
     {
-        if (GameManager.Instance.isLevelCompleted) return;
+        if (GameManager.Instance.isLevelCompleted || GameManager.Instance.isGameOver) return;
 
         Debug.Log("[LevelManager] CompleteLevel called.");
 

@@ -25,7 +25,7 @@ public class PlayerDeadState : PlayerStateBase
 
         // ── Camera ────────────────────────────────────────────────────────
         if (CameraShake.Instance != null && CameraShake.Instance.IsShaking())
-            CameraShake.Instance.StopShake();
+            CameraShake.Instance.StopShakeImmediate();
 
         ctx.StartCoroutine(StopCameraAfterDelay(1f));
 

@@ -15,6 +15,12 @@ public class CameraShake : MonoBehaviour
     private string currentShakeAudio = "";
     private float maxAudioVolume = 0.7f;
 
+    [Header("Distance-Based Settings")]
+    private Transform shakeSource = null;
+    private float maxShakeDistance = 20f;
+    private float baseIntensity = 0f;
+    private Transform playerTransform = null;
+
     private Vector3 originalPosition;
     private CameraFollow cameraFollow;
 
@@ -33,6 +39,12 @@ public class CameraShake : MonoBehaviour
     void Start()
     {
         cameraFollow = GetComponent<CameraFollow>();
+        
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            playerTransform = player.transform;
+        }
     }
 
     // Track max intensity for volume scaling
@@ -42,30 +54,47 @@ public class CameraShake : MonoBehaviour
     {
         if (isShaking)
         {
+            // Update playerTransform reference dynamically if it was missing/destroyed/respawned
+            if (playerTransform == null)
+            {
+                GameObject player = GameObject.FindWithTag("Player");
+                if (player != null) playerTransform = player.transform;
+            }
+
+            // Scale targetIntensity based on proximity to player if we have a source
+            if (shakeSource != null && playerTransform != null)
+            {
+                float distance = Vector3.Distance(playerTransform.position, shakeSource.position);
+                float factor = 1f - Mathf.Clamp01(distance / maxShakeDistance);
+                targetIntensity = baseIntensity * factor;
+            }
+
             // Gradually adjust current intensity towards target
             shakeIntensity = Mathf.Lerp(shakeIntensity, targetIntensity, Time.deltaTime * 2f);
 
             // Update Audio Volume based on intensity
             if (AudioManager.Instance != null && !string.IsNullOrEmpty(currentShakeAudio) && maxShakeIntensity > 0)
             {
-                // Volume is proportional to current intensity / max intensity
-                // We use a curve (sqr) for more natural audio falloff
-                float volumeRatio = Mathf.Clamp01(shakeIntensity / maxShakeIntensity);
+                // Volume is proportional to current intensity / max intensity, capped by maxAudioVolume
+                float volumeRatio = Mathf.Clamp01(shakeIntensity / maxShakeIntensity) * maxAudioVolume;
                 AudioManager.Instance.SetLoopingSoundVolume(currentShakeAudio, volumeRatio);
             }
 
             // Stop shaking if intensity is very low
             if (shakeIntensity < 0.01f && targetIntensity == 0f)
             {
-                StopShakeCompletely();
+                StopShakeImmediate();
             }
         }
     }
 
-    public void StartShake(float intensity, float frequency, string audioClipName)
+    public void StartShake(float intensity, float frequency, string audioClipName, Transform source = null, float maxDistance = 20f)
     {
-        // Set target intensity
+        // Set target intensity and base intensity
         targetIntensity = intensity;
+        baseIntensity = intensity;
+        shakeSource = source;
+        maxShakeDistance = maxDistance;
         
         // If this is a new shake start (or higher intensity), update max for volume scaling
         if (intensity > maxShakeIntensity)
@@ -85,7 +114,8 @@ public class CameraShake : MonoBehaviour
             {
                 AudioManager.Instance.PlayLoopingSound(audioClipName);
                 // Initialize volume
-                AudioManager.Instance.SetLoopingSoundVolume(audioClipName, Mathf.Clamp01(shakeIntensity / maxShakeIntensity));
+                float initialVolume = Mathf.Clamp01(shakeIntensity / maxShakeIntensity) * maxAudioVolume;
+                AudioManager.Instance.SetLoopingSoundVolume(audioClipName, initialVolume);
             }
             
             // Start shake coroutine
@@ -99,12 +129,15 @@ public class CameraShake : MonoBehaviour
         targetIntensity = 0f;
     }
 
-    private void StopShakeCompletely()
+    public void StopShakeImmediate()
     {
         isShaking = false;
         shakeIntensity = 0f;
         targetIntensity = 0f;
         maxShakeIntensity = 0f; 
+        shakeSource = null;
+        baseIntensity = 0f;
+        CurrentShakeOffset = Vector3.zero;
 
         // Stop shake audio
         if (AudioManager.Instance != null)

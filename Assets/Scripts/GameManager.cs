@@ -48,6 +48,11 @@ public class GameManager : MonoBehaviour
         {
             AudioManager.Instance.StopAllSoundsExceptMusic();
         }
+
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.StopShakeImmediate();
+        }
     }
 
 
@@ -72,6 +77,7 @@ public class GameManager : MonoBehaviour
 
     public void GameOver()
     {
+        isGameOver = true;
         Debug.Log("Game Over!");
         if (AudioManager.Instance != null)
         {

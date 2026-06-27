@@ -20,6 +20,13 @@ public class PlayerWalkingState : PlayerStateBase
         if (AudioManager.Instance != null)
             AudioManager.Instance.SetWalkingSoundSpeed(ctx.Speed);
 
+        // ── Transition: walk off ledge ─────────────────────────────────────
+        if (!ctx.IsGrounded())
+        {
+            ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx, applyImpulse: false));
+            return;
+        }
+
         float dir = ctx.InputDirection;
 
         // ── Transition: jump ───────────────────────────────────────────────
@@ -50,25 +57,21 @@ public class PlayerWalkingState : PlayerStateBase
     public override void Exit()
     {
         if (AudioManager.Instance != null)
+            ctx.StartCoroutine(StopWalkingSoundDelayed());
+    }
+
+    private System.Collections.IEnumerator StopWalkingSoundDelayed()
+    {
+        yield return null;
+        if (AudioManager.Instance != null && ctx.StateMachine.Current is PlayerIdleState)
+        {
             AudioManager.Instance.StopWalkingSound();
+        }
     }
 
     public override void OnTriggerEnter2D(UnityEngine.Collider2D other)
     {
         if (other.CompareTag("Death"))
             ctx.StateMachine.ChangeState(new PlayerDeadState(ctx));
-    }
-
-    // Walking off a ledge (no jump pressed)
-    public override void OnTriggerExit2D(UnityEngine.Collider2D other)
-    {
-        if (other.CompareTag("Floor") || other.CompareTag("PlatformGround"))
-            ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx, applyImpulse: false));
-    }
-
-    public override void OnCollisionExit2D(UnityEngine.Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("PlatformGround") || collision.gameObject.CompareTag("Floor"))
-            ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx, applyImpulse: false));
     }
 }

@@ -7,6 +7,7 @@ public class LevelGoal : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (_triggered) return;
+        if (GameManager.Instance != null && GameManager.Instance.isGameOver) return;
         if (!collision.CompareTag("Player")) return;
 
         _triggered = true;
