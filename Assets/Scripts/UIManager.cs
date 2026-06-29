@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -271,6 +272,13 @@ public class UIManager : MonoBehaviour
 
     void Update()
     {
+        // Always clear EventSystem selection so Space/Enter keys never accidentally
+        // re-trigger a previously clicked button (e.g. causing unintended pause toggles)
+        if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+        }
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             // Only toggle pause if not in other menus

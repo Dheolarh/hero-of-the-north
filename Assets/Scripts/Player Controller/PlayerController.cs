@@ -6,6 +6,8 @@ public class PlayerController : MonoBehaviour
     // ── Inspector fields ───────────────────────────────────────────────────
     [SerializeField] float speed;
     [SerializeField] float jumpForce;
+    [SerializeField] bool enableFallDamage = false;
+    [SerializeField] float maxSafeFallHeight = 10f;
 
     // ── Shared component references (read by states) ───────────────────────
     public Transform     PlayerTransform  { get; private set; }
@@ -17,7 +19,9 @@ public class PlayerController : MonoBehaviour
     // ── Shared data properties (read / written by states) ─────────────────
     public float Speed     => speed;
     public float JumpForce => jumpForce;
-    public int   MaxMultiJumps { get; private set; }
+    public bool  EnableFallDamage => enableFallDamage;
+    public float MaxSafeFallHeight => maxSafeFallHeight;
+    public int   MaxMultiJumps { get; set; }
 
     public float InputDirection { get; private set; }
 
@@ -88,10 +92,20 @@ public class PlayerController : MonoBehaviour
         InputDirection = 0f;
         if (HUDControlsEditor.Instance == null || !HUDControlsEditor.Instance.IsEditMode)
         {
+            // Keyboard / on-screen buttons
             if (Input.GetKey(KeyCode.LeftArrow)  || Input.GetKey(KeyCode.A) || _uiMoveLeft)  InputDirection -= 1f;
             if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D) || _uiMoveRight) InputDirection += 1f;
 
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) JumpRequested = true;
+            // Controller: left stick & D-pad (Unity's built-in "Horizontal" axis covers both)
+            float controllerAxis = Input.GetAxisRaw("Horizontal");
+            if (Mathf.Abs(controllerAxis) > 0.1f)
+                InputDirection = Mathf.Clamp(InputDirection + controllerAxis, -1f, 1f);
+
+            // Jump: keyboard + controller South button (A on Xbox / Cross on PS)
+            if (Input.GetKeyDown(KeyCode.Space)  || Input.GetKeyDown(KeyCode.W)      ||
+                Input.GetKeyDown(KeyCode.UpArrow) ||
+                Input.GetKeyDown(KeyCode.JoystickButton0))   // A / Cross
+                JumpRequested = true;
         }
         else
         {

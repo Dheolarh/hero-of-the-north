@@ -24,11 +24,13 @@ public class CameraFollow : MonoBehaviour
     private LevelCameraSettings activeSettings;
     private Vector3 logicalPosition;
     private CameraShake cameraShake;
+    private Camera cam;
 
     void Start()
     {
         cameraShake = GetComponent<CameraShake>();
         logicalPosition = transform.position;
+        cam = GetComponent<Camera>();
     }
 
     void LateUpdate()
@@ -42,6 +44,12 @@ public class CameraFollow : MonoBehaviour
         bool currentUseSmoothing = activeSettings != null ? activeSettings.useSmoothing : useSmoothing;
         float currentSmoothSpeed = activeSettings != null ? activeSettings.smoothSpeed : smoothSpeed;
         float currentFixedY = activeSettings != null ? activeSettings.fixedYHeight : (player.position.y + currentOffset.y);
+
+        // Dynamically apply zoom (Orthographic Size) from level settings
+        if (cam != null && activeSettings != null)
+        {
+            cam.orthographicSize = activeSettings.orthoSize;
+        }
 
         Vector3 desiredPosition = player.position + currentOffset;
 

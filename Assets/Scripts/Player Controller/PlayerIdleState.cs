@@ -28,8 +28,11 @@ public class PlayerIdleState : PlayerStateBase
         if (ctx.JumpRequested)
         {
             ctx.JumpRequested = false;
-            ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx));
-            return;
+            if (ctx.MaxMultiJumps > 0)
+            {
+                ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx));
+                return;
+            }
         }
 
         // ── Transition: movement input ────────────────────────────────────

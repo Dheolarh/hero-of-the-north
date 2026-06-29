@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: Level 4
   m_EditorClassIdentifier: 
   levelNumber: 4
-  sceneName: Level 4
   levelName: 4
   isBossLevel: 0
+  levelPrefab: {fileID: 6781669126711784265, guid: f5301e594e4e6744eb23b29774f75e6c, type: 3}
+  multiJumpCount: 0
   levelIcon: {fileID: 21300000, guid: 0f271ac103ca0b8439b878d0d23f2375, type: 3}
   lockedIcon: {fileID: 21300000, guid: ae0deb8daee84f0408c803b8e168b4c3, type: 3}
   bossUnlockedIcon: {fileID: 21300000, guid: aca4a8577912a1c488f3cf0ba839c82f, type: 3}

@@ -10,7 +10,8 @@ public enum TriggerType
     SingleMotion,
     RotationTrap,
     Ally,
-    PhysicsModifier
+    PhysicsModifier,
+    JumpModifier
 }
 
 public enum ComponentAction
@@ -35,6 +36,13 @@ public enum RotationDirection
     CounterClockwise
 }
 
+public enum ActivationMode
+{
+    Toggle,
+    ForceActive,
+    ForceInactive
+}
+
 public class CollisionsAndTriggers : MonoBehaviour
 {
     [Header("Objects to Manipulate")]
@@ -51,6 +59,8 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     [Header("Object Active Toggle")]
     public bool setObjectActive; // Toggle objectsToTrigger active state
+    [Tooltip("Choose whether the target object(s) should toggle their active state, force-activate (SET active = true), or force-deactivate (SET active = false).")]
+    public ActivationMode activationMode = ActivationMode.Toggle;
 
     [Header("Movement Settings")]
     public bool enableMove;
@@ -64,11 +74,13 @@ public class CollisionsAndTriggers : MonoBehaviour
     public float rotationSpeed;
     public bool stopRotationOnExit;
 
+    [Header("Coordinate Mode")]
+    [Tooltip("If true, movement and teleportation will use local coordinates relative to the parent object instead of global world coordinates.")]
+    public bool useLocalCoordinates = false;
+
     [Header("One-Time Movement Settings")]
     public Vector2 targetPosition;
     public float targetMoveSpeed;
-    [Tooltip("If true, movement and teleportation will use local coordinates relative to the parent object instead of global world coordinates.")]
-    public bool useLocalCoordinates = false;
 
     [Header("Teleport Settings")]
     public Vector2 teleportPosition;
@@ -78,6 +90,13 @@ public class CollisionsAndTriggers : MonoBehaviour
     public float fallSpeedMultiplier;
     public bool applyOnEnter = true;
     public bool resetOnExit = false;
+
+    [Header("Jump Modification Settings")]
+    [Tooltip("The overridden MaxMultiJumps value applied to the player (0 = no jump, 1 = normal jump, 2 = 1 multijump).")]
+    public int newMaxJumpsValue = 2;
+
+    private int originalMaxJumpsValue;
+    private bool isJumpModified = false;
     
     [Header("Delay Settings")]
     [Tooltip("Delay in seconds before the trap activates after being triggered.")]
@@ -197,6 +216,9 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             if (obj != null)
             {
+                // Skip translation if the object has its own PingPongMovement script to prevent double movement
+                if (obj.GetComponent<PingPongMovement>() != null) continue;
+
                 obj.transform.Translate(
                     xDirection * Time.deltaTime * moveSpeed,
                     yDirection * Time.deltaTime * moveSpeed,
@@ -287,7 +309,18 @@ public class CollisionsAndTriggers : MonoBehaviour
             {
                 if (obj != null)
                 {
-                    obj.SetActive(!obj.activeSelf);
+                    switch (activationMode)
+                    {
+                        case ActivationMode.Toggle:
+                            obj.SetActive(!obj.activeSelf);
+                            break;
+                        case ActivationMode.ForceActive:
+                            obj.SetActive(true);
+                            break;
+                        case ActivationMode.ForceInactive:
+                            obj.SetActive(false);
+                            break;
+                    }
                 }
             }
         }
@@ -357,6 +390,44 @@ public class CollisionsAndTriggers : MonoBehaviour
         }
     }
 
+    // ========== JUMP MODIFICATION FUNCTIONS ==========
+
+    void ModifyJumpSettings()
+    {
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            PlayerController pc = player.GetComponent<PlayerController>();
+            if (pc != null)
+            {
+                if (!isJumpModified)
+                {
+                    originalMaxJumpsValue = pc.MaxMultiJumps;
+                    isJumpModified = true;
+                }
+                pc.MaxMultiJumps = newMaxJumpsValue;
+                Debug.Log($"[JumpModifier] Jump settings overridden to: {newMaxJumpsValue}");
+            }
+        }
+    }
+
+    void ResetJumpSettings()
+    {
+        if (!isJumpModified) return;
+
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            PlayerController pc = player.GetComponent<PlayerController>();
+            if (pc != null)
+            {
+                pc.MaxMultiJumps = originalMaxJumpsValue;
+                isJumpModified = false;
+                Debug.Log($"[JumpModifier] Jump settings reset to original: {originalMaxJumpsValue}");
+            }
+        }
+    }
+
     // ========== COLLISION EVENTS ==========
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -405,10 +476,37 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     private void ExecuteTriggerActions()
     {
+        // Handle audio playback first (before teleporting/moving the player)
+        if (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName))
+        {
+            if (AudioManager.Instance != null)
+            {
+                if (loopAudio)
+                {
+                    AudioManager.Instance.PlayLoopingSound(audioClipName);
+                }
+                else
+                {
+                    AudioManager.Instance.PlaySfx(audioClipName);
+                }
+            }
+        }
+
         switch (triggerType)
         {
             case TriggerType.ContinousMotion:
                 enableMove = true;
+                if (objectsToTrigger != null)
+                {
+                    foreach (GameObject obj in objectsToTrigger)
+                    {
+                        if (obj != null)
+                        {
+                            PingPongMovement ppm = obj.GetComponent<PingPongMovement>();
+                            if (ppm != null) ppm.Activate();
+                        }
+                    }
+                }
                 break;
 
             case TriggerType.RotationTrap:
@@ -432,6 +530,13 @@ public class CollisionsAndTriggers : MonoBehaviour
                 }
                 break;
 
+            case TriggerType.JumpModifier:
+                if (applyOnEnter)
+                {
+                    ModifyJumpSettings();
+                }
+                break;
+
             case TriggerType.Ally:
                 break;
         }
@@ -447,22 +552,6 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             AddComponentToObject();
         }
-
-        // Handle audio playback
-        if (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName))
-        {
-            if (AudioManager.Instance != null)
-            {
-                if (loopAudio)
-                {
-                    AudioManager.Instance.PlayLoopingSound(audioClipName);
-                }
-                else
-                {
-                    AudioManager.Instance.PlaySfx(audioClipName);
-                }
-            }
-        }
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -472,6 +561,17 @@ public class CollisionsAndTriggers : MonoBehaviour
             if (triggerType == TriggerType.ContinousMotion && stopMoveOnExit)
             {
                 StopMove();
+                if (objectsToTrigger != null)
+                {
+                    foreach (GameObject obj in objectsToTrigger)
+                    {
+                        if (obj != null)
+                        {
+                            PingPongMovement ppm = obj.GetComponent<PingPongMovement>();
+                            if (ppm != null) ppm.Deactivate();
+                        }
+                    }
+                }
             }
 
             if (triggerType == TriggerType.RotationTrap && stopRotationOnExit)
@@ -482,6 +582,11 @@ public class CollisionsAndTriggers : MonoBehaviour
             if (triggerType == TriggerType.PhysicsModifier && resetOnExit)
             {
                 ResetPhysics();
+            }
+
+            if (triggerType == TriggerType.JumpModifier && resetOnExit)
+            {
+                ResetJumpSettings();
             }
         }
 

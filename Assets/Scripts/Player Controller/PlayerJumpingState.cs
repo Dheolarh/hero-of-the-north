@@ -1,3 +1,5 @@
+using UnityEngine;
+
 /// <summary>
 /// Player is airborne (either from a jump or from walking off a ledge).
 /// Supports optional multi-jump if LevelManager.allowMultiJumps is set.
@@ -7,6 +9,7 @@ public class PlayerJumpingState : PlayerStateBase
 {
     private readonly bool _applyImpulse;
     private int _midAirJumpsPerformed = 0;
+    private float _highestAirborneY;
 
     /// <param name="applyImpulse">
     /// Pass <c>true</c> when the player pressed Jump.
@@ -22,6 +25,9 @@ public class PlayerJumpingState : PlayerStateBase
     {
         ctx.PlayAnimation("isJumping");
         ctx.ResetPlayerRotation();
+        
+        // Track height from the starting position of the jump/fall
+        _highestAirborneY = ctx.PlayerTransform.position.y;
 
         if (_applyImpulse)
         {
@@ -37,10 +43,16 @@ public class PlayerJumpingState : PlayerStateBase
     {
         ctx.ResetPlayerRotation();
 
+        // Dynamically update the peak Y coordinate reached while airborne
+        if (ctx.PlayerTransform.position.y > _highestAirborneY)
+        {
+            _highestAirborneY = ctx.PlayerTransform.position.y;
+        }
+
         // ── Grounded check fallback ───────────────────────────────────────
         if (ctx.PlayerRigidbody.linearVelocity.y <= 0.1f && ctx.IsGrounded())
         {
-            ctx.StateMachine.ChangeState(new PlayerIdleState(ctx));
+            LandPlayer();
             return;
         }
 
@@ -48,7 +60,9 @@ public class PlayerJumpingState : PlayerStateBase
         if (ctx.JumpRequested)
         {
             ctx.JumpRequested = false;
-            if (_midAirJumpsPerformed < ctx.MaxMultiJumps)
+            // MaxMultiJumps represents the total jumps allowed. The first jump was off the ground,
+            // so we allow MaxMultiJumps - 1 mid-air jumps.
+            if (_midAirJumpsPerformed < (ctx.MaxMultiJumps - 1))
             {
                 _midAirJumpsPerformed++;
                 
@@ -58,6 +72,10 @@ public class PlayerJumpingState : PlayerStateBase
                 ctx.PlayerRigidbody.AddForce(
                     UnityEngine.Vector2.up * ctx.JumpForce, UnityEngine.ForceMode2D.Impulse);
                 ctx.PlayAnimation("isJumping");
+                
+                // Reset our highest peak Y since we just added new upward force
+                _highestAirborneY = ctx.PlayerTransform.position.y;
+
                 if (AudioManager.Instance != null)
                     AudioManager.Instance.PlaySfx("Jump");
             }
@@ -73,6 +91,22 @@ public class PlayerJumpingState : PlayerStateBase
         }
     }
 
+    private void LandPlayer()
+    {
+        if (ctx.EnableFallDamage)
+        {
+            float fallDistance = _highestAirborneY - ctx.PlayerTransform.position.y;
+            if (fallDistance > ctx.MaxSafeFallHeight)
+            {
+                Debug.Log($"[Fall Damage] Player fell {fallDistance:F2} units (Limit: {ctx.MaxSafeFallHeight:F2}). Player died!");
+                ctx.StateMachine.ChangeState(new PlayerDeadState(ctx));
+                return;
+            }
+        }
+
+        ctx.StateMachine.ChangeState(new PlayerIdleState(ctx));
+    }
+
     // ── Landing detection ─────────────────────────────────────────────────
 
     public override void OnTriggerEnter2D(UnityEngine.Collider2D other)
@@ -82,7 +116,7 @@ public class PlayerJumpingState : PlayerStateBase
             // Only land if the player is falling or stationary (not moving upwards)
             if (ctx.PlayerRigidbody.linearVelocity.y <= 0.1f)
             {
-                ctx.StateMachine.ChangeState(new PlayerIdleState(ctx));
+                LandPlayer();
             }
         }
         else if (other.CompareTag("Death"))
@@ -112,7 +146,7 @@ public class PlayerJumpingState : PlayerStateBase
                 {
                     if (contact.normal.y > 0.5f)
                     {
-                        ctx.StateMachine.ChangeState(new PlayerIdleState(ctx));
+                        LandPlayer();
                         break;
                     }
                 }

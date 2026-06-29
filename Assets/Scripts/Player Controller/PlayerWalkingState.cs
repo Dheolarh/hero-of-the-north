@@ -33,12 +33,15 @@ public class PlayerWalkingState : PlayerStateBase
         if (ctx.JumpRequested)
         {
             ctx.JumpRequested = false;
-            // Apply horizontal flip before leaving so the sprite faces right way
-            if (dir != 0f)
-                ctx.PlayerSprite.flipX = (dir < 0);
+            if (ctx.MaxMultiJumps > 0)
+            {
+                // Apply horizontal flip before leaving so the sprite faces right way
+                if (dir != 0f)
+                    ctx.PlayerSprite.flipX = (dir < 0);
 
-            ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx));
-            return;
+                ctx.StateMachine.ChangeState(new PlayerJumpingState(ctx));
+                return;
+            }
         }
 
         // ── Transition: no input → idle ───────────────────────────────────
@@ -57,16 +60,7 @@ public class PlayerWalkingState : PlayerStateBase
     public override void Exit()
     {
         if (AudioManager.Instance != null)
-            ctx.StartCoroutine(StopWalkingSoundDelayed());
-    }
-
-    private System.Collections.IEnumerator StopWalkingSoundDelayed()
-    {
-        yield return null;
-        if (AudioManager.Instance != null && ctx.StateMachine.Current is PlayerIdleState)
-        {
             AudioManager.Instance.StopWalkingSound();
-        }
     }
 
     public override void OnTriggerEnter2D(UnityEngine.Collider2D other)

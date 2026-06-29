@@ -2203,14 +2203,14 @@ MonoBehaviour:
     pitch: 0.5
   triggerLoopingSounds:
   - name: Boulder
-    clip: {fileID: 8300000, guid: a1a41952b94d04c41ac3532f667b89e2, type: 3}
+    clip: {fileID: 8300000, guid: bf92f2963fe5f064ca0f36b929fa722a, type: 3}
     volume: 0.7
     pitch: 0.5
   backgroundMusic:
   - name: Background
-    clip: {fileID: 8300000, guid: 2e54780e04c73824f8e698aee41c908e, type: 3}
+    clip: {fileID: 8300000, guid: 5625938599b00fe41bf3b4db89ee7e20, type: 3}
     volume: 1
-    pitch: 1
+    pitch: 3
   masterVolume: 1
   sfxVolume: 1
   musicVolume: 0.5

@@ -158,6 +158,7 @@ MonoBehaviour:
   triggerType: 3
   componentAction: 0
   setObjectActive: 0
+  activationMode: 0
   enableMove: 0
   moveDirection: 3
   moveSpeed: 0
@@ -166,14 +167,15 @@ MonoBehaviour:
   rotationDirection: 0
   rotationSpeed: 0
   stopRotationOnExit: 0
+  useLocalCoordinates: 0
   targetPosition: {x: 0, y: -35}
   targetMoveSpeed: 10
-  useLocalCoordinates: 0
   teleportPosition: {x: 0, y: 0}
   newGravityScale: 1
   fallSpeedMultiplier: 3
   applyOnEnter: 1
   resetOnExit: 0
+  newMaxJumpsValue: 2
   triggerDelay: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 0
@@ -290,6 +292,7 @@ MonoBehaviour:
   triggerType: 1
   componentAction: 0
   setObjectActive: 0
+  activationMode: 0
   enableMove: 0
   moveDirection: 3
   moveSpeed: 0
@@ -298,18 +301,19 @@ MonoBehaviour:
   rotationDirection: 0
   rotationSpeed: 0
   stopRotationOnExit: 0
+  useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
-  useLocalCoordinates: 0
   teleportPosition: {x: 3.54, y: 4.89}
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
+  newMaxJumpsValue: 2
   triggerDelay: 0
   deleteTriggerZone: 1
   playAudioOnTrigger: 1
-  audioClipName: Teleport
+  audioClipName: teleport
   loopAudio: 0
 --- !u!61 &8270141150331401278
 BoxCollider2D:
@@ -515,6 +519,7 @@ MonoBehaviour:
   triggerType: 2
   componentAction: 0
   setObjectActive: 1
+  activationMode: 0
   enableMove: 0
   moveDirection: 3
   moveSpeed: 3.4
@@ -523,14 +528,15 @@ MonoBehaviour:
   rotationDirection: 0
   rotationSpeed: 80
   stopRotationOnExit: 0
+  useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
-  useLocalCoordinates: 0
   teleportPosition: {x: 0, y: 0}
   newGravityScale: 1
   fallSpeedMultiplier: 2.5
   applyOnEnter: 1
   resetOnExit: 0
+  newMaxJumpsValue: 2
   triggerDelay: 0
   deleteTriggerZone: 1
   playAudioOnTrigger: 0
@@ -849,6 +855,7 @@ MonoBehaviour:
   triggerType: 5
   componentAction: 0
   setObjectActive: 0
+  activationMode: 0
   enableMove: 0
   moveDirection: 3
   moveSpeed: 5
@@ -857,14 +864,15 @@ MonoBehaviour:
   rotationDirection: 0
   rotationSpeed: 100
   stopRotationOnExit: 0
+  useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 5
-  useLocalCoordinates: 0
   teleportPosition: {x: 0, y: 0}
   newGravityScale: 1
   fallSpeedMultiplier: 2.5
   applyOnEnter: 1
   resetOnExit: 0
+  newMaxJumpsValue: 2
   triggerDelay: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 0

@@ -1182,7 +1182,7 @@ MonoBehaviour:
   followZ: 0
   offset: {x: 0, y: 0, z: -10}
   useSmoothing: 1
-  smoothSpeed: 5
+  smoothSpeed: 10
 --- !u!114 &1505091482
 MonoBehaviour:
   m_ObjectHideFlags: 0
