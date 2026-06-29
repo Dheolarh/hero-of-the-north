@@ -1651,6 +1651,7 @@ GameObject:
   - component: {fileID: 1988064278}
   - component: {fileID: 1988064280}
   - component: {fileID: 1988064279}
+  - component: {fileID: 1988064281}
   m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -1697,30 +1698,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Dear hero,
-
-    I write to you with sorrow in my heart. Dahak has once
-    again struck our kingdom, capturing our allies and leaving the survivors in hiding.
-    They have called upon your strength to venture into the cold and rescue those
-    we have lost.
-
-    Dahak is exceedingly dangerous. He has set treacherous traps
-    along the frozen paths, so you must tread with the utmost caution.
-
-    Troy,
-    our last brave adventurer, has set out before you to scout the wilderness and
-    clear a safe path. However, the blizzards are fierce and the terrain is hostile;
-    it takes Troy time to navigate the snow and find a safe passage. Do not rush,
-    as he can only secure one new passage each day.
-
-    The spirits of the North
-    watch your deeds closely, and your honor will grow for every companion you return
-    to safety. Time is of the essence; the faster you navigate the frozen wastes,
-    the greater your renown. Yet, guard your strength well. Every time you fall and
-    must restart your journey, your standing will diminish slightly, as we value
-    swift and decisive triumphs.
-
-    May the light guide your steps...'
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6334e812e37e91a4892f7e507441badc, type: 2}
   m_sharedMaterial: {fileID: 8117352761085033164, guid: 6334e812e37e91a4892f7e507441badc, type: 2}
@@ -1800,6 +1778,49 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1988064277}
   m_CullTransparentMesh: 1
+--- !u!114 &1988064281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1988064277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e218d7986bbc3a4e9a8f41e5c3659b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialTextInjector
+  targetText: {fileID: 1988064279}
+  messageTemplate: 'Dear {username},
+
+    I write to you with sorrow in my heart.
+    Dahak has once again struck our kingdom, capturing our allies and leaving the
+    survivors in hiding. They have called upon your strength to venture into the
+    cold and rescue those we have lost.
+
+
+    Dahak is exceedingly dangerous. He
+    has set treacherous traps along the frozen paths, so you must tread with the
+    utmost caution.
+
+
+    Troy, our last brave adventurer, has set out before you
+    to scout the wilderness and clear a safe path. However, the blizzards are fierce
+    and the terrain is hostile; it takes Troy time to navigate the snow and find
+    a safe passage. Do not rush, as he can only secure one new passage each day.
+
+
+    The
+    spirits of the North watch your deeds closely, and your honor will grow for every
+    companion you return to safety. Time is of the essence; the faster you navigate
+    the frozen wastes, the greater your renown. Yet, guard your strength well. Every
+    time you fall and must restart your journey, your standing will diminish slightly,
+    as we value swift and decisive triumphs.
+
+
+    May the light guide your steps...'
+  placeholder: Hero
+  fallback: Hero
 --- !u!224 &97814959342664772
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2176,7 +2197,7 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 61f66a47603215b40b0e13275ef499b1, type: 3}
     volume: 1
     pitch: 3
-  - name: Teleport
+  - name: teleport
     clip: {fileID: 8300000, guid: 4d702ed843982424ba06b2f26bfc14cd, type: 3}
     volume: 0.5
     pitch: 0.5

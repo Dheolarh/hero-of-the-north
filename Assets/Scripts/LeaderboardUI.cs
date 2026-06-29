@@ -184,7 +184,8 @@ public class LeaderboardUI : MonoBehaviour
     {
         if (playerHeroName != null && DevvitBridge.Instance != null)
         {
-            playerHeroName.text = DevvitBridge.Instance.username;
+            // username is already trimmed in DevvitBridge, but trim defensively here too
+            playerHeroName.text = DevvitBridge.TrimUsername(DevvitBridge.Instance.username);
         }
 
         if (playerHeroImage != null && DevvitBridge.Instance != null)

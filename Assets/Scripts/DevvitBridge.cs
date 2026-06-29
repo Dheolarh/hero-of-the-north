@@ -19,6 +19,9 @@ public class DevvitBridge : MonoBehaviour
     // Event for when unlock data is received (subscribed to by LevelManager)
     public System.Action<LevelUnlockInfo[]> OnUnlockDataReceived;
 
+    /// <summary>Fired as soon as the username has been fetched and trimmed.</summary>
+    public System.Action<string> OnUsernameReady;
+
     // ========== LIFECYCLE ==========
 
     void Awake()
@@ -27,6 +30,8 @@ public class DevvitBridge : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            // Fetch identity ASAP in Awake so username is available before any scene UI opens
+            StartCoroutine(FetchUserIdentity());
         }
         else
         {
@@ -36,9 +41,7 @@ public class DevvitBridge : MonoBehaviour
 
     void Start()
     {
-        // On start, fetch user identity and level unlock data from the server.
-        // In the Unity Editor these will fail gracefully (no Devvit server running locally).
-        StartCoroutine(FetchUserIdentity());
+        // Level unlock data can wait until Start — it doesn't block the tutorial UI
         StartCoroutine(FetchUnlockedLevels());
     }
 
@@ -52,10 +55,13 @@ public class DevvitBridge : MonoBehaviour
     {
 #if UNITY_EDITOR
         userId = "editor_user";
-        username = "EditorPlayer";
+        username = TrimUsername("EditorPlayer");
         avatarUrl = "";
         if (logMessages)
             Debug.Log($"[DevvitBridge] [Editor Mock] User identity set: {username}");
+        OnUsernameReady?.Invoke(username);
+        if (LeaderboardUI.Instance != null)
+            LeaderboardUI.Instance.UpdatePlayerStandingNameAndAvatar();
         yield break;
 #else
         using UnityWebRequest req = UnityWebRequest.Get("/api/user/me");
@@ -70,12 +76,15 @@ public class DevvitBridge : MonoBehaviour
         try
         {
             UserData data = JsonUtility.FromJson<UserData>(req.downloadHandler.text);
-            userId   = data.userId;
-            username = data.username;
+            userId    = data.userId;
+            username  = TrimUsername(data.username);
             avatarUrl = data.avatarUrl;
 
             if (logMessages)
                 Debug.Log($"[DevvitBridge] User identity: {username} ({userId})");
+
+            // Notify all listeners (e.g. TutorialTextInjector) immediately
+            OnUsernameReady?.Invoke(username);
 
             if (LeaderboardUI.Instance != null)
             {
@@ -353,6 +362,10 @@ public class DevvitBridge : MonoBehaviour
             {
                 if (logMessages)
                     Debug.Log($"[DevvitBridge] Score accepted! Hero Points: {response.heroPoints}, Total: {response.totalPoints}, Rank: {response.rank}");
+
+                // Auto-refresh leaderboard so the player sees their new rank/points
+                // without needing to quit and re-launch the game
+                StartCoroutine(RefreshLeaderboardAfterDelay(1.5f));
             }
             else
             {
@@ -363,6 +376,37 @@ public class DevvitBridge : MonoBehaviour
         {
             Debug.LogError($"[DevvitBridge] Error parsing score response: {e.Message}");
         }
+    }
+
+    /// <summary>
+    /// Waits a short moment (for the server to commit the score) then re-fetches
+    /// the leaderboard and the player's personal standing.
+    /// </summary>
+    private IEnumerator RefreshLeaderboardAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (logMessages)
+            Debug.Log("[DevvitBridge] Auto-refreshing leaderboard after score submission...");
+        RequestLeaderboard();
+        RequestPlayerStanding();
+    }
+
+    // ========== UTILITIES ==========
+
+    /// <summary>
+    /// Strips any leading "u/" prefix Reddit sometimes includes in usernames.
+    /// Returns "hero" if the name is null or empty (used as a safe fallback).
+    /// </summary>
+    public static string TrimUsername(string raw, string fallback = "hero")
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return fallback;
+
+        // Strip leading u/ or U/ (case-insensitive)
+        if (raw.StartsWith("u/", System.StringComparison.OrdinalIgnoreCase))
+            raw = raw.Substring(2);
+
+        return string.IsNullOrWhiteSpace(raw) ? fallback : raw;
     }
 
     // ========== DATA STRUCTURES ==========

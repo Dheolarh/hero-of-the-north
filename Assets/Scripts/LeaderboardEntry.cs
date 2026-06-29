@@ -26,7 +26,7 @@ public class LeaderboardEntry : MonoBehaviour
 
         if (usernameText != null)
         {
-            usernameText.text = username;
+            usernameText.text = DevvitBridge.TrimUsername(username);
         }
         else
         {
