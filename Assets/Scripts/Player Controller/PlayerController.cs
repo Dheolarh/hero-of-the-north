@@ -52,7 +52,13 @@ public class PlayerController : MonoBehaviour
         _playerCollider  = GetComponent<Collider2D>();
 
         if (LevelManager.Instance != null)
-            MaxMultiJumps = LevelManager.Instance.CurrentLevelData?.multiJumpCount ?? 0;
+        {
+            MaxMultiJumps = LevelManager.Instance.CurrentLevelData?.multiJumpCount ?? 1;
+        }
+        else
+        {
+            MaxMultiJumps = 1; // Default to normal jump in editor/sandbox scenes
+        }
 
         // Boot the state machine into Idle
         StateMachine = new PlayerStateMachine();
@@ -61,8 +67,11 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.Instance.isGameOver) return;
-        if (GameManager.Instance.isLevelCompleted)
+        bool isPlaytesting = LevelCreatorUI.Instance != null && LevelCreatorUI.Instance.IsPlaytesting;
+        if (GameManager.Instance == null && !isPlaytesting) return;
+
+        if (GameManager.Instance != null && GameManager.Instance.isGameOver) return;
+        if (GameManager.Instance != null && GameManager.Instance.isLevelCompleted)
         {
             if (!_levelCompleteFrozen)
             {

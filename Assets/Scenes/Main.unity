@@ -1819,7 +1819,7 @@ MonoBehaviour:
 
 
     May the light guide your steps...'
-  placeholder: Hero
+  placeholder: '{username}'
   fallback: Hero
 --- !u!224 &97814959342664772
 RectTransform:

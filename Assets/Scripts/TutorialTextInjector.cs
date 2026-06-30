@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -90,13 +91,60 @@ public class TutorialTextInjector : MonoBehaviour
     {
         if (targetText == null) return;
 
+        // Defensive check: if template is empty, fetch it now
+        if (string.IsNullOrEmpty(template))
+        {
+            if (!string.IsNullOrEmpty(messageTemplate))
+                template = messageTemplate;
+            else
+                template = targetText.text;
+        }
+
+        if (string.IsNullOrEmpty(template)) return;
+
         string cleanName = DevvitBridge.TrimUsername(name, fallback);
-        targetText.text  = template.Replace(placeholder, cleanName);
+        string newText = template;
+
+        // 1. Try replacing with the Inspector-defined placeholder (case-insensitive)
+        if (!string.IsNullOrEmpty(placeholder))
+        {
+            newText = ReplaceCaseInsensitive(newText, placeholder, cleanName);
+        }
+
+        // 2. Unconditionally replace standard bracket placeholders to be absolutely bulletproof
+        newText = ReplaceCaseInsensitive(newText, "{username}", cleanName);
+        newText = ReplaceCaseInsensitive(newText, "{Username}", cleanName);
+        newText = ReplaceCaseInsensitive(newText, "{USERNAME}", cleanName);
+        newText = ReplaceCaseInsensitive(newText, "{name}", cleanName);
+        newText = ReplaceCaseInsensitive(newText, "{Name}", cleanName);
+        
+        // 3. If the template contains "Dear hero", also replace "hero"/"Hero"
+        // but only if we got a real name (to avoid infinite loop of replacing "hero" with "hero")
+        if (cleanName != fallback)
+        {
+            newText = ReplaceCaseInsensitive(newText, "hero", cleanName);
+            newText = ReplaceCaseInsensitive(newText, "Hero", cleanName);
+        }
+
+        targetText.text = newText;
 
         // Re-run TextModifier effect (typewriter, etc.) with the updated text
         TextModifier modifier = GetComponent<TextModifier>();
         if (modifier != null)
             modifier.SetText(targetText.text);
+    }
+
+    private string ReplaceCaseInsensitive(string str, string oldVal, string newVal)
+    {
+        if (string.IsNullOrEmpty(str) || string.IsNullOrEmpty(oldVal)) return str;
+        
+        int index = str.IndexOf(oldVal, StringComparison.OrdinalIgnoreCase);
+        while (index != -1)
+        {
+            str = str.Substring(0, index) + newVal + str.Substring(index + oldVal.Length);
+            index = str.IndexOf(oldVal, index + newVal.Length, StringComparison.OrdinalIgnoreCase);
+        }
+        return str;
     }
 
     private IEnumerator WaitForBridge()
