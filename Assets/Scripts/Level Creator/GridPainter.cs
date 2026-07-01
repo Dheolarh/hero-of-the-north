@@ -364,6 +364,14 @@ public class GridPainter : MonoBehaviour
                     PlacedEditorObject hitObj = selectableGo.GetComponent<PlacedEditorObject>();
                     if (hitObj != null)
                     {
+                        // Check if Eraser tool is active in LevelCreatorUI
+                        if (LevelCreatorUI.Instance != null && LevelCreatorUI.Instance.IsEraserActive)
+                        {
+                            Debug.Log($"[GridPainter] Eraser active: erasing '{selectableGo.name}'");
+                            DeleteObject(hitObj);
+                            return; // Return immediately, do not select!
+                        }
+
                         Debug.Log($"[GridPainter] PlacedEditorObject target identified: '{selectableGo.name}' (Parent of '{hitCol.name}')");
                         // Detect double click
                         float timeSinceLastClick = Time.time - lastClickTime;
@@ -672,6 +680,32 @@ public class GridPainter : MonoBehaviour
     }
 
     // ── Delete Placed Object ─────────────────────────────────────────────────
+
+    public void DeleteObject(PlacedEditorObject target)
+    {
+        if (target == null) return;
+
+        // Remove active wires linked to this or from this
+        RemoveLink(target);
+
+        // Search for any other triggers that target this object
+        foreach (var obj in editorObjects)
+        {
+            if (obj.targetObject == target)
+            {
+                RemoveLink(obj);
+            }
+        }
+
+        editorObjects.Remove(target);
+        Destroy(target.gameObject);
+
+        if (selectedObject == target)
+        {
+            selectedObject = null;
+            ClearSelection();
+        }
+    }
 
     public void DeleteSelectedObject()
     {
@@ -1044,6 +1078,22 @@ public class GridPainter : MonoBehaviour
 
     private PaletteItem GetPaletteItem(string name)
     {
+        // 1. Check if LevelCreatorUI defines a custom drag-and-drop prefab for this type
+        if (LevelCreatorUI.Instance != null)
+        {
+            GameObject customPrefab = LevelCreatorUI.Instance.GetPrefabForType(name);
+            if (customPrefab != null)
+            {
+                return new PaletteItem
+                {
+                    typeName = name,
+                    editorPrefab = customPrefab,
+                    playtestPrefab = customPrefab // Use the same prefab for gameplay
+                };
+            }
+        }
+
+        // 2. Fallback to old palette registry list
         foreach (var item in palette)
         {
             if (MatchAssetType(item.typeName, name)) return item;

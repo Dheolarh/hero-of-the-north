@@ -36,6 +36,33 @@ public class LevelCreatorUI : MonoBehaviour
     [SerializeField] private TMP_Text selectedToolText;
     [SerializeField] private TMP_InputField levelNameInputField;
 
+    [System.Serializable]
+    public struct BrushPrefabMapping
+    {
+        [Tooltip("The tool name/tag for the button (e.g. 'Floor', 'PlatformIce', 'Spike 1').")]
+        public string toolName;
+        [Tooltip("The prefab to spawn when this tool is active.")]
+        public GameObject prefab;
+    }
+
+    [Header("Custom Brush Mappings")]
+    [SerializeField] private List<BrushPrefabMapping> customBrushes = new List<BrushPrefabMapping>();
+
+    public GameObject GetPrefabForType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName)) return null;
+
+        string norm = typeName.Replace(" ", "").ToLower();
+        foreach (var mapping in customBrushes)
+        {
+            if (!string.IsNullOrEmpty(mapping.toolName) && mapping.toolName.Replace(" ", "").ToLower() == norm)
+            {
+                return mapping.prefab;
+            }
+        }
+        return null;
+    }
+
     // ── Tool Selection State ──────────────────────────────────────────────────
     
     /// <summary>The type identifier of the currently selected placement asset.</summary>
@@ -138,7 +165,7 @@ public class LevelCreatorUI : MonoBehaviour
                 ? selected.customToolDisplayName 
                 : selected.assetTypeName;
 
-            selectedToolText.text = $"Active Tool: <color=red>{displayName}</color>";
+            selectedToolText.text = $"Active Tool: <color=blue>{displayName}</color>";
         }
         else if (IsEraserActive)
         {
@@ -146,7 +173,7 @@ public class LevelCreatorUI : MonoBehaviour
         }
         else
         {
-            selectedToolText.text = $"Active Tool: <color=red>{SelectedAsset}</color>";
+            selectedToolText.text = $"Active Tool: <color=blue>{SelectedAsset}</color>";
         }
     }
 
@@ -425,6 +452,14 @@ public class LevelCreatorUI : MonoBehaviour
     }
 
     // ── Utility Requests ─────────────────────────────────────────────────────
+
+    public void RequestSnapToPlayer()
+    {
+        if (GridPainter.Instance != null)
+        {
+            GridPainter.Instance.SnapCameraToPlayerStart();
+        }
+    }
 
     public void RequestClearGrid()
     {

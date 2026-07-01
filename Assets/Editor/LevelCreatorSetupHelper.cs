@@ -250,44 +250,55 @@ public class LevelCreatorSetupHelper : EditorWindow
         subPaletteRowObj.transform.SetParent(bottomPanelObj.transform, false);
         subPaletteRowObj.GetComponent<RectTransform>().sizeDelta = new Vector2(700f, 110f); // Fits 100 height buttons
 
-        // Terrain Brushes
-        GameObject terrainPalette = CreatePanel("TerrainPalette", subPaletteRowObj.transform, Color.clear, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero);
-        HorizontalLayoutGroup terrLayout = terrainPalette.AddComponent<HorizontalLayoutGroup>();
-        terrLayout.spacing = 15f;
-        terrLayout.childAlignment = TextAnchor.MiddleCenter;
+        // Terrain Brushes (Scrollable)
+        GameObject terrainPalette = CreateScrollablePalette("TerrainPalette", subPaletteRowObj.transform, buttonColor);
+        Transform terrainContent = terrainPalette.GetComponent<ScrollRect>().content;
 
-        GameObject floorBtn = CreateButton("FloorBrush", terrainPalette.transform, "Floor", buttonColor, new Vector2(150f, 100f));
-        GameObject iceBtn = CreateButton("IceBrush", terrainPalette.transform, "Ice", buttonColor, new Vector2(150f, 100f));
-        GameObject platBtn = CreateButton("MovingPlatBrush", terrainPalette.transform, "PingPong", buttonColor, new Vector2(150f, 100f));
+        GameObject floorBtn = CreateButton("FloorBrush", terrainContent, "Floor", buttonColor, new Vector2(150f, 100f));
+        GameObject iceBtn = CreateButton("IceBrush", terrainContent, "Ice", buttonColor, new Vector2(150f, 100f));
+        GameObject platBtn = CreateButton("MovingPlatBrush", terrainContent, "PingPong", buttonColor, new Vector2(150f, 100f));
+        GameObject platformBtn = CreateButton("PlatformBrush", terrainContent, "Platform", buttonColor, new Vector2(150f, 100f));
+        GameObject platform1Btn = CreateButton("Platform1Brush", terrainContent, "Platform 1", buttonColor, new Vector2(150f, 100f));
+        GameObject skyBtn = CreateButton("SkyBrush", terrainContent, "Sky", buttonColor, new Vector2(150f, 100f));
+        GameObject skyDeathBtn = CreateButton("SkyDeathBrush", terrainContent, "Sky Death", buttonColor, new Vector2(150f, 100f));
+        GameObject barrierBtn = CreateButton("BarrierBrush", terrainContent, "Barrier", buttonColor, new Vector2(150f, 100f));
+        GameObject bgBtn = CreateButton("BackgroundBrush", terrainContent, "Background", buttonColor, new Vector2(150f, 100f));
 
         AddStringSelectEvent(floorBtn.GetComponent<Button>(), ui, "Floor");
         AddStringSelectEvent(iceBtn.GetComponent<Button>(), ui, "PlatformIce");
         AddStringSelectEvent(platBtn.GetComponent<Button>(), ui, "MovingPlatform");
+        AddStringSelectEvent(platformBtn.GetComponent<Button>(), ui, "Platform");
+        AddStringSelectEvent(platform1Btn.GetComponent<Button>(), ui, "Platform 1");
+        AddStringSelectEvent(skyBtn.GetComponent<Button>(), ui, "Sky");
+        AddStringSelectEvent(skyDeathBtn.GetComponent<Button>(), ui, "Sky Death");
+        AddStringSelectEvent(barrierBtn.GetComponent<Button>(), ui, "Barrier");
+        AddStringSelectEvent(bgBtn.GetComponent<Button>(), ui, "Background");
 
-        // Hazards Brushes
-        GameObject hazardsPalette = CreatePanel("HazardsPalette", subPaletteRowObj.transform, Color.clear, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero);
-        HorizontalLayoutGroup hazLayout = hazardsPalette.AddComponent<HorizontalLayoutGroup>();
-        hazLayout.spacing = 15f;
-        hazLayout.childAlignment = TextAnchor.MiddleCenter;
+        // Hazards Brushes (Scrollable)
+        GameObject hazardsPalette = CreateScrollablePalette("HazardsPalette", subPaletteRowObj.transform, buttonColor);
+        Transform hazardsContent = hazardsPalette.GetComponent<ScrollRect>().content;
 
-        GameObject spikeBtn = CreateButton("SpikeBrush", hazardsPalette.transform, "Spikes", buttonColor, new Vector2(150f, 100f));
+        GameObject spikeBtn = CreateButton("SpikeBrush", hazardsContent, "Spikes", buttonColor, new Vector2(150f, 100f));
+        GameObject spike1Btn = CreateButton("Spike1Brush", hazardsContent, "Spike 1", buttonColor, new Vector2(150f, 100f));
+        GameObject rollerBtn = CreateButton("RollerBrush", hazardsContent, "Roller", buttonColor, new Vector2(150f, 100f));
+
         AddStringSelectEvent(spikeBtn.GetComponent<Button>(), ui, "SpikesMetal");
+        AddStringSelectEvent(spike1Btn.GetComponent<Button>(), ui, "Spike 1");
+        AddStringSelectEvent(rollerBtn.GetComponent<Button>(), ui, "Roller");
         hazardsPalette.SetActive(false);
 
-        // Essentials Brushes
-        GameObject essentialsPalette = CreatePanel("EssentialsPalette", subPaletteRowObj.transform, Color.clear, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero);
-        HorizontalLayoutGroup essLayout = essentialsPalette.AddComponent<HorizontalLayoutGroup>();
-        essLayout.spacing = 15f;
-        essLayout.childAlignment = TextAnchor.MiddleCenter;
+        // Essentials Brushes (Scrollable)
+        GameObject essentialsPalette = CreateScrollablePalette("EssentialsPalette", subPaletteRowObj.transform, buttonColor);
+        Transform essentialsContent = essentialsPalette.GetComponent<ScrollRect>().content;
 
-        GameObject startBtn = CreateButton("PlayerStartBrush", essentialsPalette.transform, "Spawn", buttonColor, new Vector2(150f, 100f));
-        GameObject portalBtn = CreateButton("GoalPortalBrush", essentialsPalette.transform, "Portal", buttonColor, new Vector2(150f, 100f));
+        GameObject startBtn = CreateButton("PlayerStartBrush", essentialsContent, "Hero", buttonColor, new Vector2(150f, 100f));
+        GameObject portalBtn = CreateButton("GoalPortalBrush", essentialsContent, "Portal", buttonColor, new Vector2(150f, 100f));
 
         AddStringSelectEvent(startBtn.GetComponent<Button>(), ui, "PlayerStart");
         AddStringSelectEvent(portalBtn.GetComponent<Button>(), ui, "Goal");
         essentialsPalette.SetActive(false);
 
-        // Camera Settings Customizer Panel
+        // Camera Settings Customizer Panel (Static sliders layout, no scroll needed)
         GameObject cameraPalette = CreatePanel("CameraSettingsPalette", subPaletteRowObj.transform, Color.clear, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero);
         HorizontalLayoutGroup camLayout = cameraPalette.AddComponent<HorizontalLayoutGroup>();
         camLayout.spacing = 25f;
@@ -460,5 +471,64 @@ public class LevelCreatorSetupHelper : EditorWindow
 
         outSlider = slider;
         return container;
+    }
+
+    private static GameObject CreateScrollablePalette(string name, Transform parent, Color buttonColor)
+    {
+        // 1. Create the Scroll View GameObject
+        GameObject scrollView = CreatePanel(name, parent, Color.clear, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero);
+
+        // 2. Add ScrollRect component (horizontal only, hide scrollbars)
+        ScrollRect scrollRect = scrollView.AddComponent<ScrollRect>();
+        scrollRect.horizontal = true;
+        scrollRect.vertical = false;
+        scrollRect.horizontalScrollbar = null;
+        scrollRect.verticalScrollbar = null;
+
+        // 3. Create Viewport (Masks buttons outside the bounds)
+        GameObject viewport = new GameObject("Viewport", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(RectMask2D));
+        viewport.transform.SetParent(scrollView.transform, false);
+
+        RectTransform rtView = viewport.GetComponent<RectTransform>();
+        rtView.anchorMin = Vector2.zero;
+        rtView.anchorMax = Vector2.one;
+        rtView.pivot = new Vector2(0f, 1f);
+        rtView.sizeDelta = Vector2.zero;
+
+        // Visual graphic for dragging interaction
+        Image img = viewport.GetComponent<Image>();
+        img.color = Color.clear;
+        img.raycastTarget = true; // MUST be true for click-dragging
+
+        // 4. Create Content container (grows horizontally)
+        GameObject content = new GameObject("Content", typeof(RectTransform));
+        content.transform.SetParent(viewport.transform, false);
+
+        RectTransform rtContent = content.GetComponent<RectTransform>();
+        rtContent.anchorMin = new Vector2(0f, 0f);
+        rtContent.anchorMax = new Vector2(0f, 1f); // Stretch height, dynamic width
+        rtContent.pivot = new Vector2(0f, 0.5f);
+        rtContent.sizeDelta = Vector2.zero;
+
+        // Auto layout using Horizontal Layout Group
+        HorizontalLayoutGroup layout = content.AddComponent<HorizontalLayoutGroup>();
+        layout.spacing = 15f;
+        layout.padding = new RectOffset(10, 10, 5, 5);
+        layout.childAlignment = TextAnchor.MiddleLeft;
+        layout.childControlWidth = false;
+        layout.childControlHeight = false;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
+
+        // Auto resize based on total button count
+        ContentSizeFitter fitter = content.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+        // Connect components
+        scrollRect.viewport = rtView;
+        scrollRect.content = rtContent;
+
+        return scrollView;
     }
 }
