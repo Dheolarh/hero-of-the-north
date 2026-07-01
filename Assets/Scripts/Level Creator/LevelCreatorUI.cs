@@ -83,6 +83,9 @@ public class LevelCreatorUI : MonoBehaviour
         SetPublishButtonState(false);
         if (validationSuccessPanel != null)
             validationSuccessPanel.SetActive(false);
+
+        // Dynamically inject Exit Playtest button (non-destructive)
+        CreateDynamicExitPlaytestButton();
     }
 
     // ── Palette Navigation ───────────────────────────────────────────────────
@@ -124,17 +127,26 @@ public class LevelCreatorUI : MonoBehaviour
         OnToolChanged?.Invoke(SelectedAsset, IsEraserActive);
     }
 
-    private void UpdateToolText()
+    public void UpdateToolText()
     {
         if (selectedToolText == null) return;
 
-        if (IsEraserActive)
+        if (GridPainter.Instance != null && GridPainter.Instance.GetSelectedObject() != null)
+        {
+            var selected = GridPainter.Instance.GetSelectedObject();
+            string displayName = !string.IsNullOrEmpty(selected.customToolDisplayName) 
+                ? selected.customToolDisplayName 
+                : selected.assetTypeName;
+
+            selectedToolText.text = $"Active Tool: <color=red>{displayName}</color>";
+        }
+        else if (IsEraserActive)
         {
             selectedToolText.text = "Active Tool: <color=red>Eraser</color>";
         }
         else
         {
-            selectedToolText.text = $"Active Tool: <color=green>{SelectedAsset}</color>";
+            selectedToolText.text = $"Active Tool: <color=red>{SelectedAsset}</color>";
         }
     }
 
@@ -152,6 +164,7 @@ public class LevelCreatorUI : MonoBehaviour
         {
             // Start playtest
             if (editorUIRoot != null) editorUIRoot.SetActive(false);
+            if (exitPlaytestButton != null) exitPlaytestButton.SetActive(true);
             if (playtestButton != null)
             {
                 var text = playtestButton.GetComponentInChildren<TMP_Text>();
@@ -163,6 +176,7 @@ public class LevelCreatorUI : MonoBehaviour
         {
             // Stop playtest and return to editor
             if (editorUIRoot != null) editorUIRoot.SetActive(true);
+            if (exitPlaytestButton != null) exitPlaytestButton.SetActive(false);
             if (playtestButton != null)
             {
                 var text = playtestButton.GetComponentInChildren<TMP_Text>();
@@ -363,6 +377,10 @@ public class LevelCreatorUI : MonoBehaviour
         if (settings != null)
         {
             settings.offset = new Vector3(val, settings.offset.y, settings.offset.z);
+            if (GridPainter.Instance != null)
+            {
+                GridPainter.Instance.SnapCameraToPlayerStart();
+            }
         }
     }
 
@@ -377,6 +395,10 @@ public class LevelCreatorUI : MonoBehaviour
             if (!settings.followY)
             {
                 settings.fixedYHeight = val;
+            }
+            if (GridPainter.Instance != null)
+            {
+                GridPainter.Instance.SnapCameraToPlayerStart();
             }
         }
     }
@@ -395,6 +417,10 @@ public class LevelCreatorUI : MonoBehaviour
             {
                 cam.orthographicSize = val;
             }
+            if (GridPainter.Instance != null)
+            {
+                GridPainter.Instance.SnapCameraToPlayerStart();
+            }
         }
     }
 
@@ -412,5 +438,62 @@ public class LevelCreatorUI : MonoBehaviour
     {
         // Go back to the main menu scene
         UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
+    }
+
+    private GameObject exitPlaytestButton;
+
+    private void CreateDynamicExitPlaytestButton()
+    {
+        // Don't duplicate if already present
+        Transform existing = transform.Find("ExitPlaytestButton");
+        if (existing != null)
+        {
+            exitPlaytestButton = existing.gameObject;
+            exitPlaytestButton.SetActive(false);
+            return;
+        }
+
+        // Create the button container under Canvas
+        exitPlaytestButton = new GameObject("ExitPlaytestButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        exitPlaytestButton.transform.SetParent(transform, false);
+
+        // Position at Top-Right with margin
+        RectTransform rt = exitPlaytestButton.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1f, 1f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.pivot = new Vector2(1f, 1f);
+        rt.anchoredPosition = new Vector2(-20f, -20f);
+        rt.sizeDelta = new Vector2(160f, 70f); // Match user button dimensions
+
+        // Styled as a dark crimson red Slate button
+        Image img = exitPlaytestButton.GetComponent<Image>();
+        img.color = new Color(0.6f, 0.15f, 0.15f, 0.95f);
+
+        // Add a neat border effect (optional, outline is clean)
+        var outline = exitPlaytestButton.AddComponent<Outline>();
+        outline.effectColor = new Color(1f, 1f, 1f, 0.2f);
+        outline.effectDistance = new Vector2(2f, -2f);
+
+        // Add a bold white label
+        GameObject labelObj = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer));
+        labelObj.transform.SetParent(exitPlaytestButton.transform, false);
+        TMP_Text txt = labelObj.AddComponent<TextMeshProUGUI>();
+        txt.text = "Exit Test";
+        txt.fontSize = 18;
+        txt.fontStyle = FontStyles.Bold;
+        txt.alignment = TextAlignmentOptions.Center;
+        txt.color = Color.white;
+
+        RectTransform rtLabel = labelObj.GetComponent<RectTransform>();
+        rtLabel.anchorMin = Vector2.zero;
+        rtLabel.anchorMax = Vector2.one;
+        rtLabel.sizeDelta = Vector2.zero;
+
+        // Attach listener
+        Button btn = exitPlaytestButton.GetComponent<Button>();
+        btn.onClick.AddListener(TogglePlaytest);
+
+        // Start hidden in Edit Mode
+        exitPlaytestButton.SetActive(false);
     }
 }

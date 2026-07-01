@@ -36,10 +36,6 @@ public class GridOverlay : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// OnPostRender is automatically called by Unity after the camera finishes rendering the scene.
-    /// Draws the grid lines directly on the GPU using GL commands.
-    /// </summary>
     void OnPostRender()
     {
         if (!showGrid) return;
@@ -79,5 +75,40 @@ public class GridOverlay : MonoBehaviour
         }
 
         GL.End();
+
+        // 3. Draw Selected Object Outline (Red border overlay)
+        var selectedObj = GridPainter.Instance != null ? GridPainter.Instance.GetSelectedObject() : null;
+        if (selectedObj != null)
+        {
+            var spriteRenderer = selectedObj.GetComponentInChildren<SpriteRenderer>();
+            if (spriteRenderer != null)
+            {
+                Bounds bounds = spriteRenderer.bounds;
+                float pad = 0.05f;
+                Vector3 min = bounds.min - new Vector3(pad, pad, 0f);
+                Vector3 max = bounds.max + new Vector3(pad, pad, 0f);
+
+                GL.Begin(GL.LINES);
+                GL.Color(Color.red);
+
+                // Bottom line
+                GL.Vertex3(min.x, min.y, 0f);
+                GL.Vertex3(max.x, min.y, 0f);
+
+                // Right line
+                GL.Vertex3(max.x, min.y, 0f);
+                GL.Vertex3(max.x, max.y, 0f);
+
+                // Top line
+                GL.Vertex3(max.x, max.y, 0f);
+                GL.Vertex3(min.x, max.y, 0f);
+
+                // Left line
+                GL.Vertex3(min.x, max.y, 0f);
+                GL.Vertex3(min.x, min.y, 0f);
+
+                GL.End();
+            }
+        }
     }
 }

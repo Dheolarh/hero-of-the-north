@@ -327,6 +327,7 @@ public class LevelCreatorSetupHelper : EditorWindow
         
         Image img = go.GetComponent<Image>();
         img.color = bgColor;
+        img.raycastTarget = false; // Disable raycast target so background panels don't block clicks on the scene
 
         RectTransform rt = go.GetComponent<RectTransform>();
         rt.anchorMin = min ?? Vector2.zero;

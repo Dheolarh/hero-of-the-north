@@ -8,6 +8,7 @@ TagManager:
   - Death
   - Barrier
   - PlatformGround
+  - Selectable
   layers:
   - Default
   - TransparentFX

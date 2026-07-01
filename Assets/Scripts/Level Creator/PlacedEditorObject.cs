@@ -9,8 +9,13 @@ public class PlacedEditorObject : MonoBehaviour
 {
     [Header("Asset Info")]
     public string assetTypeName;
+    [Tooltip("Optional custom name to display in the editor UI when this object is selected (e.g. 'Player' instead of 'PlayerStart').")]
+    public string customToolDisplayName;
 
     [Header("Properties (Adjusted via UI Properties Panel)")]
+    [Tooltip("Optionally drag in a specific project prefab to spawn during playtests instead of the global registry default.")]
+    public GameObject customPlaytestPrefab;
+
     public string moveDir = "Down"; // For spawner/pingpong directions: Up, Down, Left, Right
     public float speed = 3f;
     public float delay = 1f;

@@ -59,6 +59,10 @@ public class GridPainter : MonoBehaviour
     // Camera panning
     private Vector3 lastMousePos;
 
+    // Drag-and-drop selectable state
+    private GameObject activeDraggedSelectable = null;
+    private Vector3 dragOffset;
+
     // ── Unity lifecycle ───────────────────────────────────────────────────────
 
     void Awake()
@@ -115,6 +119,9 @@ public class GridPainter : MonoBehaviour
         // Camera Panning (Right Mouse Button drag)
         HandleCameraPanning();
 
+        // Editor Camera Zoom (Mouse scroll and touch pinch)
+        HandleCameraZoom();
+
         // Focus camera back on Player Spawn point when pressing F
         if (Input.GetKeyDown(KeyCode.F))
         {
@@ -124,6 +131,9 @@ public class GridPainter : MonoBehaviour
         // Handle Select and Double-click interactions
         HandleClickSelection();
 
+        // Handle dragging selectable objects on screen
+        HandleSelectableDragging();
+
         // Handle Linking Mode wire update
         HandleLinkingWireUpdate();
     }
@@ -132,20 +142,75 @@ public class GridPainter : MonoBehaviour
 
     private void FindExistingSceneObjects()
     {
-        // Scan the scene for any pre-placed objects under the Level container (including inactive ones)
-        if (levelContainer != null)
+        editorObjects.Clear();
+
+        // Scan the entire active scene for Selectable or Player tagged objects
+        var selectables = GameObject.FindGameObjectsWithTag("Selectable");
+        var players = GameObject.FindGameObjectsWithTag("Player");
+
+        List<GameObject> allTargets = new List<GameObject>();
+        allTargets.AddRange(selectables);
+        allTargets.AddRange(players);
+
+        foreach (GameObject go in allTargets)
         {
-            var components = levelContainer.GetComponentsInChildren<PlacedEditorObject>(true);
-            foreach (var comp in components)
+            if (go == null || go.name.Contains("Wire") || go.GetComponent<LineRenderer>() != null)
+                continue;
+
+            // Fix degenerate Z-scale (Z scale = 0 breaks Unity 2D physics colliders)
+            if (go.transform.localScale.z == 0f)
             {
-                if (!editorObjects.Contains(comp))
-                    editorObjects.Add(comp);
+                Vector3 localScale = go.transform.localScale;
+                localScale.z = 1f;
+                go.transform.localScale = localScale;
+                Debug.Log($"[GridPainter] Fixed degenerate Z-scale on '{go.name}' (forced to 1f for physics support).");
             }
-            Debug.Log($"[GridPainter] Scanned scene and registered {components.Length} existing components under '{levelContainer.name}'.");
+
+            // Disable physics simulation during editing so rigidbodies don't fall off their parent wrappers
+            var rb = go.GetComponentInChildren<Rigidbody2D>(true);
+            if (rb != null)
+            {
+                rb.simulated = false;
+            }
+
+            // Make sure they have PlacedEditorObject
+            var placedObj = go.GetComponent<PlacedEditorObject>();
+            if (placedObj == null)
+            {
+                placedObj = go.AddComponent<PlacedEditorObject>();
+            }
+
+            // Map assetTypeName correctly
+            string rawName = go.name;
+            if (string.IsNullOrEmpty(placedObj.assetTypeName))
+            {
+                if (rawName.Contains("Floor") || rawName.Contains("Ground")) placedObj.assetTypeName = "Floor";
+                else if (rawName.Contains("Ice")) placedObj.assetTypeName = "PlatformIce";
+                else if (rawName.Contains("Platform")) placedObj.assetTypeName = "MovingPlatform";
+                else if (rawName.Contains("Spike")) placedObj.assetTypeName = "SpikesMetal";
+                else if (rawName.Contains("Spawn") || rawName.Contains("PlayerStart") || rawName.Contains("Player")) placedObj.assetTypeName = "PlayerStart";
+                else if (rawName.Contains("Goal") || rawName.Contains("Portal")) placedObj.assetTypeName = "Goal";
+                else placedObj.assetTypeName = rawName.Replace("(Clone)", "").Trim();
+            }
+
+            // Add collider if missing
+            var col = go.GetComponent<Collider2D>();
+            if (col == null)
+            {
+                var newCol = go.AddComponent<BoxCollider2D>();
+                newCol.isTrigger = true; // Set as trigger so it does not physically collide with the player
+            }
+
+            // Register in the list
+            if (!editorObjects.Contains(placedObj))
+            {
+                editorObjects.Add(placedObj);
+            }
         }
+        Debug.Log($"[GridPainter] Scanned scene and registered {editorObjects.Count} editor objects.");
     }
 
-    // ── Camera Panning ───────────────────────────────────────────────────────
+    // ── Camera Panning & Zoom ────────────────────────────────────────────────
 
     private void HandleCameraPanning()
     {
@@ -165,12 +230,110 @@ public class GridPainter : MonoBehaviour
         {
             Vector3 delta = editorCamera.ScreenToViewportPoint(lastMousePos - Input.mousePosition);
             Vector3 move = new Vector3(delta.x * editorCamera.orthographicSize * 2f * editorCamera.aspect, delta.y * editorCamera.orthographicSize * 2f, 0f);
+            
             editorCamera.transform.position += move;
+            ClampCameraPosition();
             lastMousePos = Input.mousePosition;
         }
     }
 
+    private void HandleCameraZoom()
+    {
+        float currentSize = editorCamera.orthographicSize;
+
+        // 1. Mouse Scroll Wheel Zoom (Desktop)
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (Mathf.Abs(scroll) > 0.005f)
+        {
+            currentSize -= scroll * 8f; // Scroll speed scaling factor
+        }
+
+        // 2. Touch Screen Pinch-to-Zoom (Mobile WebGL)
+        if (Input.touchCount == 2)
+        {
+            Touch touchZero = Input.GetTouch(0);
+            Touch touchOne = Input.GetTouch(1);
+
+            // Find position in previous frame
+            Vector2 touchZeroPrevPos = touchZero.position - touchZero.deltaPosition;
+            Vector2 touchOnePrevPos = touchOne.position - touchOne.deltaPosition;
+
+            // Find previous and current touch distance magnitudes
+            float prevTouchDeltaMag = (touchZeroPrevPos - touchOnePrevPos).magnitude;
+            float touchDeltaMag = (touchZero.position - touchOne.position).magnitude;
+
+            // Difference in distance
+            float deltaMagnitudeDiff = touchDeltaMag - prevTouchDeltaMag;
+
+            // Adjust size (0.01f touch scaling factor)
+            currentSize -= deltaMagnitudeDiff * 0.02f;
+        }
+
+        // Clamp editing zoom between orthographic size 2 and 15
+        editorCamera.orthographicSize = Mathf.Clamp(currentSize, 2f, 15f);
+        
+        // Always clamp position after zoom to prevent view exceeding boundaries
+        ClampCameraPosition();
+    }
+
+    /// <summary>
+    /// Clamps the editor camera's position dynamically based on its current orthographic size (zoom),
+    /// ensuring that the visible screen boundaries never exceed X [-7, 50] and Y [-25, 25].
+    /// </summary>
+    private void ClampCameraPosition()
+    {
+        float halfHeight = editorCamera.orthographicSize;
+        float halfWidth = halfHeight * editorCamera.aspect;
+
+        float minXBound = -7f;
+        float maxXBound = 50f;
+        float minYBound = -25f;
+        float maxYBound = 25f;
+
+        Vector3 pos = editorCamera.transform.position;
+
+        // If the viewport fits within bounds, clamp it. Otherwise, center it on that axis.
+        if ((maxXBound - minXBound) > (2f * halfWidth))
+        {
+            pos.x = Mathf.Clamp(pos.x, minXBound + halfWidth, maxXBound - halfWidth);
+        }
+        else
+        {
+            pos.x = (minXBound + maxXBound) * 0.5f;
+        }
+
+        if ((maxYBound - minYBound) > (2f * halfHeight))
+        {
+            pos.y = Mathf.Clamp(pos.y, minYBound + halfHeight, maxYBound - halfHeight);
+        }
+        else
+        {
+            pos.y = (minYBound + maxYBound) * 0.5f;
+        }
+
+        editorCamera.transform.position = pos;
+    }
+
     // ── Selection & Double-Click ─────────────────────────────────────────────
+
+    private GameObject GetSelectableTarget(GameObject hitGo)
+    {
+        if (hitGo == null) return null;
+
+        PlacedEditorObject peo = hitGo.GetComponentInParent<PlacedEditorObject>();
+        if (peo == null) return null;
+
+        Transform curr = peo.transform;
+        while (curr != null)
+        {
+            if (curr.CompareTag("Selectable") || curr.CompareTag("Player"))
+            {
+                return peo.gameObject;
+            }
+            curr = curr.parent;
+        }
+        return null;
+    }
 
     private void HandleClickSelection()
     {
@@ -178,29 +341,52 @@ public class GridPainter : MonoBehaviour
         {
             // Prevent clicks when clicking UI buttons
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            {
+                Debug.Log("[GridPainter] Selection ignored: Clicked on a UI element.");
                 return;
+            }
 
             Vector3 mouseWorldPos = editorCamera.ScreenToWorldPoint(Input.mousePosition);
-            RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero);
+            mouseWorldPos.z = 0f; // Force Z coordinates to 0 for 2D calculations
+            Debug.Log($"[GridPainter] Click at Screen {Input.mousePosition} -> World {mouseWorldPos}");
 
-            if (hit.collider != null)
+            bool oldHitTriggers = Physics2D.queriesHitTriggers;
+            Physics2D.queriesHitTriggers = true;
+            Collider2D hitCol = Physics2D.OverlapPoint(mouseWorldPos);
+            Physics2D.queriesHitTriggers = oldHitTriggers;
+
+            if (hitCol != null)
             {
-                PlacedEditorObject hitObj = hit.collider.GetComponentInParent<PlacedEditorObject>();
-                if (hitObj != null)
+                Debug.Log($"[GridPainter] Physics overlap HIT: '{hitCol.name}', Tag: '{hitCol.tag}'");
+                GameObject selectableGo = GetSelectableTarget(hitCol.gameObject);
+                if (selectableGo != null)
                 {
-                    // Detect double click
-                    float timeSinceLastClick = Time.time - lastClickTime;
-                    if (timeSinceLastClick <= doubleClickThreshold && selectedObject == hitObj)
+                    PlacedEditorObject hitObj = selectableGo.GetComponent<PlacedEditorObject>();
+                    if (hitObj != null)
                     {
-                        OpenProperties(hitObj);
+                        Debug.Log($"[GridPainter] PlacedEditorObject target identified: '{selectableGo.name}' (Parent of '{hitCol.name}')");
+                        // Detect double click
+                        float timeSinceLastClick = Time.time - lastClickTime;
+                        if (timeSinceLastClick <= doubleClickThreshold && selectedObject == hitObj)
+                        {
+                            OpenProperties(hitObj);
+                        }
+                        else
+                        {
+                            SelectObject(hitObj);
+                        }
+                        lastClickTime = Time.time;
+                        return;
                     }
-                    else
-                    {
-                        SelectObject(hitObj);
-                    }
-                    lastClickTime = Time.time;
-                    return;
                 }
+                else
+                {
+                    Debug.Log($"[GridPainter] Hit object '{hitCol.name}' does not resolve to a Selectable/Player parent. Ignoring click.");
+                }
+            }
+            else
+            {
+                Debug.Log("[GridPainter] Click hit NOTHING in 2D space.");
             }
 
             // Clicked empty space — clear selection (unless in linking mode)
@@ -211,15 +397,67 @@ public class GridPainter : MonoBehaviour
         }
     }
 
+    private void HandleSelectableDragging()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+                return;
+
+            Vector3 mouseWorldPos = editorCamera.ScreenToWorldPoint(Input.mousePosition);
+            mouseWorldPos.z = 0f;
+
+            bool oldHitTriggers = Physics2D.queriesHitTriggers;
+            Physics2D.queriesHitTriggers = true;
+            Collider2D hitCol = Physics2D.OverlapPoint(mouseWorldPos);
+            Physics2D.queriesHitTriggers = oldHitTriggers;
+
+            if (hitCol != null)
+            {
+                GameObject selectableGo = GetSelectableTarget(hitCol.gameObject);
+                if (selectableGo != null)
+                {
+                    activeDraggedSelectable = selectableGo;
+                    dragOffset = selectableGo.transform.position - mouseWorldPos;
+                    dragOffset.z = 0f;
+                    Debug.Log($"[GridPainter] Started dragging parent object: '{activeDraggedSelectable.name}'");
+                }
+            }
+        }
+
+        if (Input.GetMouseButton(0) && activeDraggedSelectable != null)
+        {
+            Vector3 mouseWorldPos = editorCamera.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 newPos = mouseWorldPos + dragOffset;
+            newPos.z = 0f;
+
+            // Clamp coordinates to stay within level bounds
+            newPos.x = Mathf.Clamp(newPos.x, -7f, 50f);
+            newPos.y = Mathf.Clamp(newPos.y, -25f, 25f);
+
+            activeDraggedSelectable.transform.position = newPos;
+        }
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            activeDraggedSelectable = null;
+        }
+    }
+
     private void SelectObject(PlacedEditorObject obj)
     {
         ClearSelection();
         selectedObject = obj;
 
-        // Highlight selected object in scene (simple color swap or wireframe shader placeholder)
-        var sprite = selectedObject.GetComponentInChildren<SpriteRenderer>();
-        if (sprite != null)
+        // Highlight all sprite renderers in the selected hierarchy (uniform tint)
+        var sprites = selectedObject.GetComponentsInChildren<SpriteRenderer>(true);
+        foreach (var sprite in sprites)
         {
+            // Skip tinting the parent container sprite if it's the Player object
+            if (sprite.gameObject == selectedObject.gameObject && (selectedObject.CompareTag("Player") || selectedObject.name.Contains("Player")))
+            {
+                continue;
+            }
             sprite.color = new Color(0.7f, 0.9f, 1f, 1f); // light blue tint
         }
 
@@ -228,15 +466,30 @@ public class GridPainter : MonoBehaviour
         {
             ObjectPropertiesPanel.Instance.ShowProperties(selectedObject);
         }
+
+        // Refresh active tool text display
+        if (LevelCreatorUI.Instance != null)
+        {
+            LevelCreatorUI.Instance.UpdateToolText();
+        }
+    }
+
+    public PlacedEditorObject GetSelectedObject()
+    {
+        return selectedObject;
     }
 
     private void ClearSelection()
     {
         if (selectedObject != null)
         {
-            var sprite = selectedObject.GetComponentInChildren<SpriteRenderer>();
-            if (sprite != null)
+            var sprites = selectedObject.GetComponentsInChildren<SpriteRenderer>(true);
+            foreach (var sprite in sprites)
             {
+                if (sprite.gameObject == selectedObject.gameObject && (selectedObject.CompareTag("Player") || selectedObject.name.Contains("Player")))
+                {
+                    continue;
+                }
                 sprite.color = Color.white;
             }
         }
@@ -245,6 +498,12 @@ public class GridPainter : MonoBehaviour
         if (ObjectPropertiesPanel.Instance != null)
         {
             ObjectPropertiesPanel.Instance.HideProperties();
+        }
+
+        // Refresh active tool text display
+        if (LevelCreatorUI.Instance != null)
+        {
+            LevelCreatorUI.Instance.UpdateToolText();
         }
     }
 
@@ -466,14 +725,23 @@ public class GridPainter : MonoBehaviour
         {
             if (editorObj == null) continue;
 
-            PaletteItem item = GetPaletteItem(editorObj.assetTypeName);
-            if (item.playtestPrefab != null)
+            GameObject playtestPrefab = editorObj.customPlaytestPrefab;
+            if (playtestPrefab == null)
+            {
+                PaletteItem item = GetPaletteItem(editorObj.assetTypeName);
+                playtestPrefab = item.playtestPrefab;
+            }
+
+            if (playtestPrefab != null)
             {
                 GameObject clone = Instantiate(
-                    item.playtestPrefab, 
+                    playtestPrefab, 
                     editorObj.transform.position, 
                     editorObj.transform.rotation
                 );
+
+                // Ensure the cloned gameplay object is active, even if the source was disabled/hidden
+                clone.SetActive(true);
 
                 // Copy editor scale
                 clone.transform.localScale = editorObj.transform.localScale;
@@ -491,13 +759,17 @@ public class GridPainter : MonoBehaviour
         if (playerStart != null)
         {
             originalPlayerStartPos = playerStart.transform.position;
-            activePlaytestPlayer = playerStart.gameObject;
-
-            // Enable physics and simulation during playtest
-            var rb = activePlaytestPlayer.GetComponent<Rigidbody2D>();
+            
+            // Search for Rigidbody2D in parent or any children (supporting nested overrides)
+            var rb = playerStart.GetComponentInChildren<Rigidbody2D>(true);
             if (rb != null)
             {
+                activePlaytestPlayer = rb.gameObject;
                 rb.simulated = true;
+            }
+            else
+            {
+                activePlaytestPlayer = playerStart.gameObject;
             }
 
             var camFollow = Camera.main.GetComponent<CameraFollow>();
@@ -583,13 +855,47 @@ public class GridPainter : MonoBehaviour
     public void SnapCameraToPlayerStart()
     {
         var camFollow = Camera.main.GetComponent<CameraFollow>();
-        PlacedEditorObject playerStart = editorObjects.Find(o => o != null && MatchAssetType(o.assetTypeName, "PlayerStart"));
 
-        if (camFollow != null && playerStart != null)
+        if (activePlaytestPlayer != null)
         {
-            camFollow.SetTarget(playerStart.transform);
-            camFollow.StartFollowing();
-            Debug.Log("[GridPainter] Snapped camera view to PlayerStart marker.");
+            if (camFollow != null)
+            {
+                camFollow.SetTarget(activePlaytestPlayer.transform);
+                camFollow.StartFollowing();
+                Debug.Log("[GridPainter] Snapped camera view to active playtest player.");
+            }
+        }
+        else
+        {
+            // In Edit Mode, stop active following so it doesn't fight manual panning/zooming,
+            // and instantly teleport the camera to focus on the player's current position.
+            if (camFollow != null)
+            {
+                camFollow.StopFollowing();
+            }
+
+            PlacedEditorObject playerStart = editorObjects.Find(o => o != null && MatchAssetType(o.assetTypeName, "PlayerStart"));
+            if (playerStart != null)
+            {
+                Vector3 playerPos = playerStart.transform.position;
+                Vector3 camPos = editorCamera.transform.position;
+
+                var settings = FindFirstObjectByType<LevelCameraSettings>();
+                float targetX = playerPos.x;
+                float targetY = playerPos.y;
+
+                if (settings != null)
+                {
+                    targetX += settings.offset.x;
+                    targetY = settings.followY ? (playerPos.y + settings.offset.y) : settings.fixedYHeight;
+                }
+
+                // Center directly on the player's current coordinates with offset applied
+                editorCamera.transform.position = new Vector3(targetX, targetY, camPos.z);
+                ClampCameraPosition();
+
+                Debug.Log($"[GridPainter] Snapped editor camera to current player position (offset applied): {editorCamera.transform.position}");
+            }
         }
     }
 
