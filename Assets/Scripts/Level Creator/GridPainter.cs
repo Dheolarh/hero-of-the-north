@@ -457,12 +457,24 @@ public class GridPainter : MonoBehaviour
         ClearSelection();
         selectedObject = obj;
 
-        // Highlight all sprite renderers in the selected hierarchy (uniform tint)
+        // Highlight sprite renderers in the selected hierarchy
         var sprites = selectedObject.GetComponentsInChildren<SpriteRenderer>(true);
+        
+        // Detect if there are child sprite renderers under this object
+        bool hasChildSprites = false;
         foreach (var sprite in sprites)
         {
-            // Skip tinting the parent container sprite if it's the Player object
-            if (sprite.gameObject == selectedObject.gameObject && (selectedObject.CompareTag("Player") || selectedObject.name.Contains("Player")))
+            if (sprite.gameObject != selectedObject.gameObject)
+            {
+                hasChildSprites = true;
+                break;
+            }
+        }
+
+        foreach (var sprite in sprites)
+        {
+            // Skip highlighting the parent container if child sprites are present
+            if (sprite.gameObject == selectedObject.gameObject && hasChildSprites)
             {
                 continue;
             }
@@ -492,9 +504,20 @@ public class GridPainter : MonoBehaviour
         if (selectedObject != null)
         {
             var sprites = selectedObject.GetComponentsInChildren<SpriteRenderer>(true);
+            
+            bool hasChildSprites = false;
             foreach (var sprite in sprites)
             {
-                if (sprite.gameObject == selectedObject.gameObject && (selectedObject.CompareTag("Player") || selectedObject.name.Contains("Player")))
+                if (sprite.gameObject != selectedObject.gameObject)
+                {
+                    hasChildSprites = true;
+                    break;
+                }
+            }
+
+            foreach (var sprite in sprites)
+            {
+                if (sprite.gameObject == selectedObject.gameObject && hasChildSprites)
                 {
                     continue;
                 }
@@ -525,6 +548,71 @@ public class GridPainter : MonoBehaviour
     }
 
     // ── Drag-and-Drop Placement API ──────────────────────────────────────────
+
+    public void SpawnAssetAtCenter(string typeName)
+    {
+        CancelLinkingMode();
+        ClearSelection();
+
+        PaletteItem item = GetPaletteItem(typeName);
+        if (item.editorPrefab != null)
+        {
+            // Calculate center of current camera view snapped to 0.5 units
+            Vector3 camCenter = editorCamera.transform.position;
+            float snappedX = Mathf.Round(camCenter.x * 2f) / 2f;
+            float snappedY = Mathf.Round(camCenter.y * 2f) / 2f;
+            Vector3 spawnPos = new Vector3(snappedX, snappedY, 0f);
+
+            // Instantiate
+            GameObject spawned = Instantiate(item.editorPrefab, spawnPos, Quaternion.identity, levelContainer);
+            
+            // Setup PlacedEditorObject
+            var placedObj = spawned.GetComponent<PlacedEditorObject>();
+            if (placedObj == null)
+            {
+                placedObj = spawned.AddComponent<PlacedEditorObject>();
+            }
+            placedObj.assetTypeName = typeName;
+
+            // Prevent degenerate Z-scale
+            if (spawned.transform.localScale.z == 0f)
+            {
+                Vector3 localScale = spawned.transform.localScale;
+                localScale.z = 1f;
+                spawned.transform.localScale = localScale;
+            }
+
+            // Ensure collider exists for clicking/dragging
+            var col = spawned.GetComponent<Collider2D>();
+            if (col == null)
+            {
+                var newCol = spawned.AddComponent<BoxCollider2D>();
+                newCol.isTrigger = true;
+            }
+
+            // Ensure Rigidbody2D is not simulated during editing
+            var rb = spawned.GetComponentInChildren<Rigidbody2D>(true);
+            if (rb != null)
+            {
+                rb.simulated = false;
+            }
+
+            // Register
+            if (!editorObjects.Contains(placedObj))
+            {
+                editorObjects.Add(placedObj);
+            }
+
+            // Automatically select so they can drag it immediately
+            SelectObject(placedObj);
+
+            Debug.Log($"[GridPainter] Instantly spawned '{typeName}' at view center: {spawnPos}");
+        }
+        else
+        {
+            Debug.LogWarning($"[GridPainter] Could not spawn '{typeName}': Prefab not found in registry.");
+        }
+    }
 
     public void StartDragPlacement(string typeName)
     {
@@ -768,10 +856,12 @@ public class GridPainter : MonoBehaviour
 
             if (playtestPrefab != null)
             {
+                // Specify levelContainer as parent so clones are correctly organized inside LevelPrefab
                 GameObject clone = Instantiate(
                     playtestPrefab, 
                     editorObj.transform.position, 
-                    editorObj.transform.rotation
+                    editorObj.transform.rotation,
+                    levelContainer
                 );
 
                 // Ensure the cloned gameplay object is active, even if the source was disabled/hidden
@@ -789,17 +879,33 @@ public class GridPainter : MonoBehaviour
         }
 
         // 3. Configure player start & Goal Portal (if placed in editor)
-        PlacedEditorObject playerStart = editorObjects.Find(o => o != null && MatchAssetType(o.assetTypeName, "PlayerStart"));
+        PlacedEditorObject playerStart = editorObjects.Find(o => o != null && IsPlayerAsset(o.assetTypeName));
         if (playerStart != null)
         {
             originalPlayerStartPos = playerStart.transform.position;
-            
-            // Search for Rigidbody2D in parent or any children (supporting nested overrides)
-            var rb = playerStart.GetComponentInChildren<Rigidbody2D>(true);
+
+            // Find the cloned gameplay player object (instantiated from the prefab)
+            GameObject playtestPlayerClone = null;
+            if (playtestPairs.ContainsKey(playerStart))
+            {
+                playtestPlayerClone = playtestPairs[playerStart];
+            }
+
+            // Search for Rigidbody2D inside the clone or its children
+            Rigidbody2D rb = null;
+            if (playtestPlayerClone != null)
+            {
+                rb = playtestPlayerClone.GetComponentInChildren<Rigidbody2D>(true);
+            }
+
             if (rb != null)
             {
                 activePlaytestPlayer = rb.gameObject;
                 rb.simulated = true;
+            }
+            else if (playtestPlayerClone != null)
+            {
+                activePlaytestPlayer = playtestPlayerClone;
             }
             else
             {
@@ -807,7 +913,11 @@ public class GridPainter : MonoBehaviour
             }
 
             var camFollow = Camera.main.GetComponent<CameraFollow>();
-            if (camFollow != null) camFollow.SetTarget(activePlaytestPlayer.transform);
+            if (camFollow != null)
+            {
+                camFollow.SetTarget(activePlaytestPlayer.transform);
+                camFollow.StartFollowing(); // Explicitly start camera tracking
+            }
         }
         else
         {
@@ -908,7 +1018,7 @@ public class GridPainter : MonoBehaviour
                 camFollow.StopFollowing();
             }
 
-            PlacedEditorObject playerStart = editorObjects.Find(o => o != null && MatchAssetType(o.assetTypeName, "PlayerStart"));
+            PlacedEditorObject playerStart = editorObjects.Find(o => o != null && IsPlayerAsset(o.assetTypeName));
             if (playerStart != null)
             {
                 Vector3 playerPos = playerStart.transform.position;
@@ -939,12 +1049,6 @@ public class GridPainter : MonoBehaviour
         {
             if (obj != null)
             {
-                // NEVER hide the player start GameObject during playtest!
-                if (!visible && MatchAssetType(obj.assetTypeName, "PlayerStart"))
-                {
-                    continue;
-                }
-
                 obj.gameObject.SetActive(visible);
                 if (obj.wireLine != null) obj.wireLine.gameObject.SetActive(visible);
             }
@@ -1110,7 +1214,7 @@ public class GridPainter : MonoBehaviour
         };
 
         // Find PlayerStart and Goal
-        PlacedEditorObject playerStart = editorObjects.Find(o => o != null && MatchAssetType(o.assetTypeName, "PlayerStart"));
+        PlacedEditorObject playerStart = editorObjects.Find(o => o != null && IsPlayerAsset(o.assetTypeName));
         if (playerStart != null) levelData.playerStartPos = new Vector2S(playerStart.transform.position);
 
         PlacedEditorObject goalObj = editorObjects.Find(o => o != null && MatchAssetType(o.assetTypeName, "Goal"));
@@ -1119,7 +1223,7 @@ public class GridPainter : MonoBehaviour
         // Export all other placed tiles and traps
         foreach (var obj in editorObjects)
         {
-            if (obj == null || MatchAssetType(obj.assetTypeName, "PlayerStart") || MatchAssetType(obj.assetTypeName, "Goal")) continue;
+            if (obj == null || IsPlayerAsset(obj.assetTypeName) || MatchAssetType(obj.assetTypeName, "Goal")) continue;
 
             if (IsTrapAsset(obj.assetTypeName))
             {
@@ -1132,6 +1236,11 @@ public class GridPainter : MonoBehaviour
         }
 
         return levelData;
+    }
+
+    private bool IsPlayerAsset(string name)
+    {
+        return MatchAssetType(name, "PlayerStart") || MatchAssetType(name, "Hero") || MatchAssetType(name, "Spawn") || MatchAssetType(name, "Player");
     }
 
     private bool IsTrapAsset(string name)

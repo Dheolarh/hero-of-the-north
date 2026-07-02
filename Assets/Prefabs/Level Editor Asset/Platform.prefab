@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 889834604417638559}
   - component: {fileID: 8786244155725995012}
   m_Layer: 0
-  m_Name: Spike
+  m_Name: Platform
   m_TagString: Selectable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28,7 +28,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 4.5, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3261821856956447255}
@@ -106,7 +106,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
   assetTypeName: 
-  customToolDisplayName: Spike
+  customToolDisplayName: Platform
   customPlaytestPrefab: {fileID: 0}
   moveDir: Down
   speed: 3
@@ -126,8 +126,8 @@ GameObject:
   - component: {fileID: 2125456216144542558}
   - component: {fileID: 8038571647732650329}
   m_Layer: 0
-  m_Name: spike
-  m_TagString: Death
+  m_Name: ground
+  m_TagString: PlatformGround
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -140,13 +140,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6350419872549208477}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 1, w: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.22222224, y: 1, z: 1}
+  m_LocalScale: {x: 0.51, y: 1.1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3160517872115214873}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 180}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2125456216144542558
 SpriteRenderer:
   serializedVersion: 2
@@ -196,7 +196,7 @@ SpriteRenderer:
   m_SortingLayer: 3
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 2026624422, guid: 99e0832f2e8efae4ba10b757f5e03873, type: 3}
+  m_Sprite: {fileID: 21300002, guid: 99e0832f2e8efae4ba10b757f5e03873, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -236,19 +236,19 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.0033509731, y: 0.03367363}
+  m_Offset: {x: -0.02887407, y: -0.00774318}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 4.3542523, y: 0.94}
+    oldSize: {x: 1.8918475, y: 0.8000001}
     newSize: {x: 4.35, y: 0.940459}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 4.427772, y: 0.93127096}
+  m_Size: {x: 1.9009976, y: 0.8484373}
   m_EdgeRadius: 0

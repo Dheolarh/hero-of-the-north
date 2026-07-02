@@ -142,6 +142,11 @@ public class LevelCreatorUI : MonoBehaviour
         IsEraserActive = false;
         UpdateToolText();
         OnToolChanged?.Invoke(SelectedAsset, IsEraserActive);
+
+        if (GridPainter.Instance != null)
+        {
+            GridPainter.Instance.SpawnAssetAtCenter(assetType);
+        }
     }
 
     /// <summary>

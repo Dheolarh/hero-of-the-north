@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 889834604417638559}
   - component: {fileID: 8786244155725995012}
   m_Layer: 0
-  m_Name: Roller
+  m_Name: Teleporter
   m_TagString: Selectable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81,7 +81,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 455018537
   m_SortingLayer: 3
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0}
@@ -124,11 +124,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5799371062665937727, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.19798526
+      value: 2.0701976
       objectReference: {fileID: 0}
     - target: {fileID: 5799371062665937727, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.20228472
+      value: 2.0866446
       objectReference: {fileID: 0}
     - target: {fileID: 5799371062665937727, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
       propertyPath: m_LocalScale.z
@@ -136,11 +136,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5799371062665937727, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.008599997
+      value: -0.0003
       objectReference: {fileID: 0}
     - target: {fileID: 5799371062665937727, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.0029000044
+      value: 0.003
       objectReference: {fileID: 0}
     - target: {fileID: 5799371062665937727, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
       propertyPath: m_LocalPosition.z
@@ -174,19 +174,68 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6699812196234266857, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
+      propertyPath: m_Radius
+      value: 0.2610758
+      objectReference: {fileID: 0}
+    - target: {fileID: 6699812196234266857, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
+      propertyPath: m_Offset.x
+      value: -0.0036509687
+      objectReference: {fileID: 0}
+    - target: {fileID: 6699812196234266857, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
+      propertyPath: m_Offset.y
+      value: 0.00044266912
+      objectReference: {fileID: 0}
     - target: {fileID: 7212944105427456555, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
       propertyPath: m_Name
-      value: roller
+      value: portal
+      objectReference: {fileID: 0}
+    - target: {fileID: 7212944105427456555, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 7412984943590465914, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: aab0db57506f03643b1a32aa72ac98fd, type: 2}
+    - target: {fileID: 7412984943590465914, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
       propertyPath: m_SortingOrder
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7212944105427456555, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1937518792734576744}
   m_SourcePrefab: {fileID: 100100000, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
+--- !u!1 &6170976706053656482 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7212944105427456555, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
+  m_PrefabInstance: {fileID: 3583230247007001993}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1937518792734576744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6170976706053656482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 055fd0eddf8bd37488ccae3a03faf4d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Teleporter2D
+  triggerOnTriggerEnter: 1
+  targetTag: Player
+  useTriggerPositionAsPointA: 1
+  localPointA: {x: 0, y: 0}
+  activationRadius: 0.8
+  localPointB: {x: 0, y: 0}
+  resetRigidbodyVelocity: 1
+  showGizmos: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 1}
 --- !u!4 &7044106651114905270 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5799371062665937727, guid: 2bd8a5a1f9778b0498bdb0e688fa9516, type: 3}
