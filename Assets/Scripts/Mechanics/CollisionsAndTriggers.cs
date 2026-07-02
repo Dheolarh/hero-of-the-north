@@ -45,6 +45,13 @@ public enum ActivationMode
 
 public class CollisionsAndTriggers : MonoBehaviour
 {
+    [Header("Activation Conditions")]
+    [Tooltip("If true, the trap will activate immediately when the level starts.")]
+    public bool activateOnStart = false;
+
+    [Tooltip("List of objects that can trigger this trap when they collide with each other.")]
+    public GameObject[] activationObjects;
+
     [Header("Objects to Manipulate")]
     public GameObject[] objectsToTrigger;
 
@@ -85,6 +92,14 @@ public class CollisionsAndTriggers : MonoBehaviour
     [Header("Teleport Settings")]
     public Vector2 teleportPosition;
 
+    [Header("Destination Target Settings")]
+    [Tooltip("The object in the scene to use as the movement/teleportation destination.")]
+    public GameObject destinationTargetObject;
+    [Tooltip("Should it match the target's X position?")]
+    public bool useTargetX = true;
+    [Tooltip("Should it match the target's Y position?")]
+    public bool useTargetY = true;
+
     [Header("Physics Modification Settings")]
     public float newGravityScale;
     public float fallSpeedMultiplier;
@@ -106,6 +121,7 @@ public class CollisionsAndTriggers : MonoBehaviour
     private Rigidbody2D modifyRigidbody;
     private float originalGravityScale;
     private bool isPhysicsModified = false;
+    private float lastTriggerTime = -999f;
 
     [Header("Delete Trigger Zone")]
     public bool deleteTriggerZone;
@@ -126,6 +142,31 @@ public class CollisionsAndTriggers : MonoBehaviour
             if (modifyRigidbody != null)
             {
                 originalGravityScale = modifyRigidbody.gravityScale;
+            }
+        }
+
+        // Setup activation conditions
+        if (activateOnStart)
+        {
+            ExecuteTriggerActions();
+        }
+        else
+        {
+            // Always add listener to ourselves so we can also detect collisions
+            var selfListener = gameObject.GetComponent<ActivationCollisionListener>() ?? gameObject.AddComponent<ActivationCollisionListener>();
+            selfListener.parentTrigger = this;
+
+            if (activationObjects != null && activationObjects.Length > 0)
+            {
+                foreach (var obj in activationObjects)
+                {
+                    if (obj != null)
+                    {
+                        // Add listeners to detect mutual collisions
+                        var listener = obj.GetComponent<ActivationCollisionListener>() ?? obj.AddComponent<ActivationCollisionListener>();
+                        listener.parentTrigger = this;
+                    }
+                }
             }
         }
     }
@@ -159,6 +200,22 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     // ========== MOVEMENT FUNCTIONS ==========
 
+    private Vector2 GetTargetDestination(GameObject movingObj, Vector2 defaultStaticPos, bool isTeleport)
+    {
+        if (destinationTargetObject == null)
+        {
+            return isTeleport ? teleportPosition : targetPosition;
+        }
+
+        Vector2 targetCoords = useLocalCoordinates ? (Vector2)destinationTargetObject.transform.localPosition : (Vector2)destinationTargetObject.transform.position;
+        Vector2 currentCoords = useLocalCoordinates ? (Vector2)movingObj.transform.localPosition : (Vector2)movingObj.transform.position;
+
+        float x = useTargetX ? targetCoords.x : currentCoords.x;
+        float y = useTargetY ? targetCoords.y : currentCoords.y;
+
+        return new Vector2(x, y);
+    }
+
     void MoveToTarget()
     {
         if (objectsToTrigger == null || objectsToTrigger.Length == 0) return;
@@ -167,29 +224,31 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             if (obj == null) continue;
 
+            Vector2 dest = GetTargetDestination(obj, targetPosition, false);
+
             if (useLocalCoordinates)
             {
                 Vector2 currentPos = obj.transform.localPosition;
-                Vector2 newPos = Vector2.MoveTowards(currentPos, targetPosition, targetMoveSpeed * Time.deltaTime);
+                Vector2 newPos = Vector2.MoveTowards(currentPos, dest, targetMoveSpeed * Time.deltaTime);
                 obj.transform.localPosition = new Vector3(newPos.x, newPos.y, obj.transform.localPosition.z);
 
                 // Check if reached target (using first object as reference)
-                if (obj == objectsToTrigger[0] && Vector2.Distance(currentPos, targetPosition) < 0.01f)
+                if (obj == objectsToTrigger[0] && Vector2.Distance(currentPos, dest) < 0.01f)
                 {
-                    obj.transform.localPosition = new Vector3(targetPosition.x, targetPosition.y, obj.transform.localPosition.z);
+                    obj.transform.localPosition = new Vector3(dest.x, dest.y, obj.transform.localPosition.z);
                     isMovingToTarget = false;
                 }
             }
             else
             {
                 Vector2 currentPos = obj.transform.position;
-                Vector2 newPos = Vector2.MoveTowards(currentPos, targetPosition, targetMoveSpeed * Time.deltaTime);
+                Vector2 newPos = Vector2.MoveTowards(currentPos, dest, targetMoveSpeed * Time.deltaTime);
                 obj.transform.position = new Vector3(newPos.x, newPos.y, obj.transform.position.z);
 
                 // Check if reached target (using first object as reference)
-                if (obj == objectsToTrigger[0] && Vector2.Distance(currentPos, targetPosition) < 0.01f)
+                if (obj == objectsToTrigger[0] && Vector2.Distance(currentPos, dest) < 0.01f)
                 {
-                    obj.transform.position = new Vector3(targetPosition.x, targetPosition.y, obj.transform.position.z);
+                    obj.transform.position = new Vector3(dest.x, dest.y, obj.transform.position.z);
                     isMovingToTarget = false;
                 }
             }
@@ -282,13 +341,15 @@ public class CollisionsAndTriggers : MonoBehaviour
             {
                 if (obj != null)
                 {
+                    Vector2 dest = GetTargetDestination(obj, teleportPosition, true);
+
                     if (useLocalCoordinates)
                     {
-                        obj.transform.localPosition = new Vector3(teleportPosition.x, teleportPosition.y, obj.transform.localPosition.z);
+                        obj.transform.localPosition = new Vector3(dest.x, dest.y, obj.transform.localPosition.z);
                     }
                     else
                     {
-                        obj.transform.position = new Vector3(teleportPosition.x, teleportPosition.y, obj.transform.position.z);
+                        obj.transform.position = new Vector3(dest.x, dest.y, obj.transform.position.z);
                     }
                 }
             }
@@ -452,18 +513,38 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     // ========== TRIGGER EVENTS ==========
 
+    public void ReportActivationCollision(GameObject objA, GameObject objB)
+    {
+        if (Time.time - lastTriggerTime < 0.1f) return;
+        lastTriggerTime = Time.time;
+
+        Debug.Log($"[CollisionsAndTriggers] Activation collision detected between {objA.name} and {objB.name}!");
+        if (triggerDelay > 0f)
+        {
+            StartCoroutine(TriggerSequenceWithDelay());
+        }
+        else
+        {
+            ExecuteTriggerActions();
+        }
+    }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
-        Debug.Log($"[CollisionsAndTriggers] OnTriggerEnter2D called! Other: {other.gameObject.name}, Tag: {other.tag}, This GameObject: {gameObject.name}");        
-        if (other.CompareTag("Player"))
+        // Fallback to default Player collision behavior if activationObjects list is empty and activateOnStart is false
+        if ((activationObjects == null || activationObjects.Length == 0) && !activateOnStart)
         {
-            if (triggerDelay > 0f)
+            Debug.Log($"[CollisionsAndTriggers] OnTriggerEnter2D called! Other: {other.gameObject.name}, Tag: {other.tag}, This GameObject: {gameObject.name}");        
+            if (other.CompareTag("Player"))
             {
-                StartCoroutine(TriggerSequenceWithDelay());
-            }
-            else
-            {
-                ExecuteTriggerActions();
+                if (triggerDelay > 0f)
+                {
+                    StartCoroutine(TriggerSequenceWithDelay());
+                }
+                else
+                {
+                    ExecuteTriggerActions();
+                }
             }
         }
     }
@@ -594,6 +675,58 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             var collider = GetComponent<Collider2D>();
             collider.enabled = false;
+        }
+    }
+}
+
+/// <summary>
+/// Helper listener added at runtime to objects that trigger the trap.
+/// Reports a trigger collision if any two items in the activation list touch.
+/// </summary>
+public class ActivationCollisionListener : MonoBehaviour
+{
+    public CollisionsAndTriggers parentTrigger;
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        HandleCollision(collision.gameObject);
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        HandleCollision(other.gameObject);
+    }
+
+    private void HandleCollision(GameObject otherGo)
+    {
+        if (parentTrigger == null || parentTrigger.activationObjects == null) return;
+
+        bool thisInList = false;
+        bool otherInList = false;
+
+        foreach (var obj in parentTrigger.activationObjects)
+        {
+            if (obj == gameObject) thisInList = true;
+            if (obj == otherGo) otherInList = true;
+        }
+
+        // Case 1: Two objects in the activation list touch
+        if (thisInList && otherInList)
+        {
+            parentTrigger.ReportActivationCollision(gameObject, otherGo);
+            return;
+        }
+
+        // Case 2: Only 1 activation object is selected, check if it touches the trigger zone itself
+        if (parentTrigger.activationObjects.Length == 1)
+        {
+            bool thisIsTriggerZone = (gameObject == parentTrigger.gameObject);
+            bool otherIsTriggerZone = (otherGo == parentTrigger.gameObject);
+
+            if ((thisInList && otherIsTriggerZone) || (otherInList && thisIsTriggerZone))
+            {
+                parentTrigger.ReportActivationCollision(gameObject, otherGo);
+            }
         }
     }
 }

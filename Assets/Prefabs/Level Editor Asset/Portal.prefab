@@ -126,6 +126,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Portal
       objectReference: {fileID: 0}
+    - target: {fileID: 3883875668099781198, guid: 840d799e54eec6c43a1481cf7ee8dbef, type: 3}
+      propertyPath: m_SortingOrder
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7720664010099969065, guid: 840d799e54eec6c43a1481cf7ee8dbef, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.3

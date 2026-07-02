@@ -37,6 +37,7 @@ public class GridPainter : MonoBehaviour
     
     // Active selection state
     private PlacedEditorObject selectedObject;
+    public static bool suppressNamePromptOnce = false;
 
     // Drag-and-drop state
     private GameObject activeDragObject;
@@ -239,6 +240,12 @@ public class GridPainter : MonoBehaviour
 
     private void HandleCameraZoom()
     {
+        // Ignore zoom if the cursor is hovering over a UI element (e.g., scrolling a panel)
+        if (UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+        {
+            return;
+        }
+
         float currentSize = editorCamera.orthographicSize;
 
         // 1. Mouse Scroll Wheel Zoom (Desktop)
@@ -499,6 +506,11 @@ public class GridPainter : MonoBehaviour
         return selectedObject;
     }
 
+    public List<PlacedEditorObject> GetPlacedObjects()
+    {
+        return editorObjects;
+    }
+
     private void ClearSelection()
     {
         if (selectedObject != null)
@@ -604,7 +616,28 @@ public class GridPainter : MonoBehaviour
             }
 
             // Automatically select so they can drag it immediately
-            SelectObject(placedObj);
+            if (LevelCreatorUI.Instance != null && !suppressNamePromptOnce)
+            {
+                LevelCreatorUI.Instance.PromptForObjectName(placedObj, 
+                    (newName) => {
+                        SelectObject(placedObj);
+                        var controller = LevelCreatorUI.Instance.GetComponentInChildren<MechanicsEditorPanelController>();
+                        if (controller != null)
+                        {
+                            controller.RefreshCandidateList();
+                            controller.RefreshWiringPanelIfActive(placedObj);
+                        }
+                    }, 
+                    () => {
+                        DeleteObject(placedObj);
+                    }
+                );
+            }
+            else
+            {
+                SelectObject(placedObj);
+            }
+            suppressNamePromptOnce = false;
 
             Debug.Log($"[GridPainter] Instantly spawned '{typeName}' at view center: {spawnPos}");
         }
@@ -677,7 +710,29 @@ public class GridPainter : MonoBehaviour
         // Add to active placed list
         editorObjects.Add(activeDragScript);
 
-        SelectObject(activeDragScript);
+        PlacedEditorObject placedObj = activeDragScript;
+        if (LevelCreatorUI.Instance != null && !suppressNamePromptOnce)
+        {
+            LevelCreatorUI.Instance.PromptForObjectName(placedObj, 
+                (newName) => {
+                    SelectObject(placedObj);
+                    var controller = LevelCreatorUI.Instance.GetComponentInChildren<MechanicsEditorPanelController>();
+                    if (controller != null)
+                    {
+                        controller.RefreshCandidateList();
+                        controller.RefreshWiringPanelIfActive(placedObj);
+                    }
+                }, 
+                () => {
+                    DeleteObject(placedObj);
+                }
+            );
+        }
+        else
+        {
+            SelectObject(placedObj);
+        }
+        suppressNamePromptOnce = false;
 
         activeDragObject = null;
         activeDragScript = null;
@@ -940,23 +995,12 @@ public class GridPainter : MonoBehaviour
             Debug.LogWarning("[GridPainter] Playtest Goal portal prefab is null! Make sure 'Goal' has a playtestPrefab assigned in the GridPainter inspector palette.");
         }
 
-        // 4. Wire trigger-to-target links dynamically
+        // 4. Wire and configure trigger-to-target links dynamically on the playtest clones
         foreach (var editorObj in editorObjects)
         {
-            if (editorObj.hasTarget && editorObj.targetObject != null)
+            if (editorObj != null && playtestPairs.ContainsKey(editorObj))
             {
-                if (playtestPairs.ContainsKey(editorObj) && playtestPairs.ContainsKey(editorObj.targetObject))
-                {
-                    GameObject triggerClone = playtestPairs[editorObj];
-                    GameObject targetClone = playtestPairs[editorObj.targetObject];
-
-                    CollisionsAndTriggers triggerScript = triggerClone.GetComponent<CollisionsAndTriggers>();
-                    if (triggerScript != null)
-                    {
-                        triggerScript.objectsToTrigger = new GameObject[] { targetClone };
-                        Debug.Log($"[GridPainter] Wired playtest triggers: {triggerClone.name} -> {targetClone.name}");
-                    }
-                }
+                CopyCollisionsAndTriggers(editorObj, playtestPairs[editorObj], playtestPairs);
             }
         }
     }
@@ -1269,6 +1313,127 @@ public class GridPainter : MonoBehaviour
         lr.endColor = wireColor;
         lr.sortingOrder = 10;
         return lr;
+    }
+
+    private void CopyCollisionsAndTriggers(PlacedEditorObject editorObj, GameObject spawnedObj, Dictionary<PlacedEditorObject, GameObject> playtestPairs)
+    {
+        var editorTriggerScript = editorObj.GetComponent<CollisionsAndTriggers>();
+        if (editorTriggerScript == null) return;
+
+        // Add or get component on playtest clone
+        var playtestTrigger = spawnedObj.GetComponent<CollisionsAndTriggers>() ?? spawnedObj.AddComponent<CollisionsAndTriggers>();
+
+        // Copy basic value fields
+        playtestTrigger.activateOnStart = editorTriggerScript.activateOnStart;
+        playtestTrigger.triggerType = editorTriggerScript.triggerType;
+        playtestTrigger.componentAction = editorTriggerScript.componentAction;
+        playtestTrigger.setObjectActive = editorTriggerScript.setObjectActive;
+        playtestTrigger.activationMode = editorTriggerScript.activationMode;
+        playtestTrigger.enableMove = editorTriggerScript.enableMove;
+        playtestTrigger.moveDirection = editorTriggerScript.moveDirection;
+        playtestTrigger.moveSpeed = editorTriggerScript.moveSpeed;
+        playtestTrigger.stopMoveOnExit = editorTriggerScript.stopMoveOnExit;
+        playtestTrigger.enableRotation = editorTriggerScript.enableRotation;
+        playtestTrigger.rotationDirection = editorTriggerScript.rotationDirection;
+        playtestTrigger.rotationSpeed = editorTriggerScript.rotationSpeed;
+        playtestTrigger.stopRotationOnExit = editorTriggerScript.stopRotationOnExit;
+        playtestTrigger.useLocalCoordinates = editorTriggerScript.useLocalCoordinates;
+        playtestTrigger.targetPosition = editorTriggerScript.targetPosition;
+        playtestTrigger.targetMoveSpeed = editorTriggerScript.targetMoveSpeed;
+        playtestTrigger.teleportPosition = editorTriggerScript.teleportPosition;
+        playtestTrigger.newGravityScale = editorTriggerScript.newGravityScale;
+        playtestTrigger.fallSpeedMultiplier = editorTriggerScript.fallSpeedMultiplier;
+        playtestTrigger.applyOnEnter = editorTriggerScript.applyOnEnter;
+        playtestTrigger.resetOnExit = editorTriggerScript.resetOnExit;
+        playtestTrigger.newMaxJumpsValue = editorTriggerScript.newMaxJumpsValue;
+        playtestTrigger.triggerDelay = editorTriggerScript.triggerDelay;
+        playtestTrigger.deleteTriggerZone = editorTriggerScript.deleteTriggerZone;
+        playtestTrigger.playAudioOnTrigger = editorTriggerScript.playAudioOnTrigger;
+        playtestTrigger.audioClipName = editorTriggerScript.audioClipName;
+        playtestTrigger.loopAudio = editorTriggerScript.loopAudio;
+        playtestTrigger.useTargetX = editorTriggerScript.useTargetX;
+        playtestTrigger.useTargetY = editorTriggerScript.useTargetY;
+
+        // Copy reference fields mapped to playtest clones
+        if (editorTriggerScript.objectToModify != null)
+        {
+            var modifyEditorScript = editorTriggerScript.objectToModify.GetComponent<PlacedEditorObject>();
+            if (modifyEditorScript != null && playtestPairs.ContainsKey(modifyEditorScript))
+            {
+                playtestTrigger.objectToModify = playtestPairs[modifyEditorScript];
+            }
+            else
+            {
+                playtestTrigger.objectToModify = editorTriggerScript.objectToModify;
+            }
+        }
+
+        if (editorTriggerScript.destinationTargetObject != null)
+        {
+            var destEditorScript = editorTriggerScript.destinationTargetObject.GetComponent<PlacedEditorObject>();
+            if (destEditorScript != null && playtestPairs.ContainsKey(destEditorScript))
+            {
+                playtestTrigger.destinationTargetObject = playtestPairs[destEditorScript];
+            }
+            else
+            {
+                playtestTrigger.destinationTargetObject = editorTriggerScript.destinationTargetObject;
+            }
+        }
+
+        List<GameObject> playtestTargets = new List<GameObject>();
+        if (editorTriggerScript.objectsToTrigger != null && editorTriggerScript.objectsToTrigger.Length > 0)
+        {
+            foreach (var targetEditorGo in editorTriggerScript.objectsToTrigger)
+            {
+                if (targetEditorGo == null) continue;
+                var targetEditorScript = targetEditorGo.GetComponent<PlacedEditorObject>();
+                if (targetEditorScript != null && playtestPairs.ContainsKey(targetEditorScript))
+                {
+                    playtestTargets.Add(playtestPairs[targetEditorScript]);
+                }
+                else
+                {
+                    playtestTargets.Add(targetEditorGo);
+                }
+            }
+        }
+        else if (editorObj.hasTarget && editorObj.targetObject != null && playtestPairs.ContainsKey(editorObj.targetObject))
+        {
+            playtestTargets.Add(playtestPairs[editorObj.targetObject]);
+        }
+        playtestTrigger.objectsToTrigger = playtestTargets.ToArray();
+
+        List<GameObject> playtestActivators = new List<GameObject>();
+        if (editorTriggerScript.activationObjects != null && editorTriggerScript.activationObjects.Length > 0)
+        {
+            foreach (var actEditorGo in editorTriggerScript.activationObjects)
+            {
+                if (actEditorGo == null) continue;
+                var actEditorScript = actEditorGo.GetComponent<PlacedEditorObject>();
+                if (actEditorScript != null && playtestPairs.ContainsKey(actEditorScript))
+                {
+                    playtestActivators.Add(playtestPairs[actEditorScript]);
+                }
+                else
+                {
+                    playtestActivators.Add(actEditorGo);
+                }
+            }
+        }
+        playtestTrigger.activationObjects = playtestActivators.ToArray();
+
+        // Ensure collider is set to trigger if it exists
+        var col = spawnedObj.GetComponent<Collider2D>();
+        if (col == null)
+        {
+            var newCol = spawnedObj.AddComponent<BoxCollider2D>();
+            newCol.isTrigger = true;
+        }
+        else
+        {
+            col.isTrigger = true;
+        }
     }
 }
 

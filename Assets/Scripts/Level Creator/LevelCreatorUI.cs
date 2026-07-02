@@ -91,6 +91,8 @@ public class LevelCreatorUI : MonoBehaviour
     /// <summary>Fired when the user requests loading a saved local level.</summary>
     public event Action<CustomLevelData> OnLoadLevelRequest;
 
+    private GameObject activeMechanicsPanel;
+
     // ── Unity lifecycle ───────────────────────────────────────────────────────
 
     void Awake()
@@ -535,5 +537,437 @@ public class LevelCreatorUI : MonoBehaviour
 
         // Start hidden in Edit Mode
         exitPlaytestButton.SetActive(false);
+    }
+
+    /// <summary>
+    /// Toggles the dynamic popup Mechanics Editor Panel.
+    /// </summary>
+    public void ToggleMechanicsPanel()
+    {
+        if (activeMechanicsPanel != null)
+        {
+            Destroy(activeMechanicsPanel);
+            activeMechanicsPanel = null;
+            return;
+        }
+
+        if (editorUIRoot == null) return;
+
+        // 1. Root Popup Container (Stretched to take up most of the screen)
+        activeMechanicsPanel = new GameObject("MechanicsPopupPanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        activeMechanicsPanel.transform.SetParent(editorUIRoot.transform, false);
+
+        RectTransform rtRoot = activeMechanicsPanel.GetComponent<RectTransform>();
+        rtRoot.anchorMin = new Vector2(0.08f, 0.08f);
+        rtRoot.anchorMax = new Vector2(0.92f, 0.92f);
+        rtRoot.pivot = new Vector2(0.5f, 0.5f);
+        rtRoot.anchoredPosition = Vector2.zero;
+        rtRoot.sizeDelta = Vector2.zero;
+
+        Image imgRoot = activeMechanicsPanel.GetComponent<Image>();
+        imgRoot.color = new Color(0.1f, 0.12f, 0.16f, 0.98f); // deep slate glassmorphism style
+
+        Outline outline = activeMechanicsPanel.AddComponent<Outline>();
+        outline.effectColor = new Color(0.2f, 0.7f, 1f, 0.4f); // neon cyan border
+        outline.effectDistance = new Vector2(2f, -2f);
+
+        // 2. Header Title Text
+        GameObject titleObj = new GameObject("HeaderTitle", typeof(RectTransform), typeof(CanvasRenderer));
+        titleObj.transform.SetParent(activeMechanicsPanel.transform, false);
+        RectTransform rtTitle = titleObj.GetComponent<RectTransform>();
+        rtTitle.anchorMin = new Vector2(0.05f, 0.94f);
+        rtTitle.anchorMax = new Vector2(0.75f, 0.98f);
+        rtTitle.pivot = new Vector2(0f, 0.5f);
+        rtTitle.anchoredPosition = Vector2.zero;
+        rtTitle.sizeDelta = Vector2.zero;
+
+        TMP_Text txtTitle = titleObj.AddComponent<TextMeshProUGUI>();
+        txtTitle.text = "LEVEL MECHANICS EDITOR";
+        txtTitle.fontSize = 22;
+        txtTitle.fontStyle = FontStyles.Bold;
+        txtTitle.color = Color.white;
+
+        // 3. Close Button (X in top right)
+        GameObject closeBtnObj = new GameObject("CloseButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        closeBtnObj.transform.SetParent(activeMechanicsPanel.transform, false);
+        RectTransform rtClose = closeBtnObj.GetComponent<RectTransform>();
+        rtClose.anchorMin = new Vector2(0.85f, 0.94f);
+        rtClose.anchorMax = new Vector2(0.95f, 0.98f);
+        rtClose.pivot = new Vector2(1f, 0.5f);
+        rtClose.anchoredPosition = Vector2.zero;
+        rtClose.sizeDelta = Vector2.zero;
+
+        closeBtnObj.GetComponent<Image>().color = new Color(0.3f, 0.1f, 0.1f, 1f);
+        GameObject closeTxtObj = new GameObject("X", typeof(RectTransform), typeof(CanvasRenderer));
+        closeTxtObj.transform.SetParent(closeBtnObj.transform, false);
+        RectTransform rtCloseTxt = closeTxtObj.GetComponent<RectTransform>();
+        rtCloseTxt.anchorMin = Vector2.zero;
+        rtCloseTxt.anchorMax = Vector2.one;
+        rtCloseTxt.sizeDelta = Vector2.zero;
+        TMP_Text txtClose = closeTxtObj.AddComponent<TextMeshProUGUI>();
+        txtClose.text = "X";
+        txtClose.fontSize = 18;
+        txtClose.fontStyle = FontStyles.Bold;
+        txtClose.alignment = TextAlignmentOptions.Center;
+        txtClose.color = Color.white;
+
+        closeBtnObj.GetComponent<Button>().onClick.AddListener(ToggleMechanicsPanel);
+
+        // 4. Trap Name Input Row
+        GameObject nameRowObj = new GameObject("TrapNameRow", typeof(RectTransform));
+        nameRowObj.transform.SetParent(activeMechanicsPanel.transform, false);
+        RectTransform rtRow = nameRowObj.GetComponent<RectTransform>();
+        rtRow.anchorMin = new Vector2(0.05f, 0.87f);
+        rtRow.anchorMax = new Vector2(0.95f, 0.92f);
+        rtRow.pivot = new Vector2(0.5f, 0.5f);
+        rtRow.anchoredPosition = Vector2.zero;
+        rtRow.sizeDelta = Vector2.zero;
+
+        HorizontalLayoutGroup rowLayout = nameRowObj.AddComponent<HorizontalLayoutGroup>();
+        rowLayout.spacing = 15f;
+        rowLayout.childAlignment = TextAnchor.MiddleLeft;
+        rowLayout.childControlWidth = false;
+
+        GameObject nameLabel = new GameObject("NameLabel", typeof(RectTransform), typeof(CanvasRenderer));
+        nameLabel.transform.SetParent(nameRowObj.transform, false);
+        TMP_Text txtLabel = nameLabel.AddComponent<TextMeshProUGUI>();
+        txtLabel.text = "Active Trap Name:";
+        txtLabel.fontSize = 16f;
+        txtLabel.color = Color.white;
+        nameLabel.GetComponent<RectTransform>().sizeDelta = new Vector2(150f, 40f);
+
+        GameObject inputContainer = new GameObject("TrapNameInput", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(TMP_InputField));
+        inputContainer.transform.SetParent(nameRowObj.transform, false);
+        inputContainer.GetComponent<RectTransform>().sizeDelta = new Vector2(300f, 40f);
+        inputContainer.GetComponent<Image>().color = new Color(0.18f, 0.22f, 0.28f, 1f);
+
+        // Viewport (TextArea)
+        GameObject inputArea = new GameObject("TextArea", typeof(RectTransform), typeof(RectMask2D));
+        inputArea.transform.SetParent(inputContainer.transform, false);
+        RectTransform rtInputArea = inputArea.GetComponent<RectTransform>();
+        rtInputArea.anchorMin = Vector2.zero;
+        rtInputArea.anchorMax = Vector2.one;
+        rtInputArea.sizeDelta = new Vector2(-16f, -10f);
+
+        GameObject placeholderObj = new GameObject("Placeholder", typeof(RectTransform), typeof(CanvasRenderer));
+        placeholderObj.transform.SetParent(inputArea.transform, false);
+        RectTransform rtPlace = placeholderObj.GetComponent<RectTransform>();
+        rtPlace.anchorMin = Vector2.zero;
+        rtPlace.anchorMax = Vector2.one;
+        rtPlace.sizeDelta = Vector2.zero;
+        TMP_Text txtPlaceholder = placeholderObj.AddComponent<TextMeshProUGUI>();
+        txtPlaceholder.text = "Select a trap to rename...";
+        txtPlaceholder.fontSize = 15;
+        txtPlaceholder.fontStyle = FontStyles.Italic;
+        txtPlaceholder.color = new Color(0.5f, 0.5f, 0.5f, 1f);
+        txtPlaceholder.alignment = TextAlignmentOptions.MidlineLeft;
+
+        GameObject textObj = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer));
+        textObj.transform.SetParent(inputArea.transform, false);
+        RectTransform rtText = textObj.GetComponent<RectTransform>();
+        rtText.anchorMin = Vector2.zero;
+        rtText.anchorMax = Vector2.one;
+        rtText.sizeDelta = Vector2.zero;
+        TMP_Text txtActive = textObj.AddComponent<TextMeshProUGUI>();
+        txtActive.fontSize = 15;
+        txtActive.color = Color.white;
+        txtActive.alignment = TextAlignmentOptions.MidlineLeft;
+
+        TMP_InputField inputField = inputContainer.GetComponent<TMP_InputField>();
+        inputField.textViewport = rtInputArea;
+        inputField.placeholder = txtPlaceholder;
+        inputField.textComponent = txtActive;
+        inputField.caretWidth = 2;
+        inputField.customCaretColor = true;
+        inputField.caretColor = Color.white;
+        inputField.fontAsset = txtActive.font;
+        inputField.selectionColor = new Color(0.2f, 0.44f, 1f, 0.5f);
+
+        // 4.5 Section Title "Traps"
+        GameObject trapsTitleObj = new GameObject("TrapsSectionTitle", typeof(RectTransform), typeof(CanvasRenderer));
+        trapsTitleObj.transform.SetParent(activeMechanicsPanel.transform, false);
+        RectTransform rtTrapsTitle = trapsTitleObj.GetComponent<RectTransform>();
+        rtTrapsTitle.anchorMin = new Vector2(0.05f, 0.82f);
+        rtTrapsTitle.anchorMax = new Vector2(0.95f, 0.86f);
+        rtTrapsTitle.pivot = new Vector2(0f, 0.5f);
+        rtTrapsTitle.anchoredPosition = Vector2.zero;
+        rtTrapsTitle.sizeDelta = Vector2.zero;
+
+        TMP_Text txtTrapsTitle = trapsTitleObj.AddComponent<TextMeshProUGUI>();
+        txtTrapsTitle.text = "Traps";
+        txtTrapsTitle.fontSize = 16;
+        txtTrapsTitle.fontStyle = FontStyles.Bold;
+        txtTrapsTitle.color = new Color(0.2f, 0.7f, 1f, 1f); // Neon cyan color matching theme accents
+        txtTrapsTitle.alignment = TextAlignmentOptions.MidlineLeft;
+
+        // 5. Scroll View for Candidate List (slightly shorter to not be too tall)
+        GameObject listScrollObj = CreateScrollView("CandidatesScrollView", activeMechanicsPanel.transform, new Vector2(0.05f, 0.52f), new Vector2(0.95f, 0.81f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+        Transform listContent = listScrollObj.transform.Find("Viewport/Content");
+
+        // 6. Scroll View for Properties Detail Form (Height shortened slightly to accommodate footer)
+        GameObject propScrollObj = CreateScrollView("PropertiesScrollView", activeMechanicsPanel.transform, new Vector2(0.05f, 0.10f), new Vector2(0.95f, 0.48f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+        Transform propContent = propScrollObj.transform.Find("Viewport/Content");
+
+        // 7. Footer Buttons Container
+        GameObject footerObj = new GameObject("FooterButtons", typeof(RectTransform));
+        footerObj.transform.SetParent(activeMechanicsPanel.transform, false);
+        RectTransform rtFooter = footerObj.GetComponent<RectTransform>();
+        rtFooter.anchorMin = new Vector2(0.05f, 0.02f);
+        rtFooter.anchorMax = new Vector2(0.95f, 0.08f);
+        rtFooter.pivot = new Vector2(0.5f, 0.5f);
+        rtFooter.anchoredPosition = Vector2.zero;
+        rtFooter.sizeDelta = Vector2.zero;
+
+        HorizontalLayoutGroup footerLayout = footerObj.AddComponent<HorizontalLayoutGroup>();
+        footerLayout.spacing = 20f;
+        footerLayout.childAlignment = TextAnchor.MiddleCenter;
+        footerLayout.childControlWidth = true;
+        footerLayout.childControlHeight = true;
+
+        GameObject saveBtn = CreateFooterButton("SaveDraftButton", footerObj.transform, "SAVE", new Color(0.18f, 0.65f, 0.35f, 1f));
+        saveBtn.GetComponent<Button>().onClick.AddListener(SaveLevelDraft);
+
+        GameObject closeBtn = CreateFooterButton("ClosePanelButton", footerObj.transform, "CLOSE", new Color(0.25f, 0.3f, 0.38f, 1f));
+        closeBtn.GetComponent<Button>().onClick.AddListener(ToggleMechanicsPanel);
+
+        // 8. Attach and wire the Controller
+        var controller = activeMechanicsPanel.AddComponent<MechanicsEditorPanelController>();
+        
+        // Link internal fields using reflection to bypass inspector dependencies
+        SetPrivateField(controller, "searchInputField", inputField);
+        SetPrivateField(controller, "listContent", listContent.GetComponent<RectTransform>());
+        SetPrivateField(controller, "propertiesContent", propContent.GetComponent<RectTransform>());
+
+        controller.Initialize();
+    }
+
+    private GameObject CreateScrollView(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 pos, Vector2 size)
+    {
+        GameObject scrollObj = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(ScrollRect));
+        scrollObj.transform.SetParent(parent, false);
+
+        RectTransform rt = scrollObj.GetComponent<RectTransform>();
+        rt.anchorMin = anchorMin;
+        rt.anchorMax = anchorMax;
+        rt.pivot = pivot;
+        rt.anchoredPosition = pos;
+        rt.sizeDelta = size;
+
+        scrollObj.GetComponent<Image>().color = new Color(0.07f, 0.08f, 0.11f, 1f); // darker inner backing
+
+        // Viewport
+        GameObject viewportObj = new GameObject("Viewport", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(RectMask2D));
+        viewportObj.transform.SetParent(scrollObj.transform, false);
+        
+        RectTransform rtView = viewportObj.GetComponent<RectTransform>();
+        rtView.anchorMin = Vector2.zero;
+        rtView.anchorMax = Vector2.one;
+        rtView.sizeDelta = Vector2.zero;
+        viewportObj.GetComponent<Image>().color = Color.clear;
+
+        // Content
+        GameObject contentObj = new GameObject("Content", typeof(RectTransform));
+        contentObj.transform.SetParent(viewportObj.transform, false);
+
+        RectTransform rtContent = contentObj.GetComponent<RectTransform>();
+        rtContent.anchorMin = new Vector2(0f, 1f);
+        rtContent.anchorMax = new Vector2(1f, 1f);
+        rtContent.pivot = new Vector2(0.5f, 1f);
+        rtContent.sizeDelta = new Vector2(0f, 0f);
+
+        VerticalLayoutGroup layout = contentObj.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(10, 10, 10, 10);
+        layout.spacing = 8f;
+        layout.childControlWidth = true;
+        layout.childControlHeight = false;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+
+        ContentSizeFitter fitter = contentObj.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        ScrollRect scrollRect = scrollObj.GetComponent<ScrollRect>();
+        scrollRect.viewport = rtView;
+        scrollRect.content = rtContent;
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+        scrollRect.movementType = ScrollRect.MovementType.Clamped;
+        scrollRect.scrollSensitivity = 25f;
+
+        return scrollObj;
+    }
+
+    private void SetPrivateField(object target, string fieldName, object value)
+    {
+        var field = target.GetType().GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (field != null)
+        {
+            field.SetValue(target, value);
+        }
+        else
+        {
+            Debug.LogWarning($"[LevelCreatorUI] Field {fieldName} not found on {target.GetType().Name}");
+        }
+    }
+
+    private GameObject CreateFooterButton(string name, Transform parent, string label, Color color)
+    {
+        GameObject btnObj = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        btnObj.transform.SetParent(parent, false);
+
+        btnObj.GetComponent<Image>().color = color;
+
+        GameObject txtObj = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer));
+        txtObj.transform.SetParent(btnObj.transform, false);
+        RectTransform rtTxt = txtObj.GetComponent<RectTransform>();
+        rtTxt.anchorMin = Vector2.zero;
+        rtTxt.anchorMax = Vector2.one;
+        rtTxt.sizeDelta = Vector2.zero;
+
+        TMP_Text txt = txtObj.AddComponent<TextMeshProUGUI>();
+        txt.text = label;
+        txt.fontSize = 15f;
+        txt.fontStyle = FontStyles.Bold;
+        txt.alignment = TextAlignmentOptions.Center;
+        txt.color = Color.white;
+
+        return btnObj;
+    }
+
+    public void PromptForObjectName(PlacedEditorObject placedObj, Action<string> onConfirm, Action onCancel)
+    {
+        if (editorUIRoot == null) return;
+
+        // Create modal backdrop overlay to block background clicks
+        GameObject modalBackdrop = new GameObject("NamePromptModalBackdrop", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(GraphicRaycaster));
+        modalBackdrop.transform.SetParent(editorUIRoot.transform, false);
+
+        RectTransform rtBackdrop = modalBackdrop.GetComponent<RectTransform>();
+        rtBackdrop.anchorMin = Vector2.zero;
+        rtBackdrop.anchorMax = Vector2.one;
+        rtBackdrop.pivot = new Vector2(0.5f, 0.5f);
+        rtBackdrop.anchoredPosition = Vector2.zero;
+        rtBackdrop.sizeDelta = Vector2.zero;
+
+        // Semi-transparent dark background
+        Image imgBackdrop = modalBackdrop.GetComponent<Image>();
+        imgBackdrop.color = new Color(0f, 0f, 0f, 0.6f);
+
+        // Center Panel container
+        GameObject dialogPanel = new GameObject("DialogPanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        dialogPanel.transform.SetParent(modalBackdrop.transform, false);
+
+        RectTransform rtPanel = dialogPanel.GetComponent<RectTransform>();
+        rtPanel.anchorMin = new Vector2(0.35f, 0.4f);
+        rtPanel.anchorMax = new Vector2(0.65f, 0.6f);
+        rtPanel.pivot = new Vector2(0.5f, 0.5f);
+        rtPanel.anchoredPosition = Vector2.zero;
+        rtPanel.sizeDelta = Vector2.zero;
+
+        Image imgPanel = dialogPanel.GetComponent<Image>();
+        imgPanel.color = new Color(0.12f, 0.15f, 0.2f, 1f); // deep slate style matching the theme
+
+        Outline outline = dialogPanel.AddComponent<Outline>();
+        outline.effectColor = new Color(0.2f, 0.7f, 1f, 0.5f);
+        outline.effectDistance = new Vector2(2f, -2f);
+
+        // Title text
+        GameObject titleObj = new GameObject("Title", typeof(RectTransform), typeof(CanvasRenderer));
+        titleObj.transform.SetParent(dialogPanel.transform, false);
+        RectTransform rtTitle = titleObj.GetComponent<RectTransform>();
+        rtTitle.anchorMin = new Vector2(0.05f, 0.75f);
+        rtTitle.anchorMax = new Vector2(0.95f, 0.95f);
+        rtTitle.pivot = new Vector2(0.5f, 0.5f);
+        rtTitle.anchoredPosition = Vector2.zero;
+        rtTitle.sizeDelta = Vector2.zero;
+
+        TMP_Text txtTitle = titleObj.AddComponent<TextMeshProUGUI>();
+        txtTitle.text = "Name Spawned Object";
+        txtTitle.fontSize = 18;
+        txtTitle.fontStyle = FontStyles.Bold;
+        txtTitle.color = Color.white;
+        txtTitle.alignment = TextAlignmentOptions.Center;
+
+        // Input Field
+        GameObject inputObj = new GameObject("NameInput", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(TMP_InputField));
+        inputObj.transform.SetParent(dialogPanel.transform, false);
+        RectTransform rtInput = inputObj.GetComponent<RectTransform>();
+        rtInput.anchorMin = new Vector2(0.1f, 0.4f);
+        rtInput.anchorMax = new Vector2(0.9f, 0.65f);
+        rtInput.pivot = new Vector2(0.5f, 0.5f);
+        rtInput.anchoredPosition = Vector2.zero;
+        rtInput.sizeDelta = Vector2.zero;
+
+        inputObj.GetComponent<Image>().color = new Color(0.2f, 0.25f, 0.32f, 1f);
+
+        // Viewport (TextArea)
+        GameObject inputArea = new GameObject("TextArea", typeof(RectTransform), typeof(RectMask2D));
+        inputArea.transform.SetParent(inputObj.transform, false);
+        RectTransform rtInputArea = inputArea.GetComponent<RectTransform>();
+        rtInputArea.anchorMin = Vector2.zero;
+        rtInputArea.anchorMax = Vector2.one;
+        rtInputArea.sizeDelta = new Vector2(-16f, -10f);
+
+        // Text Component
+        GameObject textObj = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer));
+        textObj.transform.SetParent(inputArea.transform, false);
+        RectTransform rtText = textObj.GetComponent<RectTransform>();
+        rtText.anchorMin = Vector2.zero;
+        rtText.anchorMax = Vector2.one;
+        rtText.sizeDelta = Vector2.zero;
+
+        TMP_Text tmpText = textObj.AddComponent<TextMeshProUGUI>();
+        tmpText.fontSize = 16f;
+        tmpText.color = Color.white;
+        tmpText.alignment = TextAlignmentOptions.MidlineLeft;
+
+        TMP_InputField input = inputObj.GetComponent<TMP_InputField>();
+        input.textViewport = rtInputArea;
+        input.textComponent = tmpText;
+        input.text = placedObj.gameObject.name;
+        input.caretWidth = 2;
+        input.customCaretColor = true;
+        input.caretColor = Color.white;
+        input.fontAsset = tmpText.font;
+        input.selectionColor = new Color(0.2f, 0.44f, 1f, 0.5f);
+
+        // Focus input field immediately
+        input.ActivateInputField();
+
+        // Footer buttons container
+        GameObject footerObj = new GameObject("Footer", typeof(RectTransform));
+        footerObj.transform.SetParent(dialogPanel.transform, false);
+        RectTransform rtFooter = footerObj.GetComponent<RectTransform>();
+        rtFooter.anchorMin = new Vector2(0.1f, 0.1f);
+        rtFooter.anchorMax = new Vector2(0.9f, 0.3f);
+        rtFooter.pivot = new Vector2(0.5f, 0.5f);
+        rtFooter.anchoredPosition = Vector2.zero;
+        rtFooter.sizeDelta = Vector2.zero;
+
+        HorizontalLayoutGroup layout = footerObj.AddComponent<HorizontalLayoutGroup>();
+        layout.spacing = 15f;
+        layout.childAlignment = TextAnchor.MiddleCenter;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+
+        GameObject okayBtn = CreateFooterButton("OkayButton", footerObj.transform, "OK", new Color(0.18f, 0.65f, 0.35f, 1f));
+        GameObject cancelBtn = CreateFooterButton("CancelButton", footerObj.transform, "CANCEL", new Color(0.8f, 0.2f, 0.2f, 1f));
+
+        okayBtn.GetComponent<Button>().onClick.AddListener(() =>
+        {
+            string chosenName = input.text.Trim();
+            if (string.IsNullOrEmpty(chosenName)) chosenName = placedObj.assetTypeName;
+            placedObj.gameObject.name = chosenName;
+            placedObj.customToolDisplayName = chosenName;
+            Destroy(modalBackdrop);
+            onConfirm?.Invoke(chosenName);
+        });
+
+        cancelBtn.GetComponent<Button>().onClick.AddListener(() =>
+        {
+            Destroy(modalBackdrop);
+            onCancel?.Invoke();
+        });
     }
 }
