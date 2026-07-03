@@ -854,6 +854,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 380193417791851650}
   objectToModify: {fileID: 0}
@@ -873,6 +875,9 @@ MonoBehaviour:
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
   teleportPosition: {x: 0, y: 0}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 1
   fallSpeedMultiplier: 2.5
   applyOnEnter: 1

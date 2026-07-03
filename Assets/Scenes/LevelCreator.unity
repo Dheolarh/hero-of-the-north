@@ -12655,7 +12655,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: Triggers
+          m_StringArgument: TriggerZone
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &1994213039

@@ -10,6 +10,9 @@ public class PlayerDeadState : PlayerStateBase
 
     public override void Enter()
     {
+        // ── Guard: player has already won — ignore any late death triggers ─
+        if (GameManager.Instance != null && GameManager.Instance.isLevelCompleted) return;
+
         // ── Mark game over ────────────────────────────────────────────────
         GameManager.Instance.isGameOver = true;
 

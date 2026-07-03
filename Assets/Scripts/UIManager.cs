@@ -16,6 +16,8 @@ public class UIManager : MonoBehaviour
     public GameObject editModeUI;
     public GameObject tutorialPanel;
     public GameObject messagePanel;
+    public GameObject communityPanel;
+    public GameObject creatorPanel;
     public GameObject HUD;
 
     [Header("Tutorial Settings")]
@@ -112,11 +114,31 @@ public class UIManager : MonoBehaviour
                 btn.onClick.AddListener(PlayButtonClickSound);
                 Debug.Log($"[UIManager] Programmatically bound Message button: {btn.gameObject.name}");
             }
+
+            // Community panel button
+            if ((btn.gameObject.name == "CommunityButton" || btn.gameObject.name == "CommunityBtn" || btn.gameObject.name == "Community") && !btn.transform.IsChildOf(transform))
+            {
+                btn.onClick = new Button.ButtonClickedEvent();
+                btn.onClick.AddListener(ToggleCommunityPanel);
+                btn.onClick.AddListener(PlayButtonClickSound);
+                Debug.Log($"[UIManager] Programmatically bound Community button: {btn.gameObject.name}");
+            }
+
+            // Creator panel button
+            if ((btn.gameObject.name == "CreatorButton" || btn.gameObject.name == "CreatorBtn" || btn.gameObject.name == "Creator") && !btn.transform.IsChildOf(transform))
+            {
+                btn.onClick = new Button.ButtonClickedEvent();
+                btn.onClick.AddListener(ToggleCreatorPanel);
+                btn.onClick.AddListener(PlayButtonClickSound);
+                Debug.Log($"[UIManager] Programmatically bound Creator button: {btn.gameObject.name}");
+            }
         }
 
         BindCloseButtonForPanel(tutorialPanel, CloseTutorialPanel);
         BindCloseButtonForPanel(leaderboardUI, CloseLeaderboardUI);
         BindCloseButtonForPanel(messagePanel, CloseMessagePanel);
+        BindCloseButtonForPanel(communityPanel, CloseCommunityPanel);
+        BindCloseButtonForPanel(creatorPanel, CloseCreatorPanel);
     }
 
     private void PlayButtonClickSound()
@@ -149,6 +171,8 @@ public class UIManager : MonoBehaviour
         if (IsManagerGameObject(editModeUI)) editModeUI = null;
         if (IsManagerGameObject(tutorialPanel)) tutorialPanel = null;
         if (IsManagerGameObject(messagePanel)) messagePanel = null;
+        if (IsManagerGameObject(communityPanel)) communityPanel = null;
+        if (IsManagerGameObject(creatorPanel)) creatorPanel = null;
 
         UIPanel[] panels = FindObjectsByType<UIPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
@@ -203,6 +227,12 @@ public class UIManager : MonoBehaviour
                     break;
                 case UIPanel.PanelType.MessagePanel:
                     messagePanel = targetPanelGo;
+                    break;
+                case UIPanel.PanelType.CommunityPanel:
+                    communityPanel = targetPanelGo;
+                    break;
+                case UIPanel.PanelType.CreatorPanel:
+                    creatorPanel = targetPanelGo;
                     break;
             }
         }
@@ -268,6 +298,8 @@ public class UIManager : MonoBehaviour
         editModeUI = ResolvePanelGameObject(editModeUI);
         tutorialPanel = ResolvePanelGameObject(tutorialPanel);
         messagePanel = ResolvePanelGameObject(messagePanel);
+        communityPanel = ResolvePanelGameObject(communityPanel);
+        creatorPanel = ResolvePanelGameObject(creatorPanel);
     }
 
     void Update()
@@ -421,6 +453,54 @@ public class UIManager : MonoBehaviour
     public void CloseMessagePanel()
     {
         CloseUnrollingPanel(messagePanel);
+    }
+
+    // ── Community Panel ────────────────────────────────────────────────────────
+
+    public void ToggleCommunityPanel()
+    {
+        if (communityPanel == null) return;
+        if (!communityPanel.activeInHierarchy)
+            OpenCommunityPanel();
+        else
+            CloseCommunityPanel();
+    }
+
+    public void OpenCommunityPanel()
+    {
+        // Opening Community closes Creator (mutually exclusive)
+        if (creatorPanel != null && creatorPanel.activeInHierarchy)
+            CloseCreatorPanel();
+        OpenUnrollingPanel(communityPanel, scrollOpenSoundName);
+    }
+
+    public void CloseCommunityPanel()
+    {
+        CloseUnrollingPanel(communityPanel);
+    }
+
+    // ── Creator Panel ──────────────────────────────────────────────────────────
+
+    public void ToggleCreatorPanel()
+    {
+        if (creatorPanel == null) return;
+        if (!creatorPanel.activeInHierarchy)
+            OpenCreatorPanel();
+        else
+            CloseCreatorPanel();
+    }
+
+    public void OpenCreatorPanel()
+    {
+        // Opening Creator closes Community (mutually exclusive)
+        if (communityPanel != null && communityPanel.activeInHierarchy)
+            CloseCommunityPanel();
+        OpenUnrollingPanel(creatorPanel, scrollOpenSoundName);
+    }
+
+    public void CloseCreatorPanel()
+    {
+        CloseUnrollingPanel(creatorPanel);
     }
 
     public void OpenUnrollingPanel(GameObject panel, string openSoundName = "ScrollOpen")
@@ -807,6 +887,8 @@ public class UIManager : MonoBehaviour
         if (editModeUI != null) { editModeUI.transform.localScale = Vector3.one; editModeUI.SetActive(false); }
         ResetPanelMaskAndDisable(tutorialPanel);
         ResetPanelMaskAndDisable(messagePanel);
+        ResetPanelMaskAndDisable(communityPanel);
+        ResetPanelMaskAndDisable(creatorPanel);
     }
 
     private void ResetPanelMaskAndDisable(GameObject panel)

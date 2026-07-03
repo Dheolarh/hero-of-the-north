@@ -88,6 +88,12 @@ public class CollisionsAndTriggers : MonoBehaviour
     [Header("One-Time Movement Settings")]
     public Vector2 targetPosition;
     public float targetMoveSpeed;
+    [Tooltip("Seconds to wait between each object in the list starting its move. 0 = all move simultaneously.")]
+    public float moveStaggerInterval = 0f;
+    [Tooltip("When enabled, objects only move on the X axis. Their Y position is preserved.")]
+    public bool moveOnXOnly = false;
+    [Tooltip("When enabled, objects only move on the Y axis. Their X position is preserved.")]
+    public bool moveOnYOnly = false;
 
     [Header("Teleport Settings")]
     public Vector2 teleportPosition;
@@ -118,6 +124,10 @@ public class CollisionsAndTriggers : MonoBehaviour
     public float triggerDelay = 0f;
     
     private bool isMovingToTarget = false;
+    // Tracks which objects are actively moving toward the target (populated by stagger coroutine)
+    private readonly HashSet<GameObject> _movingObjects = new HashSet<GameObject>();
+    // True while the stagger coroutine is still dispatching objects
+    private bool _staggerRunning = false;
     private Rigidbody2D modifyRigidbody;
     private float originalGravityScale;
     private bool isPhysicsModified = false;
@@ -202,27 +212,61 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     private Vector2 GetTargetDestination(GameObject movingObj, Vector2 defaultStaticPos, bool isTeleport)
     {
+        Vector2 currentCoords = useLocalCoordinates ? (Vector2)movingObj.transform.localPosition : (Vector2)movingObj.transform.position;
+
         if (destinationTargetObject == null)
         {
-            return isTeleport ? teleportPosition : targetPosition;
+            // No destination object — use the manually set position
+            Vector2 staticPos = isTeleport ? teleportPosition : targetPosition;
+
+            if (!isTeleport)
+            {
+                // Axis-lock: override the unused axis with the object's current position
+                if (moveOnXOnly) return new Vector2(staticPos.x, currentCoords.y);
+                if (moveOnYOnly) return new Vector2(currentCoords.x, staticPos.y);
+            }
+
+            return staticPos;
         }
 
         Vector2 targetCoords = useLocalCoordinates ? (Vector2)destinationTargetObject.transform.localPosition : (Vector2)destinationTargetObject.transform.position;
-        Vector2 currentCoords = useLocalCoordinates ? (Vector2)movingObj.transform.localPosition : (Vector2)movingObj.transform.position;
 
-        float x = useTargetX ? targetCoords.x : currentCoords.x;
-        float y = useTargetY ? targetCoords.y : currentCoords.y;
+        // Destination object path: use useTargetX/Y flags as before, but also
+        // honour the axis-lock toggles when not teleporting.
+        float x, y;
+        if (!isTeleport && moveOnXOnly)
+        {
+            x = targetCoords.x;
+            y = currentCoords.y;   // always keep current Y
+        }
+        else if (!isTeleport && moveOnYOnly)
+        {
+            x = currentCoords.x;   // always keep current X
+            y = targetCoords.y;
+        }
+        else
+        {
+            x = useTargetX ? targetCoords.x : currentCoords.x;
+            y = useTargetY ? targetCoords.y : currentCoords.y;
+        }
 
         return new Vector2(x, y);
     }
 
     void MoveToTarget()
     {
-        if (objectsToTrigger == null || objectsToTrigger.Length == 0) return;
-
-        foreach (GameObject obj in objectsToTrigger)
+        // Nothing active yet (stagger may still be running)
+        if (_movingObjects.Count == 0)
         {
-            if (obj == null) continue;
+            if (!_staggerRunning) isMovingToTarget = false;
+            return;
+        }
+
+        List<GameObject> toRemove = new List<GameObject>();
+
+        foreach (GameObject obj in _movingObjects)
+        {
+            if (obj == null) { toRemove.Add(obj); continue; }
 
             Vector2 dest = GetTargetDestination(obj, targetPosition, false);
 
@@ -232,11 +276,10 @@ public class CollisionsAndTriggers : MonoBehaviour
                 Vector2 newPos = Vector2.MoveTowards(currentPos, dest, targetMoveSpeed * Time.deltaTime);
                 obj.transform.localPosition = new Vector3(newPos.x, newPos.y, obj.transform.localPosition.z);
 
-                // Check if reached target (using first object as reference)
-                if (obj == objectsToTrigger[0] && Vector2.Distance(currentPos, dest) < 0.01f)
+                if (Vector2.Distance(currentPos, dest) < 0.01f)
                 {
                     obj.transform.localPosition = new Vector3(dest.x, dest.y, obj.transform.localPosition.z);
-                    isMovingToTarget = false;
+                    toRemove.Add(obj);
                 }
             }
             else
@@ -245,14 +288,19 @@ public class CollisionsAndTriggers : MonoBehaviour
                 Vector2 newPos = Vector2.MoveTowards(currentPos, dest, targetMoveSpeed * Time.deltaTime);
                 obj.transform.position = new Vector3(newPos.x, newPos.y, obj.transform.position.z);
 
-                // Check if reached target (using first object as reference)
-                if (obj == objectsToTrigger[0] && Vector2.Distance(currentPos, dest) < 0.01f)
+                if (Vector2.Distance(currentPos, dest) < 0.01f)
                 {
                     obj.transform.position = new Vector3(dest.x, dest.y, obj.transform.position.z);
-                    isMovingToTarget = false;
+                    toRemove.Add(obj);
                 }
             }
         }
+
+        foreach (var obj in toRemove) _movingObjects.Remove(obj);
+
+        // Stop the update loop once all objects have arrived and nothing more is queued
+        if (_movingObjects.Count == 0 && !_staggerRunning)
+            isMovingToTarget = false;
     }
 
     void ContinuousMovement()
@@ -310,7 +358,38 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void StartMoveToTarget()
     {
-        isMovingToTarget = true;
+        _movingObjects.Clear();
+
+        if (moveStaggerInterval <= 0f || objectsToTrigger == null || objectsToTrigger.Length == 0)
+        {
+            // No stagger — activate all objects simultaneously
+            if (objectsToTrigger != null)
+                foreach (var obj in objectsToTrigger)
+                    if (obj != null) _movingObjects.Add(obj);
+            isMovingToTarget = true;
+        }
+        else
+        {
+            // Staggered: each object starts after (index * interval) seconds
+            StartCoroutine(StaggeredMoveStart());
+        }
+    }
+
+    private IEnumerator StaggeredMoveStart()
+    {
+        _staggerRunning = true;
+        isMovingToTarget  = true;
+
+        for (int i = 0; i < objectsToTrigger.Length; i++)
+        {
+            if (i > 0)
+                yield return new WaitForSeconds(moveStaggerInterval);
+
+            if (objectsToTrigger[i] != null)
+                _movingObjects.Add(objectsToTrigger[i]);
+        }
+
+        _staggerRunning = false;
     }
 
     void StartMove()

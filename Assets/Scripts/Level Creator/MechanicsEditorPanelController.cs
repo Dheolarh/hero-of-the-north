@@ -311,6 +311,33 @@ public class MechanicsEditorPanelController : MonoBehaviour
                             activeTriggerScript.useTargetY = val;
                         });
                     }
+
+                    // ── Axis lock toggles ──────────────────────────────────────
+                    CreateNoteField("Axis Lock — restrict each object to move only along one axis. The other axis is kept at the object's current value.");
+
+                    CreateToggleField("Move on X Only (lock Y position)", activeTriggerScript.moveOnXOnly, (val) =>
+                    {
+                        activeTriggerScript.moveOnXOnly = val;
+                        if (val) activeTriggerScript.moveOnYOnly = false; // mutually exclusive
+                        RefreshPropertiesPanel();
+                    });
+                    CreateToggleField("Move on Y Only (lock X position)", activeTriggerScript.moveOnYOnly, (val) =>
+                    {
+                        activeTriggerScript.moveOnYOnly = val;
+                        if (val) activeTriggerScript.moveOnXOnly = false; // mutually exclusive
+                        RefreshPropertiesPanel();
+                    });
+
+                    // Position hint changes based on axis lock
+                    if (activeTriggerScript.moveOnXOnly)
+                        CreateNoteField("Set the X position below — objects will move to that X and stay at their current Y.");
+                    else if (activeTriggerScript.moveOnYOnly)
+                        CreateNoteField("Set the Y position below — objects will move to that Y and stay at their current X.");
+
+                    CreateFloatField("Stagger Interval (seconds)", activeTriggerScript.moveStaggerInterval, (val) =>
+                    {
+                        activeTriggerScript.moveStaggerInterval = Mathf.Max(0f, val);
+                    });
                     CreateFloatField("Movement Speed", activeTriggerScript.targetMoveSpeed, (val) =>
                     {
                         activeTriggerScript.targetMoveSpeed = val;

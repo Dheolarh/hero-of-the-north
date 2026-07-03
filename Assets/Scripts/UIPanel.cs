@@ -14,7 +14,9 @@ public class UIPanel : MonoBehaviour
         LeaderboardUI,
         LockedLevelUI,
         TutorialPanel,
-        MessagePanel
+        MessagePanel,
+        CommunityPanel,
+        CreatorPanel
     }
 
     [SerializeField] private PanelType panelType;

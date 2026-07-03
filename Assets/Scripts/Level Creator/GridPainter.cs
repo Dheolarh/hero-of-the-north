@@ -1353,6 +1353,9 @@ public class GridPainter : MonoBehaviour
         playtestTrigger.loopAudio = editorTriggerScript.loopAudio;
         playtestTrigger.useTargetX = editorTriggerScript.useTargetX;
         playtestTrigger.useTargetY = editorTriggerScript.useTargetY;
+        playtestTrigger.moveOnXOnly = editorTriggerScript.moveOnXOnly;
+        playtestTrigger.moveOnYOnly = editorTriggerScript.moveOnYOnly;
+        playtestTrigger.moveStaggerInterval = editorTriggerScript.moveStaggerInterval;
 
         // Copy reference fields mapped to playtest clones
         if (editorTriggerScript.objectToModify != null)

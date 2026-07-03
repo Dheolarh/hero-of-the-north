@@ -46,64 +46,87 @@ export async function submitScore(
 ): Promise<{ totalPoints: number; rank: number }> {
     const now = Date.now();
 
-    // Get player stats
-    const statsKey = `${PLAYER_STATS_PREFIX}${userId}`;
-    const currentStats = await redis.hGetAll(statsKey);
-
-    // Check if level already completed
-    const levelKey = `${PLAYER_LEVEL_PREFIX}${userId}:${levelNumber}`;
-    const existingLevel = await redis.hGetAll(levelKey);
-
-    let totalPoints = parseInt(currentStats?.totalPoints || '0');
-    let levelsCompleted = parseInt(currentStats?.levelsCompleted || '0');
-
-    const existingPoints = parseInt(existingLevel?.heroPoints || '0');
-    const isNewLevel = !existingLevel?.heroPoints;
-    const isImprovedScore = heroPoints > existingPoints;
-
-    if (isNewLevel) {
-        levelsCompleted++;
-        totalPoints += heroPoints;
-    } else if (isImprovedScore) {
-        totalPoints = totalPoints - existingPoints + heroPoints;
-    } else {
-        // Score not improved
-        let rank = await getPlayerRank(redis, userId);
+    // ── Atomic duplicate-submission guard ────────────────────────────────────
+    // Use a short-lived Redis lock (SET NX + EX) so that two in-flight requests
+    // for the same user+level can't both slip through the "already played" check
+    // before either has written to Redis (classic read-then-write race condition).
+    const lockKey = `lock:score:${userId}:${levelNumber}`;
+    // SET NX returns true only when the key did NOT previously exist (we got the lock).
+    const gotLock = await redis.set(lockKey, '1', { nx: true, ex: 10 });
+    if (!gotLock) {
+        // Another request is already processing this user+level — reject early.
+        const statsKey = `${PLAYER_STATS_PREFIX}${userId}`;
+        const currentStats = await redis.hGetAll(statsKey);
+        const totalPoints = parseInt(currentStats?.totalPoints || '0');
+        const rank = await getPlayerRank(redis, userId);
         return { totalPoints, rank };
     }
 
-    // Save level stats
-    await redis.hSet(levelKey, {
-        levelNumber: levelNumber.toString(),
-        heroPoints: heroPoints.toString(),
-        alliesSaved: alliesSaved.toString(),
-        timeSpent: timeSpent.toString(),
-        retryCount: retryCount.toString(),
-        completedAt: now.toString(),
-    });
+    try {
+        // Get player stats
+        const statsKey = `${PLAYER_STATS_PREFIX}${userId}`;
+        const currentStats = await redis.hGetAll(statsKey);
 
-    // Update player stats
-    // Only update avatarUrl if provided (it might not be available in some contexts, but should be from api)
-    const statsUpdate: any = {
-        userId,
-        username,
-        totalPoints: totalPoints.toString(),
-        levelsCompleted: levelsCompleted.toString(),
-        lastPlayed: now.toString(),
-    };
+        // Check if level already completed
+        const levelKey = `${PLAYER_LEVEL_PREFIX}${userId}:${levelNumber}`;
+        const existingLevel = await redis.hGetAll(levelKey);
 
-    if (avatarUrl) {
-        statsUpdate.avatarUrl = avatarUrl;
+        let totalPoints = parseInt(currentStats?.totalPoints || '0');
+        let levelsCompleted = parseInt(currentStats?.levelsCompleted || '0');
+
+        const existingPoints = parseInt(existingLevel?.heroPoints || '0');
+        const isNewLevel = !existingLevel?.heroPoints;
+        const isImprovedScore = heroPoints > existingPoints;
+
+        if (isNewLevel) {
+            levelsCompleted++;
+            totalPoints += heroPoints;
+        } else if (isImprovedScore) {
+            totalPoints = totalPoints - existingPoints + heroPoints;
+        } else {
+            // Score not improved
+            const rank = await getPlayerRank(redis, userId);
+            return { totalPoints, rank };
+        }
+
+        // Save level stats
+        await redis.hSet(levelKey, {
+            levelNumber: levelNumber.toString(),
+            heroPoints: heroPoints.toString(),
+            alliesSaved: alliesSaved.toString(),
+            timeSpent: timeSpent.toString(),
+            retryCount: retryCount.toString(),
+            completedAt: now.toString(),
+        });
+
+        // Update player stats
+        // Only update avatarUrl if provided (it might not be available in some contexts, but should be from api)
+        const statsUpdate: any = {
+            userId,
+            username,
+            totalPoints: totalPoints.toString(),
+            levelsCompleted: levelsCompleted.toString(),
+            lastPlayed: now.toString(),
+        };
+
+        if (avatarUrl) {
+            statsUpdate.avatarUrl = avatarUrl;
+        }
+
+        await redis.hSet(statsKey, statsUpdate);
+
+        // Update leaderboard
+        await redis.zAdd(LEADERBOARD_KEY, { member: userId, score: totalPoints });
+
+        const rank = await getPlayerRank(redis, userId);
+        return { totalPoints, rank };
+    } finally {
+        // Always release the lock so a legitimate future attempt (e.g. improved score
+        // on a retry a few seconds later) isn't permanently blocked.
+        await redis.del(lockKey);
     }
-
-    await redis.hSet(statsKey, statsUpdate);
-
-    // Update leaderboard
-    await redis.zAdd(LEADERBOARD_KEY, { member: userId, score: totalPoints });
-
-    const rank = await getPlayerRank(redis, userId);
-    return { totalPoints, rank };
 }
+
 
 /**
  * Get top N players
