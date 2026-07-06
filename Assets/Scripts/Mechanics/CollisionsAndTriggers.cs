@@ -440,6 +440,17 @@ public class CollisionsAndTriggers : MonoBehaviour
                 {
                     Vector2 dest = GetTargetDestination(obj, teleportPosition, true);
 
+                    Rigidbody2D rb = obj.GetComponent<Rigidbody2D>();
+                    if (rb != null)
+                    {
+                        rb.linearVelocity = Vector2.zero;
+                        rb.angularVelocity = 0f;
+                        if (!useLocalCoordinates)
+                        {
+                            rb.position = dest;
+                        }
+                    }
+
                     if (useLocalCoordinates)
                     {
                         obj.transform.localPosition = new Vector3(dest.x, dest.y, obj.transform.localPosition.z);
@@ -448,6 +459,8 @@ public class CollisionsAndTriggers : MonoBehaviour
                     {
                         obj.transform.position = new Vector3(dest.x, dest.y, obj.transform.position.z);
                     }
+
+                    Physics2D.SyncTransforms();
                 }
             }
         }
