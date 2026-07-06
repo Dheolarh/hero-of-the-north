@@ -20257,6 +20257,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2040478326}
     - target: {fileID: 3900263032004719190, guid: 5dd081e98f8b0d04cbfc29f7461a95bd, type: 3}
+      propertyPath: teleportComponent
+      value: 
+      objectReference: {fileID: 9119688696989865778}
+    - target: {fileID: 3900263032004719190, guid: 5dd081e98f8b0d04cbfc29f7461a95bd, type: 3}
       propertyPath: activeTrapNameText
       value: 
       objectReference: {fileID: 896139028}
@@ -22092,8 +22096,52 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3262143268944527901, guid: 5dd081e98f8b0d04cbfc29f7461a95bd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4868820069790011589}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6609791014955292542, guid: 5dd081e98f8b0d04cbfc29f7461a95bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9119688696989865778}
   m_SourcePrefab: {fileID: 100100000, guid: 5dd081e98f8b0d04cbfc29f7461a95bd, type: 3}
+--- !u!114 &9119688696989865775 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 786058307022954886, guid: 5dd081e98f8b0d04cbfc29f7461a95bd, type: 3}
+  m_PrefabInstance: {fileID: 9119688696989865774}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
+--- !u!114 &9119688696989865776 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3503799262864840812, guid: 5dd081e98f8b0d04cbfc29f7461a95bd, type: 3}
+  m_PrefabInstance: {fileID: 9119688696989865774}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
+--- !u!1 &9119688696989865777 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6609791014955292542, guid: 5dd081e98f8b0d04cbfc29f7461a95bd, type: 3}
+  m_PrefabInstance: {fileID: 9119688696989865774}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9119688696989865778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9119688696989865777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6479fcd00ccca0541b670645e843d1c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Teleport
+  teleportXSlider: {fileID: 9119688696989865776}
+  teleportYSlider: {fileID: 9119688696989865775}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

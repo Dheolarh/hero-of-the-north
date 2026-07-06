@@ -50,10 +50,9 @@ public class MechanicsEditorPanelController : MonoBehaviour
     [SerializeField] private Transform activationObjectsScroll;
 
     [SerializeField] private Transform teleportObjectsScroll;
-    [SerializeField] private Transform teleportDestinationTargetScroll;
+    [SerializeField] private Teleport teleportComponent;
 
     [SerializeField] private Transform singleMotionObjectsScroll;
-    [SerializeField] private Transform singleMotionDestinationTargetScroll;
 
     [SerializeField] private Transform continuousMotionObjectsScroll;
 
@@ -331,7 +330,6 @@ public class MechanicsEditorPanelController : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        List<Toggle> toggles = new List<Toggle>();
 
         foreach (var candidate in allSelectableObjects)
         {
@@ -344,39 +342,32 @@ public class MechanicsEditorPanelController : MonoBehaviour
             {
                 Objects item = Instantiate(objectRowPrefab, contentTrans, false);
                 item.gameObject.SetActive(true);
-                item.Setup(itemName, isChecked, null);
-
-                Toggle toggle = item.Toggle;
-                if (toggle != null)
+                item.Setup(itemName, isChecked, (val) =>
                 {
-                    toggles.Add(toggle);
-                    int toggleIndex = toggles.Count - 1;
-                    toggle.onValueChanged.AddListener((val) =>
+                    if (!isMultiSelect)
                     {
-                        if (!isMultiSelect)
+                        if (val)
                         {
-                            if (val)
+                            foreach (Transform child in contentTrans)
                             {
-                                for (int j = 0; j < toggles.Count; j++)
+                                Objects childItem = child.GetComponent<Objects>();
+                                if (childItem != null && childItem != item && childItem.Toggle != null)
                                 {
-                                    if (j != toggleIndex && toggles[j] != null)
-                                    {
-                                        toggles[j].SetIsOnWithoutNotify(false);
-                                    }
+                                    childItem.Toggle.SetIsOnWithoutNotify(false);
                                 }
-                                onToggleChanged?.Invoke(itemGo, true);
                             }
-                            else
-                            {
-                                onToggleChanged?.Invoke(itemGo, false);
-                            }
+                            onToggleChanged?.Invoke(itemGo, true);
                         }
                         else
                         {
-                            onToggleChanged?.Invoke(itemGo, val);
+                            onToggleChanged?.Invoke(itemGo, false);
                         }
-                    });
-                }
+                    }
+                    else
+                    {
+                        onToggleChanged?.Invoke(itemGo, val);
+                    }
+                });
             }
             else
             {
@@ -408,8 +399,6 @@ public class MechanicsEditorPanelController : MonoBehaviour
                 toggle.isOn = isChecked;
                 toggle.targetGraphic = bgObj.GetComponent<Image>();
                 toggle.graphic = checkObj.GetComponent<Image>();
-                toggles.Add(toggle);
-
                 GameObject labelObj = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer));
                 labelObj.transform.SetParent(itemContainer.transform, false);
                 TMP_Text txt = labelObj.AddComponent<TextMeshProUGUI>();
@@ -419,18 +408,18 @@ public class MechanicsEditorPanelController : MonoBehaviour
                 txt.alignment = TextAlignmentOptions.MidlineLeft;
                 labelObj.GetComponent<RectTransform>().sizeDelta = new Vector2(400f, 40f);
 
-                int toggleIndex = toggles.Count - 1;
                 toggle.onValueChanged.AddListener((val) =>
                 {
                     if (!isMultiSelect)
                     {
                         if (val)
                         {
-                            for (int j = 0; j < toggles.Count; j++)
+                            foreach (Transform child in contentTrans)
                             {
-                                if (j != toggleIndex && toggles[j] != null)
+                                Toggle childToggle = child.GetComponentInChildren<Toggle>(true);
+                                if (childToggle != null && childToggle != toggle)
                                 {
-                                    toggles[j].SetIsOnWithoutNotify(false);
+                                    childToggle.SetIsOnWithoutNotify(false);
                                 }
                             }
                             onToggleChanged?.Invoke(itemGo, true);
@@ -451,6 +440,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
 
     private void UpdateObjectsToTrigger(GameObject itemGo, bool selected)
     {
+        Debug.Log($"[UpdateObjectsToTrigger] itemGo: {(itemGo != null ? itemGo.name : "null")}, selected: {selected}");
         if (activeTriggerScript == null) return;
         HashSet<GameObject> currentSelections = new HashSet<GameObject>();
         if (activeTriggerScript.objectsToTrigger != null)
@@ -570,21 +560,15 @@ public class MechanicsEditorPanelController : MonoBehaviour
                 PopulateStaticScrollChecklist(teleportObjectsScroll, currentSelections, (itemGo, selected) =>
                 {
                     UpdateObjectsToTrigger(itemGo, selected);
+                    if (teleportComponent != null) teleportComponent.Setup(activeTriggerScript);
                 }, true);
             }
 
-            if (teleportDestinationTargetScroll != null)
+
+
+            if (teleportComponent != null)
             {
-                HashSet<GameObject> currentSelections = new HashSet<GameObject>();
-                if (activeTriggerScript.destinationTargetObject != null)
-                {
-                    currentSelections.Add(activeTriggerScript.destinationTargetObject);
-                }
-                PopulateStaticScrollChecklist(teleportDestinationTargetScroll, currentSelections, (itemGo, selected) =>
-                {
-                    if (selected) activeTriggerScript.destinationTargetObject = itemGo;
-                    else activeTriggerScript.destinationTargetObject = null;
-                }, false);
+                teleportComponent.Setup(activeTriggerScript);
             }
         }
 
@@ -604,19 +588,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
                 }, true);
             }
 
-            if (singleMotionDestinationTargetScroll != null)
-            {
-                HashSet<GameObject> currentSelections = new HashSet<GameObject>();
-                if (activeTriggerScript.destinationTargetObject != null)
-                {
-                    currentSelections.Add(activeTriggerScript.destinationTargetObject);
-                }
-                PopulateStaticScrollChecklist(singleMotionDestinationTargetScroll, currentSelections, (itemGo, selected) =>
-                {
-                    if (selected) activeTriggerScript.destinationTargetObject = itemGo;
-                    else activeTriggerScript.destinationTargetObject = null;
-                }, false);
-            }
+
 
             if (singleMotionSpeedInput != null)
             {
