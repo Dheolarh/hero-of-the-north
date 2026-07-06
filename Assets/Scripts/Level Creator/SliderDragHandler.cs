@@ -3,32 +3,21 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System;
 
-public class SliderDragHandler : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class SliderDragHandler : MonoBehaviour, IPointerDownHandler
 {
-    public Action OnDragStart;
-    public Action OnDragEnd;
+    public Action<Slider> OnDragStart;
+
+    private Slider parentSlider;
+
+    private void Awake()
+    {
+        parentSlider = GetComponentInParent<Slider>();
+    }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        Debug.Log($"[SliderDragHandler] OnPointerDown on GameObject: {gameObject.name}");
-        OnDragStart?.Invoke();
-    }
-
-    public void OnBeginDrag(PointerEventData eventData)
-    {
-        Debug.Log($"[SliderDragHandler] OnBeginDrag on GameObject: {gameObject.name}");
-        OnDragStart?.Invoke();
-    }
-
-    public void OnDrag(PointerEventData eventData)
-    {
-        // Must implement IDragHandler for drag events to work, but empty since Slider handles value updates internally.
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        Debug.Log($"[SliderDragHandler] OnEndDrag on GameObject: {gameObject.name}");
-        OnDragEnd?.Invoke();
+        Debug.Log($"[SliderDragHandler] OnPointerDown on: {gameObject.name}");
+        OnDragStart?.Invoke(parentSlider);
     }
 }
 
@@ -44,6 +33,7 @@ public class CameraBorrowerSlider : MonoBehaviour
     private Vector3 initialObjectPosition;
     private Vector3 initialCameraPosition;
     private CanvasGroup parentCanvasGroup;
+    private Slider activeSlider = null;
 
     public void Initialize(Slider xSlider, Slider ySlider, GameObject targetObject, Vector2 savedPosition, CanvasGroup parentGroup = null)
     {
@@ -51,6 +41,11 @@ public class CameraBorrowerSlider : MonoBehaviour
         this.ySlider = ySlider;
         this.targetObject = targetObject;
         this.parentCanvasGroup = parentGroup;
+
+        // Ensure this Teleport panel itself fades with the parent editor group
+        CanvasGroup childCg = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
+        childCg.ignoreParentGroups = false;
+        childCg.alpha = 1f;
 
         Camera cam = Camera.main;
         if (cam != null && xSlider != null && ySlider != null)
@@ -100,41 +95,52 @@ public class CameraBorrowerSlider : MonoBehaviour
             if (targetObject != null)
             {
                 var dragX = xSlider.gameObject.GetComponent<SliderDragHandler>() ?? xSlider.gameObject.AddComponent<SliderDragHandler>();
-                dragX.OnDragStart = OnSliderDragStart;
-                dragX.OnDragEnd = OnSliderDragEnd;
+                dragX.OnDragStart = HandleDragStart;
 
                 if (xSlider.handleRect != null)
                 {
                     var handleDragX = xSlider.handleRect.gameObject.GetComponent<SliderDragHandler>() ?? xSlider.handleRect.gameObject.AddComponent<SliderDragHandler>();
-                    handleDragX.OnDragStart = OnSliderDragStart;
-                    handleDragX.OnDragEnd = OnSliderDragEnd;
+                    handleDragX.OnDragStart = HandleDragStart;
                 }
 
                 var dragY = ySlider.gameObject.GetComponent<SliderDragHandler>() ?? ySlider.gameObject.AddComponent<SliderDragHandler>();
-                dragY.OnDragStart = OnSliderDragStart;
-                dragY.OnDragEnd = OnSliderDragEnd;
+                dragY.OnDragStart = HandleDragStart;
 
                 if (ySlider.handleRect != null)
                 {
                     var handleDragY = ySlider.handleRect.gameObject.GetComponent<SliderDragHandler>() ?? ySlider.handleRect.gameObject.AddComponent<SliderDragHandler>();
-                    handleDragY.OnDragStart = OnSliderDragStart;
-                    handleDragY.OnDragEnd = OnSliderDragEnd;
+                    handleDragY.OnDragStart = HandleDragStart;
                 }
             }
         }
     }
 
+    private void HandleDragStart(Slider slider)
+    {
+        activeSlider = slider;
+        OnSliderDragStart();
+    }
+
     private void Update()
     {
-        if (isDragging && targetObject != null && Camera.main != null)
+        if (isDragging)
         {
-            Camera.main.transform.position = new Vector3(targetObject.transform.position.x, targetObject.transform.position.y, Camera.main.transform.position.z);
+            // Bulletproof: If mouse button is released, stop dragging immediately
+            if (!Input.GetMouseButton(0))
+            {
+                OnSliderDragEnd();
+                return;
+            }
+
+            if (targetObject != null && Camera.main != null)
+            {
+                Camera.main.transform.position = new Vector3(targetObject.transform.position.x, targetObject.transform.position.y, Camera.main.transform.position.z);
+            }
         }
     }
 
     private void OnSliderDragStart()
     {
-        Debug.Log($"[CameraBorrowerSlider] OnSliderDragStart! targetObject: {(targetObject != null ? targetObject.name : "null")}");
         if (targetObject == null) return;
         isDragging = true;
         initialObjectPosition = targetObject.transform.position;
@@ -145,20 +151,20 @@ public class CameraBorrowerSlider : MonoBehaviour
 
         if (parentCanvasGroup != null)
         {
-            parentCanvasGroup.alpha = 0.05f;
+            parentCanvasGroup.alpha = 0.05f; // Dim overall editor panel
         }
 
-        // Keep this control panel fully visible if CanvasGroup is present
-        CanvasGroup childCg = GetComponent<CanvasGroup>();
-        if (childCg != null)
+        // Keep ONLY the active slider fully visible
+        if (activeSlider != null)
         {
-            childCg.ignoreParentGroups = true;
+            CanvasGroup sliderCg = activeSlider.gameObject.GetComponent<CanvasGroup>() ?? activeSlider.gameObject.AddComponent<CanvasGroup>();
+            sliderCg.ignoreParentGroups = true;
+            sliderCg.alpha = 1f;
         }
     }
 
     private void OnSliderDragEnd()
     {
-        Debug.Log($"[CameraBorrowerSlider] OnSliderDragEnd! targetObject: {(targetObject != null ? targetObject.name : "null")}");
         if (targetObject == null) return;
         isDragging = false;
 
@@ -179,6 +185,18 @@ public class CameraBorrowerSlider : MonoBehaviour
         if (parentCanvasGroup != null)
         {
             parentCanvasGroup.alpha = 1f;
+        }
+
+        // Restore active slider to inherit parent opacity again
+        if (activeSlider != null)
+        {
+            CanvasGroup sliderCg = activeSlider.gameObject.GetComponent<CanvasGroup>();
+            if (sliderCg != null)
+            {
+                sliderCg.ignoreParentGroups = false;
+                sliderCg.alpha = 1f;
+            }
+            activeSlider = null;
         }
 
         // Reinitialize to clamp values
