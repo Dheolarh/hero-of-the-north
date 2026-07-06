@@ -34,6 +34,8 @@ public class CameraBorrowerSlider : MonoBehaviour
     private Vector3 initialCameraPosition;
     private CanvasGroup parentCanvasGroup;
     private Slider activeSlider = null;
+    private Vector3 targetObjectPos;
+    private bool hasStoredInitialPositions = false;
 
     public void Initialize(Slider xSlider, Slider ySlider, GameObject targetObject, Vector2 savedPosition, CanvasGroup parentGroup = null)
     {
@@ -64,6 +66,11 @@ public class CameraBorrowerSlider : MonoBehaviour
                 }
                 xSlider.value = Mathf.Clamp(startPos.x, xSlider.minValue, xSlider.maxValue);
                 ySlider.value = Mathf.Clamp(startPos.y, ySlider.minValue, ySlider.maxValue);
+                
+                if (targetObject != null)
+                {
+                    targetObjectPos = targetObject.transform.position;
+                }
             }
 
             xSlider.onValueChanged.RemoveAllListeners();
@@ -71,7 +78,7 @@ public class CameraBorrowerSlider : MonoBehaviour
             {
                 if (isDragging && targetObject != null)
                 {
-                    targetObject.transform.position = new Vector3(val, ySlider.value, targetObject.transform.position.z);
+                    targetObjectPos.x = val;
                 }
             });
 
@@ -80,7 +87,7 @@ public class CameraBorrowerSlider : MonoBehaviour
             {
                 if (isDragging && targetObject != null)
                 {
-                    targetObject.transform.position = new Vector3(xSlider.value, val, targetObject.transform.position.z);
+                    targetObjectPos.y = val;
                 }
             });
 
@@ -126,6 +133,15 @@ public class CameraBorrowerSlider : MonoBehaviour
 
             if (targetObject != null && Camera.main != null)
             {
+                // 1. Smoothly glide the target object towards the target coordinate slider value
+                float speed = 8f; // Speed factor (smoothly glides the target)
+                targetObject.transform.position = Vector3.Lerp(
+                    targetObject.transform.position,
+                    new Vector3(targetObjectPos.x, targetObjectPos.y, targetObject.transform.position.z),
+                    Time.deltaTime * speed
+                );
+
+                // 2. Smoothly follow with camera, applying clamping bounds
                 Camera cam = Camera.main;
                 float halfHeight = cam.orthographicSize;
                 float halfWidth = halfHeight * cam.aspect;
@@ -135,28 +151,30 @@ public class CameraBorrowerSlider : MonoBehaviour
                 float minYBound = -25f;
                 float maxYBound = 25f;
 
-                Vector3 targetCamPos = new Vector3(targetObject.transform.position.x, targetObject.transform.position.y, cam.transform.position.z);
+                // Focus on the smoothed target object position
+                Vector3 desiredCamPos = new Vector3(targetObject.transform.position.x, targetObject.transform.position.y, cam.transform.position.z);
 
-                // Clamp camera position to level bounds
+                // Clamp camera target position to level bounds
                 if ((maxXBound - minXBound) > (2f * halfWidth))
                 {
-                    targetCamPos.x = Mathf.Clamp(targetCamPos.x, minXBound + halfWidth, maxXBound - halfWidth);
+                    desiredCamPos.x = Mathf.Clamp(desiredCamPos.x, minXBound + halfWidth, maxXBound - halfWidth);
                 }
                 else
                 {
-                    targetCamPos.x = (minXBound + maxXBound) * 0.5f;
+                    desiredCamPos.x = (minXBound + maxXBound) * 0.5f;
                 }
 
                 if ((maxYBound - minYBound) > (2f * halfHeight))
                 {
-                    targetCamPos.y = Mathf.Clamp(targetCamPos.y, minYBound + halfHeight, maxYBound - halfHeight);
+                    desiredCamPos.y = Mathf.Clamp(desiredCamPos.y, minYBound + halfHeight, maxYBound - halfHeight);
                 }
                 else
                 {
-                    targetCamPos.y = (minYBound + maxYBound) * 0.5f;
+                    desiredCamPos.y = (minYBound + maxYBound) * 0.5f;
                 }
 
-                cam.transform.position = targetCamPos;
+                // Smoothly interpolate the camera position
+                cam.transform.position = Vector3.Lerp(cam.transform.position, desiredCamPos, Time.deltaTime * speed);
             }
         }
     }
@@ -165,12 +183,19 @@ public class CameraBorrowerSlider : MonoBehaviour
     {
         if (targetObject == null) return;
         isDragging = true;
-        initialObjectPosition = targetObject.transform.position;
-        if (Camera.main != null)
+
+        if (!hasStoredInitialPositions)
         {
-            initialCameraPosition = Camera.main.transform.position;
+            initialObjectPosition = targetObject.transform.position;
+            if (Camera.main != null)
+            {
+                initialCameraPosition = Camera.main.transform.position;
+            }
+            hasStoredInitialPositions = true;
         }
 
+        targetObjectPos = targetObject.transform.position;
+        
         if (parentCanvasGroup != null)
         {
             parentCanvasGroup.alpha = 0.05f; // Dim overall editor panel
@@ -190,14 +215,9 @@ public class CameraBorrowerSlider : MonoBehaviour
         // Notify saved position
         OnPositionSaved?.Invoke(finalPos);
 
-        // Snap target object back to its initial position
-        targetObject.transform.position = initialObjectPosition;
-
-        // Return camera to player
-        if (Camera.main != null)
-        {
-            Camera.main.transform.position = initialCameraPosition;
-        }
+        // DO NOT snap target object back and return camera on slider release anymore.
+        // Let it stay in place so user can review the position.
+        // Snap back will happen on save or close.
 
         if (parentCanvasGroup != null)
         {
@@ -211,6 +231,24 @@ public class CameraBorrowerSlider : MonoBehaviour
 
         // Reinitialize to clamp values
         Initialize(xSlider, ySlider, targetObject, finalPos, parentCanvasGroup);
+    }
+
+    public void ResetToInitialState()
+    {
+        if (hasStoredInitialPositions)
+        {
+            if (targetObject != null)
+            {
+                targetObject.transform.position = initialObjectPosition;
+            }
+
+            if (Camera.main != null && initialCameraPosition != Vector3.zero)
+            {
+                Camera.main.transform.position = initialCameraPosition;
+            }
+
+            hasStoredInitialPositions = false;
+        }
     }
 
     private void SetAllExceptActiveSlider(bool active)

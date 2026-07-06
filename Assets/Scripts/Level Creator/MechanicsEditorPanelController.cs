@@ -80,6 +80,8 @@ public class MechanicsEditorPanelController : MonoBehaviour
             createTrapButton.onClick.AddListener(CreateNewTrap);
         }
 
+        WireUpPanelControlButtons();
+
         RefreshCandidateList();
         ShowSelectPrompt();
     }
@@ -645,5 +647,64 @@ public class MechanicsEditorPanelController : MonoBehaviour
                 }, true);
             }
         }
+    }
+
+    private void WireUpPanelControlButtons()
+    {
+        Transform closeBtnTrans = transform.Find("CloseButton");
+        if (closeBtnTrans != null)
+        {
+            Button btn = closeBtnTrans.GetComponent<Button>();
+            if (btn != null)
+            {
+                btn.onClick.RemoveAllListeners();
+                btn.onClick.AddListener(CancelAndClose);
+            }
+        }
+
+        Transform footer = transform.Find("FooterButtons");
+        if (footer != null)
+        {
+            Button[] buttons = footer.GetComponentsInChildren<Button>(true);
+            foreach (var btn in buttons)
+            {
+                if (btn.name.ToLower().Contains("save"))
+                {
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(SaveTrapAndClose);
+                }
+                else if (btn.name.ToLower().Contains("close") || btn.name.ToLower().Contains("cancel"))
+                {
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(CancelAndClose);
+                }
+            }
+        }
+    }
+
+    private void SaveTrapAndClose()
+    {
+        Debug.Log("[MechanicsPanel] Save Trap and Close clicked.");
+        CloseAndReset();
+    }
+
+    private void CancelAndClose()
+    {
+        Debug.Log("[MechanicsPanel] Cancel and Close clicked.");
+        CloseAndReset();
+    }
+
+    private void CloseAndReset()
+    {
+        if (teleportComponent != null)
+        {
+            var borrower = teleportComponent.GetComponent<CameraBorrowerSlider>();
+            if (borrower != null)
+            {
+                borrower.ResetToInitialState();
+            }
+        }
+
+        gameObject.SetActive(false);
     }
 }
