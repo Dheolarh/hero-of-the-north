@@ -4,10 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Side Panel UI controller for modifying properties (scale, rotation, trigger wiring, speed, delay)
-/// of the currently selected PlacedEditorObject in the editor.
-/// </summary>
 public class ObjectPropertiesPanel : MonoBehaviour
 {
     public static ObjectPropertiesPanel Instance { get; private set; }

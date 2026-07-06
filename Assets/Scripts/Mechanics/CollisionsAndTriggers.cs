@@ -133,6 +133,13 @@ public class CollisionsAndTriggers : MonoBehaviour
     private bool isPhysicsModified = false;
     private float lastTriggerTime = -999f;
 
+    [Header("Change Object Properties Settings")]
+    public bool modifyColliderState = false;
+    public bool makeSolid = true;
+    public bool modifyGravityState = false;
+    public bool makeSubjectToGravity = false;
+    public bool appearOnTrigger = false;
+
     [Header("Delete Trigger Zone")]
     public bool deleteTriggerZone;
 
@@ -152,6 +159,17 @@ public class CollisionsAndTriggers : MonoBehaviour
             if (modifyRigidbody != null)
             {
                 originalGravityScale = modifyRigidbody.gravityScale;
+            }
+        }
+
+        // If configured to appear on trigger, make targets invisible at start
+        if (appearOnTrigger && objectsToTrigger != null)
+        {
+            foreach (var obj in objectsToTrigger)
+            {
+                if (obj == null) continue;
+                var renderers = obj.GetComponentsInChildren<Renderer>(true);
+                foreach (var r in renderers) r.enabled = false;
             }
         }
 
@@ -636,6 +654,17 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     private void ExecuteTriggerActions()
     {
+        // If configured to appear on trigger, make targets visible now
+        if (appearOnTrigger && objectsToTrigger != null)
+        {
+            foreach (var obj in objectsToTrigger)
+            {
+                if (obj == null) continue;
+                var renderers = obj.GetComponentsInChildren<Renderer>(true);
+                foreach (var r in renderers) r.enabled = true;
+            }
+        }
+
         // Handle audio playback first (before teleporting/moving the player)
         if (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName))
         {
@@ -684,9 +713,42 @@ public class CollisionsAndTriggers : MonoBehaviour
                 break;
 
             case TriggerType.PhysicsModifier:
-                if (applyOnEnter)
+                if (objectsToTrigger != null)
                 {
-                    ModifyPhysics();
+                    foreach (GameObject obj in objectsToTrigger)
+                    {
+                        if (obj == null) continue;
+
+                        // 1. Handle Collider
+                        if (modifyColliderState)
+                        {
+                            var col = obj.GetComponent<Collider2D>();
+                            if (col != null)
+                            {
+                                col.enabled = makeSolid;
+                            }
+                        }
+
+                        // 2. Handle Gravity
+                        if (modifyGravityState)
+                        {
+                            var rb = obj.GetComponent<Rigidbody2D>();
+                            if (rb == null && makeSubjectToGravity)
+                            {
+                                rb = obj.AddComponent<Rigidbody2D>();
+                                rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+                            }
+                            if (rb != null)
+                            {
+                                rb.simulated = true;
+                                rb.gravityScale = makeSubjectToGravity ? 1f : 0f;
+                                if (!makeSubjectToGravity)
+                                {
+                                    rb.linearVelocity = Vector2.zero;
+                                }
+                            }
+                        }
+                    }
                 }
                 break;
 

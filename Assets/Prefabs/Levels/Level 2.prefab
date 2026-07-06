@@ -105,12 +105,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
-  - {fileID: 2823311323931651421}
+  - {fileID: 1017823556315195216}
   objectToModify: {fileID: 0}
   triggerType: 3
   componentAction: 0
   setObjectActive: 0
+  activationMode: 0
   enableMove: 0
   moveDirection: 3
   moveSpeed: 0
@@ -119,15 +122,27 @@ MonoBehaviour:
   rotationDirection: 0
   rotationSpeed: 0
   stopRotationOnExit: 0
+  useLocalCoordinates: 1
   targetPosition: {x: -6, y: -49}
   targetMoveSpeed: 15
-  useLocalCoordinates: 1
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
+  newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 1
   playAudioOnTrigger: 0
   audioClipName: 
@@ -177,144 +192,6 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
-  m_EdgeRadius: 0
---- !u!1 &2823311323931651421
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1849759649770021247}
-  - component: {fileID: 633648179646385576}
-  - component: {fileID: 3145149062727938885}
-  m_Layer: 0
-  m_Name: Platform1
-  m_TagString: PlatformGround
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1849759649770021247
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2823311323931651421}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -6, y: -50.947, z: 0}
-  m_LocalScale: {x: 1.5, y: 1.5, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 314622657957081619}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &633648179646385576
-SpriteRenderer:
-  serializedVersion: 2
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2823311323931651421}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 455018537
-  m_SortingLayer: 3
-  m_SortingOrder: 2
-  m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300022, guid: 99e0832f2e8efae4ba10b757f5e03873, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 1.7299999, y: 0.9604687}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
-  m_SpriteSortPoint: 0
---- !u!61 &3145149062727938885
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2823311323931651421}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.7299999, y: 0.9604687}
-    newSize: {x: 1.7299999, y: 0.9604687}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 1.7299999, y: 0.9604687}
   m_EdgeRadius: 0
 --- !u!1 &4120035753745455952
 GameObject:
@@ -446,7 +323,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.7299999, y: 0.9604687}
+    oldSize: {x: 1.7316911, y: 0.96000004}
     newSize: {x: 1.7299999, y: 0.9604687}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -584,7 +461,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.7299999, y: 0.9604687}
+    oldSize: {x: 1.7316911, y: 0.96000004}
     newSize: {x: 1.7299999, y: 0.9604687}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -732,12 +609,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 4120035753745455952}
   objectToModify: {fileID: 0}
   triggerType: 2
   componentAction: 0
   setObjectActive: 1
+  activationMode: 1
   enableMove: 0
   moveDirection: 2
   moveSpeed: 2
@@ -746,15 +626,27 @@ MonoBehaviour:
   rotationDirection: 0
   rotationSpeed: 0
   stopRotationOnExit: 0
+  useLocalCoordinates: 1
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
-  useLocalCoordinates: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
+  newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 0
   audioClipName: 
@@ -817,12 +709,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 4770509850554539631}
   objectToModify: {fileID: 0}
   triggerType: 3
   componentAction: 0
   setObjectActive: 0
+  activationMode: 0
   enableMove: 0
   moveDirection: 3
   moveSpeed: 0
@@ -831,15 +726,27 @@ MonoBehaviour:
   rotationDirection: 0
   rotationSpeed: 0
   stopRotationOnExit: 0
+  useLocalCoordinates: 1
   targetPosition: {x: -9.02, y: -50}
   targetMoveSpeed: 15
-  useLocalCoordinates: 1
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
+  newMaxJumpsValue: 2
   triggerDelay: 1
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 0
   audioClipName: 
@@ -951,7 +858,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7987937751821307281}
-  - {fileID: 1849759649770021247}
+  - {fileID: 8882613221415967962}
   m_Father: {fileID: 6906109697073204493}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8875007569884264545
@@ -1974,6 +1881,81 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
   m_PrefabInstance: {fileID: 5892792668088849331}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5962569545380342821
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 314622657957081619}
+    m_Modifications:
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -50.947
+      objectReference: {fileID: 0}
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6674128251679673205, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+      propertyPath: m_Name
+      value: ground 2
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+--- !u!1 &1017823556315195216 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6674128251679673205, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+  m_PrefabInstance: {fileID: 5962569545380342821}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8882613221415967962 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3024779306088460543, guid: 3ac03d4e231ac7744970dd94ec78d69a, type: 3}
+  m_PrefabInstance: {fileID: 5962569545380342821}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8147848126757174976
 PrefabInstance:

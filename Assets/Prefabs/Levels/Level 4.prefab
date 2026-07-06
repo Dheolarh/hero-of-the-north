@@ -152,6 +152,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 4352641416726158255}
   objectToModify: {fileID: 0}
@@ -170,13 +172,24 @@ MonoBehaviour:
   useLocalCoordinates: 1
   targetPosition: {x: -5.9, y: -48.93}
   targetMoveSpeed: 5
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 0
   audioClipName: 
@@ -193,6 +206,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 757907934282542711}
   objectToModify: {fileID: 0}
@@ -211,13 +226,24 @@ MonoBehaviour:
   useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
   newMaxJumpsValue: 3
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 1
   playAudioOnTrigger: 0
   audioClipName: 
@@ -867,6 +893,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 4352641416726158255}
   objectToModify: {fileID: 0}
@@ -885,13 +913,24 @@ MonoBehaviour:
   useLocalCoordinates: 1
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 30, y: -48.893}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 1
   audioClipName: teleport
@@ -908,6 +947,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 757907934282542711}
   objectToModify: {fileID: 0}
@@ -926,13 +967,24 @@ MonoBehaviour:
   useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
   newMaxJumpsValue: 3
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 1
   playAudioOnTrigger: 0
   audioClipName: 
@@ -949,6 +1001,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 134050717208040213}
   objectToModify: {fileID: 0}
@@ -967,13 +1021,24 @@ MonoBehaviour:
   useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 0
   audioClipName: 
@@ -1132,6 +1197,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 757907934282542711}
   objectToModify: {fileID: 0}
@@ -1150,13 +1217,24 @@ MonoBehaviour:
   useLocalCoordinates: 1
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 25, y: -85.5}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 1
   audioClipName: teleport
@@ -1173,6 +1251,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 5599600420124854423}
   - {fileID: 3484348307683513032}
@@ -1195,13 +1275,24 @@ MonoBehaviour:
   useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 0
   audioClipName: 
@@ -1218,6 +1309,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 9152539878385736323}
   objectToModify: {fileID: 0}
@@ -1236,13 +1329,24 @@ MonoBehaviour:
   useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 0
   audioClipName: 
@@ -1259,6 +1363,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 1996718939754172376}
   - {fileID: 9075461832935273799}
@@ -1279,13 +1385,24 @@ MonoBehaviour:
   useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 0
   audioClipName: 
@@ -2110,7 +2227,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6674128251679673205, guid: a9649ee2b8bcc114dabe6a883a12d062, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4180129372515425888}
   m_SourcePrefab: {fileID: 100100000, guid: a9649ee2b8bcc114dabe6a883a12d062, type: 3}
 --- !u!4 &4093963797481747229 stripped
 Transform:
@@ -2122,6 +2242,24 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6674128251679673205, guid: a9649ee2b8bcc114dabe6a883a12d062, type: 3}
   m_PrefabInstance: {fileID: 1236944682906256354}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4180129372515425888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5599600420124854423}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1af875c258cd974fa2e7d77a4679894, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PingPongMovement
+  movementDirection: 0
+  maxLeftOffset: 10
+  maxRightOffset: 10
+  speed: 3
+  startAutomatically: 1
+  playerMovesWithPlatform: 1
 --- !u!1001 &1495256495816361507
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3424,6 +3562,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3958cc0ac0f8d5a42ab712352587d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionsAndTriggers
+  activateOnStart: 0
+  activationObjects: []
   objectsToTrigger:
   - {fileID: 757907934282542711}
   objectToModify: {fileID: 0}
@@ -3442,13 +3582,24 @@ MonoBehaviour:
   useLocalCoordinates: 1
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 30, y: -49}
+  destinationTargetObject: {fileID: 0}
+  useTargetX: 1
+  useTargetY: 1
   newGravityScale: 0
   fallSpeedMultiplier: 0
   applyOnEnter: 1
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 1
   audioClipName: teleport
@@ -3649,13 +3800,34 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6674128251679673205, guid: d0da683f72f9de948912b0549edef962, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8373969417725879978}
   m_SourcePrefab: {fileID: 100100000, guid: d0da683f72f9de948912b0549edef962, type: 3}
 --- !u!1 &3484348307683513032 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6674128251679673205, guid: d0da683f72f9de948912b0549edef962, type: 3}
   m_PrefabInstance: {fileID: 7837846766949079485}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8373969417725879978
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3484348307683513032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1af875c258cd974fa2e7d77a4679894, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PingPongMovement
+  movementDirection: 0
+  maxLeftOffset: 10
+  maxRightOffset: 10
+  speed: 3
+  startAutomatically: 1
+  playerMovesWithPlatform: 0
 --- !u!4 &4989861784990738754 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3024779306088460543, guid: d0da683f72f9de948912b0549edef962, type: 3}

@@ -577,6 +577,7 @@ public class GridPainter : MonoBehaviour
 
             // Instantiate
             GameObject spawned = Instantiate(item.editorPrefab, spawnPos, Quaternion.identity, levelContainer);
+            spawned.name = item.editorPrefab.name;
             
             // Setup PlacedEditorObject
             var placedObj = spawned.GetComponent<PlacedEditorObject>();
@@ -616,28 +617,13 @@ public class GridPainter : MonoBehaviour
             }
 
             // Automatically select so they can drag it immediately
-            if (LevelCreatorUI.Instance != null && !suppressNamePromptOnce)
+            SelectObject(placedObj);
+            var controller = LevelCreatorUI.Instance != null ? LevelCreatorUI.Instance.GetComponentInChildren<MechanicsEditorPanelController>() : null;
+            if (controller != null)
             {
-                LevelCreatorUI.Instance.PromptForObjectName(placedObj, 
-                    (newName) => {
-                        SelectObject(placedObj);
-                        var controller = LevelCreatorUI.Instance.GetComponentInChildren<MechanicsEditorPanelController>();
-                        if (controller != null)
-                        {
-                            controller.RefreshCandidateList();
-                            controller.RefreshWiringPanelIfActive(placedObj);
-                        }
-                    }, 
-                    () => {
-                        DeleteObject(placedObj);
-                    }
-                );
+                controller.RefreshCandidateList();
+                controller.RefreshWiringPanelIfActive(placedObj);
             }
-            else
-            {
-                SelectObject(placedObj);
-            }
-            suppressNamePromptOnce = false;
 
             Debug.Log($"[GridPainter] Instantly spawned '{typeName}' at view center: {spawnPos}");
         }
@@ -657,6 +643,7 @@ public class GridPainter : MonoBehaviour
         {
             // Spawn the editor visual representation
             activeDragObject = Instantiate(item.editorPrefab, Vector3.zero, Quaternion.identity, levelContainer);
+            activeDragObject.name = item.editorPrefab.name;
             activeDragScript = activeDragObject.GetComponent<PlacedEditorObject>();
             if (activeDragScript == null)
             {
@@ -711,28 +698,13 @@ public class GridPainter : MonoBehaviour
         editorObjects.Add(activeDragScript);
 
         PlacedEditorObject placedObj = activeDragScript;
-        if (LevelCreatorUI.Instance != null && !suppressNamePromptOnce)
+        SelectObject(placedObj);
+        var controller = LevelCreatorUI.Instance != null ? LevelCreatorUI.Instance.GetComponentInChildren<MechanicsEditorPanelController>() : null;
+        if (controller != null)
         {
-            LevelCreatorUI.Instance.PromptForObjectName(placedObj, 
-                (newName) => {
-                    SelectObject(placedObj);
-                    var controller = LevelCreatorUI.Instance.GetComponentInChildren<MechanicsEditorPanelController>();
-                    if (controller != null)
-                    {
-                        controller.RefreshCandidateList();
-                        controller.RefreshWiringPanelIfActive(placedObj);
-                    }
-                }, 
-                () => {
-                    DeleteObject(placedObj);
-                }
-            );
+            controller.RefreshCandidateList();
+            controller.RefreshWiringPanelIfActive(placedObj);
         }
-        else
-        {
-            SelectObject(placedObj);
-        }
-        suppressNamePromptOnce = false;
 
         activeDragObject = null;
         activeDragScript = null;
@@ -1348,6 +1320,13 @@ public class GridPainter : MonoBehaviour
         playtestTrigger.newMaxJumpsValue = editorTriggerScript.newMaxJumpsValue;
         playtestTrigger.triggerDelay = editorTriggerScript.triggerDelay;
         playtestTrigger.deleteTriggerZone = editorTriggerScript.deleteTriggerZone;
+        
+        // Copy Object Properties values
+        playtestTrigger.modifyColliderState = editorTriggerScript.modifyColliderState;
+        playtestTrigger.makeSolid = editorTriggerScript.makeSolid;
+        playtestTrigger.modifyGravityState = editorTriggerScript.modifyGravityState;
+        playtestTrigger.makeSubjectToGravity = editorTriggerScript.makeSubjectToGravity;
+        playtestTrigger.appearOnTrigger = editorTriggerScript.appearOnTrigger;
         playtestTrigger.playAudioOnTrigger = editorTriggerScript.playAudioOnTrigger;
         playtestTrigger.audioClipName = editorTriggerScript.audioClipName;
         playtestTrigger.loopAudio = editorTriggerScript.loopAudio;
