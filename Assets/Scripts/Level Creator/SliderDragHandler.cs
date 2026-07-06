@@ -47,22 +47,14 @@ public class CameraBorrowerSlider : MonoBehaviour
         childCg.ignoreParentGroups = false;
         childCg.alpha = 1f;
 
-        Camera cam = Camera.main;
-        if (cam != null && xSlider != null && ySlider != null)
-        {
-            float orthoSize = cam.orthographicSize;
-            float aspect = cam.aspect;
-            float camX = cam.transform.position.x;
-            float camY = cam.transform.position.y;
-
-            xSlider.minValue = camX - orthoSize * aspect;
-            xSlider.maxValue = camX + orthoSize * aspect;
-            ySlider.minValue = camY - orthoSize;
-            ySlider.maxValue = camY + orthoSize;
-        }
-
         if (xSlider != null && ySlider != null)
         {
+            // Level boundaries matching ClampCameraPosition
+            xSlider.minValue = -7f;
+            xSlider.maxValue = 50f;
+            ySlider.minValue = -25f;
+            ySlider.maxValue = 25f;
+
             if (!isDragging)
             {
                 Vector2 startPos = savedPosition;
@@ -134,7 +126,37 @@ public class CameraBorrowerSlider : MonoBehaviour
 
             if (targetObject != null && Camera.main != null)
             {
-                Camera.main.transform.position = new Vector3(targetObject.transform.position.x, targetObject.transform.position.y, Camera.main.transform.position.z);
+                Camera cam = Camera.main;
+                float halfHeight = cam.orthographicSize;
+                float halfWidth = halfHeight * cam.aspect;
+
+                float minXBound = -7f;
+                float maxXBound = 50f;
+                float minYBound = -25f;
+                float maxYBound = 25f;
+
+                Vector3 targetCamPos = new Vector3(targetObject.transform.position.x, targetObject.transform.position.y, cam.transform.position.z);
+
+                // Clamp camera position to level bounds
+                if ((maxXBound - minXBound) > (2f * halfWidth))
+                {
+                    targetCamPos.x = Mathf.Clamp(targetCamPos.x, minXBound + halfWidth, maxXBound - halfWidth);
+                }
+                else
+                {
+                    targetCamPos.x = (minXBound + maxXBound) * 0.5f;
+                }
+
+                if ((maxYBound - minYBound) > (2f * halfHeight))
+                {
+                    targetCamPos.y = Mathf.Clamp(targetCamPos.y, minYBound + halfHeight, maxYBound - halfHeight);
+                }
+                else
+                {
+                    targetCamPos.y = (minYBound + maxYBound) * 0.5f;
+                }
+
+                cam.transform.position = targetCamPos;
             }
         }
     }
@@ -154,13 +176,8 @@ public class CameraBorrowerSlider : MonoBehaviour
             parentCanvasGroup.alpha = 0.05f; // Dim overall editor panel
         }
 
-        // Keep ONLY the active slider fully visible
-        if (activeSlider != null)
-        {
-            CanvasGroup sliderCg = activeSlider.gameObject.GetComponent<CanvasGroup>() ?? activeSlider.gameObject.AddComponent<CanvasGroup>();
-            sliderCg.ignoreParentGroups = true;
-            sliderCg.alpha = 1f;
-        }
+        // Hide all extra elements except the active slider (opacity-based to preserve layout)
+        SetAllExceptActiveSlider(false);
     }
 
     private void OnSliderDragEnd()
@@ -187,19 +204,71 @@ public class CameraBorrowerSlider : MonoBehaviour
             parentCanvasGroup.alpha = 1f;
         }
 
-        // Restore active slider to inherit parent opacity again
-        if (activeSlider != null)
-        {
-            CanvasGroup sliderCg = activeSlider.gameObject.GetComponent<CanvasGroup>();
-            if (sliderCg != null)
-            {
-                sliderCg.ignoreParentGroups = false;
-                sliderCg.alpha = 1f;
-            }
-            activeSlider = null;
-        }
+        // Restore all extra elements back to normal visibility
+        SetAllExceptActiveSlider(true);
+
+        activeSlider = null;
 
         // Reinitialize to clamp values
         Initialize(xSlider, ySlider, targetObject, finalPos, parentCanvasGroup);
+    }
+
+    private void SetAllExceptActiveSlider(bool active)
+    {
+        float targetAlpha = active ? 1f : 0f;
+
+        foreach (Transform child in transform)
+        {
+            if (child.name == "Header")
+            {
+                SetCanvasGroupAlpha(child.gameObject, targetAlpha);
+            }
+            else if (child.name == "Teleport") // This is the child panel
+            {
+                foreach (Transform subChild in child)
+                {
+                    if (subChild.name == "Object to teleport - scroll" || 
+                        subChild.name == "Coordinate Label")
+                    {
+                        SetCanvasGroupAlpha(subChild.gameObject, targetAlpha);
+                    }
+                    else if (subChild.name == "X Coordinate" || subChild.name == "Y coordinate")
+                    {
+                        Slider sliderInChild = subChild.GetComponentInChildren<Slider>();
+                        if (sliderInChild != null)
+                        {
+                            if (sliderInChild == activeSlider)
+                            {
+                                // Active coordinate panel: Hide its text label but keep the panel and slider visible
+                                Transform label = subChild.Find("Label");
+                                if (label != null)
+                                {
+                                    SetCanvasGroupAlpha(label.gameObject, targetAlpha);
+                                }
+
+                                // Make sure this slider's panel itself ignores parent group fading and stays visible
+                                var cg = subChild.gameObject.GetComponent<CanvasGroup>() ?? subChild.gameObject.AddComponent<CanvasGroup>();
+                                cg.ignoreParentGroups = !active;
+                                cg.alpha = 1f;
+                            }
+                            else
+                            {
+                                // Inactive slider panel: Hide it completely
+                                SetCanvasGroupAlpha(subChild.gameObject, targetAlpha);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void SetCanvasGroupAlpha(GameObject go, float alpha)
+    {
+        var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
+        cg.alpha = alpha;
+        cg.blocksRaycasts = (alpha > 0.01f);
+        cg.interactable = (alpha > 0.01f);
+        cg.ignoreParentGroups = false;
     }
 }
