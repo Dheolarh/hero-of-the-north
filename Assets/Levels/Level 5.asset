@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 5
   levelName: 5
   isBossLevel: 0
-  levelPrefab: {fileID: 6781669126711784265, guid: d337b701a8427644dbf1b1128fa81a96, type: 3}
+  levelPrefab: {fileID: 6781669126711784265, guid: 4dbf0c704518b3f428a86c54ad258361, type: 3}
   multiJumpCount: 2
   levelIcon: {fileID: 21300000, guid: 0f271ac103ca0b8439b878d0d23f2375, type: 3}
   lockedIcon: {fileID: 21300000, guid: ae0deb8daee84f0408c803b8e168b4c3, type: 3}

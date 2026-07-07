@@ -28,8 +28,8 @@ Transform:
   m_GameObject: {fileID: 259679159934216680}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.055195, y: -3.8469274, z: 10.261825}
-  m_LocalScale: {x: 0.20085716, y: 0.7959129, z: 1}
+  m_LocalPosition: {x: 4.25, y: -2.8203, z: 10.261825}
+  m_LocalScale: {x: 0.20085716, y: 2.8491294, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 9099983791090126665}
@@ -172,6 +172,9 @@ MonoBehaviour:
   useLocalCoordinates: 0
   targetPosition: {x: 0, y: -35}
   targetMoveSpeed: 10
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
   destinationTargetObject: {fileID: 0}
   useTargetX: 1
@@ -182,6 +185,11 @@ MonoBehaviour:
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 0
   audioClipName: 
@@ -311,6 +319,9 @@ MonoBehaviour:
   useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 3.54, y: 4.89}
   destinationTargetObject: {fileID: 0}
   useTargetX: 1
@@ -321,6 +332,11 @@ MonoBehaviour:
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 1
   playAudioOnTrigger: 1
   audioClipName: teleport
@@ -543,6 +559,9 @@ MonoBehaviour:
   useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 0
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
   destinationTargetObject: {fileID: 0}
   useTargetX: 1
@@ -553,6 +572,11 @@ MonoBehaviour:
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 1
   playAudioOnTrigger: 0
   audioClipName: 
@@ -886,6 +910,9 @@ MonoBehaviour:
   useLocalCoordinates: 0
   targetPosition: {x: 0, y: 0}
   targetMoveSpeed: 5
+  moveStaggerInterval: 0
+  moveOnXOnly: 0
+  moveOnYOnly: 0
   teleportPosition: {x: 0, y: 0}
   destinationTargetObject: {fileID: 0}
   useTargetX: 1
@@ -896,6 +923,11 @@ MonoBehaviour:
   resetOnExit: 0
   newMaxJumpsValue: 2
   triggerDelay: 0
+  modifyColliderState: 0
+  makeSolid: 1
+  modifyGravityState: 0
+  makeSubjectToGravity: 0
+  appearOnTrigger: 0
   deleteTriggerZone: 0
   playAudioOnTrigger: 0
   audioClipName: 
@@ -1773,13 +1805,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5494596951536812588, guid: 330cad76e1df3f540a8c72fa58ce02d7, type: 3}
+      propertyPath: m_Mass
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 6491451177317349311, guid: 330cad76e1df3f540a8c72fa58ce02d7, type: 3}
       propertyPath: speed
       value: 3.2
       objectReference: {fileID: 0}
     - target: {fileID: 6491451177317349311, guid: 330cad76e1df3f540a8c72fa58ce02d7, type: 3}
       propertyPath: jumpForce
-      value: 9
+      value: 45
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
