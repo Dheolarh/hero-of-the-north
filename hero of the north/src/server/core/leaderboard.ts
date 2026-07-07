@@ -3,9 +3,26 @@
  */
 // import { RedisClient } from '@devvit/public-api'; // Removed to avoid type conflicts
 
-const LEADERBOARD_KEY = 'leaderboard:global';
-const PLAYER_STATS_PREFIX = 'player:stats:';      // Hash: userId -> stats
-const PLAYER_LEVEL_PREFIX = 'player:level:';      // Hash: userId:levelNum -> level stats
+function getWeeklyId(): string {
+    // Reset weekly on Monday 00:00 UTC
+    // Unix epoch was Thursday, Jan 1, 1970. Monday was Jan 5 (4 days offset).
+    const fourDaysInMs = 4 * 24 * 60 * 60 * 1000;
+    const weekInMs = 7 * 24 * 60 * 60 * 1000;
+    const weekTimestamp = Math.floor((Date.now() - fourDaysInMs) / weekInMs);
+    return `W_${weekTimestamp}`;
+}
+
+function getLeaderboardKey(): string {
+    return `leaderboard:${getWeeklyId()}`;
+}
+
+function getPlayerStatsPrefix(): string {
+    return `player:stats:${getWeeklyId()}:`;
+}
+
+function getPlayerLevelPrefix(): string {
+    return `player:level:${getWeeklyId()}:`;
+}
 
 export interface PlayerStats {
     userId: string;
@@ -55,7 +72,7 @@ export async function submitScore(
     const gotLock = await redis.set(lockKey, '1', { nx: true, ex: 10 });
     if (!gotLock) {
         // Another request is already processing this user+level — reject early.
-        const statsKey = `${PLAYER_STATS_PREFIX}${userId}`;
+        const statsKey = getPlayerStatsPrefix() + userId;
         const currentStats = await redis.hGetAll(statsKey);
         const totalPoints = parseInt(currentStats?.totalPoints || '0');
         const rank = await getPlayerRank(redis, userId);
@@ -64,11 +81,11 @@ export async function submitScore(
 
     try {
         // Get player stats
-        const statsKey = `${PLAYER_STATS_PREFIX}${userId}`;
+        const statsKey = getPlayerStatsPrefix() + userId;
         const currentStats = await redis.hGetAll(statsKey);
 
         // Check if level already completed
-        const levelKey = `${PLAYER_LEVEL_PREFIX}${userId}:${levelNumber}`;
+        const levelKey = getPlayerLevelPrefix() + userId + ":" + levelNumber;
         const existingLevel = await redis.hGetAll(levelKey);
 
         let totalPoints = parseInt(currentStats?.totalPoints || '0');
@@ -116,7 +133,7 @@ export async function submitScore(
         await redis.hSet(statsKey, statsUpdate);
 
         // Update leaderboard
-        await redis.zAdd(LEADERBOARD_KEY, { member: userId, score: totalPoints });
+        await redis.zAdd(getLeaderboardKey(), { member: userId, score: totalPoints });
 
         const rank = await getPlayerRank(redis, userId);
         return { totalPoints, rank };
@@ -136,7 +153,7 @@ export async function getTopPlayers(
     limit: number = 50
 ): Promise<LeaderboardEntry[]> {
     try {
-        const topMembers = await redis.zRange(LEADERBOARD_KEY, 0, limit - 1, {
+        const topMembers = await redis.zRange(getLeaderboardKey(), 0, limit - 1, {
             by: 'rank',
             reverse: true
         });
@@ -150,7 +167,7 @@ export async function getTopPlayers(
             if (!userId) continue;
 
             // Get username and avatar
-            const stats = await redis.hGetAll(`${PLAYER_STATS_PREFIX}${userId}`);
+            const stats = await redis.hGetAll(getPlayerStatsPrefix() + userId);
             entries.push({
                 rank: i + 1,
                 userId,
@@ -171,11 +188,11 @@ export async function getTopPlayers(
  */
 export async function getPlayerRank(redis: any, userId: string): Promise<number> {
     try {
-        const rank = await redis.zRank(LEADERBOARD_KEY, userId);
+        const rank = await redis.zRank(getLeaderboardKey(), userId);
 
         if (rank === undefined || rank === null) return 0;
 
-        const count = await redis.zCard(LEADERBOARD_KEY);
+        const count = await redis.zCard(getLeaderboardKey());
         return count - rank;
     } catch (e) {
         console.error('Error getting rank:', e);
@@ -187,7 +204,7 @@ export async function getPlayerRank(redis: any, userId: string): Promise<number>
  * Get single player standing
  */
 export async function getPlayerStanding(redis: any, userId: string): Promise<PlayerStanding | null> {
-    const stats = await redis.hGetAll(`${PLAYER_STATS_PREFIX}${userId}`);
+    const stats = await redis.hGetAll(getPlayerStatsPrefix() + userId);
     if (!stats || !stats.totalPoints) return null;
 
     const rank = await getPlayerRank(redis, userId);

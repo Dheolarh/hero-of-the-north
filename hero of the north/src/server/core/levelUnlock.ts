@@ -7,7 +7,9 @@
 const TOTAL_LEVELS = 32; // Tutorial (0) + 31 regular levels
 const INITIALLY_UNLOCKED = 2; // Tutorial + Level 1
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const LAUNCH_TIME_KEY = 'game:launchTime';
+// Suffix to control level unlock resets. Increment this (e.g., 'v2' to 'v3') to reset the timer.
+const BUILD_VERSION_SUFFIX = 'v2';
+const LAUNCH_TIME_KEY = `game:launchTime:${BUILD_VERSION_SUFFIX}`;
 
 export interface UnlockStatus {
     unlockedLevels: number; // Number of levels currently unlocked

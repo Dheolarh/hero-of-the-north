@@ -189,3 +189,24 @@ api.get('/leaderboard/standing/:userId', async (c) => {
 
     return c.json({ found: true, standing });
 });
+
+// GET /api/post/info
+// Returns current post author (summoner) and active viewer (player) names.
+api.get('/post/info', async (c) => {
+    const postId = context.postId;
+    let summoner = 'Someone';
+    
+    if (postId) {
+        try {
+            const post = await reddit.getPostById(postId);
+            if (post && post.authorName) {
+                summoner = post.authorName;
+            }
+        } catch (e) {
+            console.warn('[API] Could not fetch post details:', e);
+        }
+    }
+
+    const player = context.username || 'Redditor';
+    return c.json({ summoner, player });
+});

@@ -1,32 +1,50 @@
-import { navigateTo, context, requestExpandedMode } from '@devvit/web/client';
+import { requestExpandedMode } from '@devvit/web/client';
 
-const docsLink = document.getElementById('docs-link') as HTMLDivElement;
-const playtestLink = document.getElementById('playtest-link') as HTMLDivElement;
-const discordLink = document.getElementById('discord-link') as HTMLDivElement;
-const startButton = document.getElementById(
-  'start-button'
-) as HTMLButtonElement;
+const startButton = document.getElementById('start-button') as HTMLButtonElement;
 
-startButton.addEventListener('click', (e) => {
-  requestExpandedMode(e, 'game');
-});
-
-docsLink.addEventListener('click', () => {
-  navigateTo('https://developers.reddit.com/docs');
-});
-
-playtestLink.addEventListener('click', () => {
-  navigateTo('https://www.reddit.com/r/Devvit');
-});
-
-discordLink.addEventListener('click', () => {
-  navigateTo('https://discord.com/invite/R7yu2wh9Qz');
-});
-
-const titleElement = document.getElementById('title') as HTMLHeadingElement;
-
-function init() {
-  titleElement.textContent = `Hey ${context.username ?? 'user'} 👋`;
+if (startButton) {
+  startButton.addEventListener('click', (e) => {
+    requestExpandedMode(e, 'game');
+  });
 }
 
-init();
+async function init() {
+  const summoningTextElement = document.getElementById('summoning-text') as HTMLDivElement;
+  if (!summoningTextElement) {
+    console.warn('[Splash] summoning-text element not found in DOM');
+    return;
+  }
+
+  // Define fallback text helper
+  const setFallbackText = () => {
+    summoningTextElement.innerHTML = 
+      `A brave soul has summoned you to be the <span class="highlight-hero">Hero of the North</span>`;
+  };
+
+  // Add a small 150ms delay to let the Devvit post-message proxy bridge initialize
+  await new Promise(resolve => setTimeout(resolve, 150));
+
+  try {
+    const res = await fetch('/api/post/info');
+    if (res.ok) {
+      const data = await res.json();
+      const summoner = data.summoner || 'Someone';
+      const player = data.player || 'Redditor';
+      
+      summoningTextElement.innerHTML = 
+        `<span class="highlight-summoner">u/${summoner}</span> has summoned <span class="highlight-hero">u/${player}</span> to be the hero`;
+    } else {
+      setFallbackText();
+    }
+  } catch (err) {
+    console.warn('[Splash] Could not fetch post/user info from Hono server:', err);
+    setFallbackText();
+  }
+}
+
+// Run init when DOM is loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => init());
+} else {
+  init();
+}

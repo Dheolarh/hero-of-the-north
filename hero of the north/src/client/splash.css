@@ -4,93 +4,101 @@
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
-  color: #000000;
 }
 
 .app {
   display: flex;
   position: relative;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
   height: 100vh;
   margin: 0;
-  gap: 16px;
+  background-color: #0b0e14; /* Polar night backing */
+  overflow: hidden;
 }
 
-.snoo {
-  object-fit: contain;
-  width: 40%;
-  max-width: 200px;
-  margin: 0 auto;
-  transform: translateX(-30px);
-}
-
-.logo {
+/* Full Bleed Background Image covering the entire post container */
+.banner-bg {
   position: absolute;
-  width: 90px;
-  height: auto;
-  top: calc(50vh - 105px);
-  left: calc(50% + 75px);
-  transform: translateY(-50%);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
 }
 
-.content {
+/* Overlay panel at the bottom with a dark gradient backing for readability */
+.overlay-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 24px 36px 24px;
+  background: linear-gradient(
+    to top,
+    rgba(11, 14, 20, 0.98) 0%,
+    rgba(11, 14, 20, 0.9) 45%,
+    rgba(11, 14, 20, 0.6) 75%,
+    transparent 100%
+  );
+  z-index: 2;
 }
 
-.title {
-  font-size: 1.5em;
-  font-weight: bold;
+.game-logo {
+  width: 90%;
+  max-width: 360px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+}
+
+.summoning-text {
+  font-size: 1.15em;
   text-align: center;
+  color: #e6edf3;
+  line-height: 1.5;
+  font-weight: 500;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  max-width: 600px;
 }
 
-.description {
-  font-size: 1em;
-  text-align: center;
-  color: #5c6c74;
+.summoning-text .highlight-summoner {
+  color: #ff9f43; /* Warm gold/orange */
+  font-weight: 700;
 }
 
-.code {
-  background-color: #e5ebee;
-  padding: 2px 4px;
-  border-radius: 4px;
+.summoning-text .highlight-hero {
+  color: #00d2ff; /* Ice cyan */
+  font-weight: 700;
 }
 
 .start-button {
-  background-color: #d93900;
+  background: linear-gradient(135deg, #0072ff, #00d2ff); /* Icy cyan gradient */
   color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
   border: none;
-  padding: 6px 16px;
-  height: 28px;
-  font-size: 1.1em;
-  border-radius: 12px;
+  padding: 10px 48px;
+  height: 48px;
+  font-size: 1.25em;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-radius: 24px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 210, 255, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
-.footer {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 12px;
-  font-size: 0.8em;
-  color: #666666;
+.start-button:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(0, 210, 255, 0.6);
 }
 
-.docs-link {
-  cursor: pointer;
-}
-
-.divider {
-  color: rgba(0, 0, 0, 0.1);
+.start-button:active {
+  transform: scale(0.98);
 }
