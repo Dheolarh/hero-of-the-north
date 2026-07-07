@@ -55,7 +55,7 @@ public class DevvitBridge : MonoBehaviour
     {
 #if UNITY_EDITOR
         userId = "editor_user";
-        username = TrimUsername("EditorPlayer");
+        username = TrimUsername("Player");
         avatarUrl = "";
         if (logMessages)
             Debug.Log($"[DevvitBridge] [Editor Mock] User identity set: {username}");
@@ -64,7 +64,8 @@ public class DevvitBridge : MonoBehaviour
             LeaderboardUI.Instance.UpdatePlayerStandingNameAndAvatar();
         yield break;
 #else
-        using UnityWebRequest req = UnityWebRequest.Get("/api/user/me");
+        string url = "/api/user/me?t=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        using UnityWebRequest req = UnityWebRequest.Get(url);
         yield return req.SendWebRequest();
 
         if (req.result != UnityWebRequest.Result.Success)
@@ -140,7 +141,8 @@ public class DevvitBridge : MonoBehaviour
         OnUnlockDataReceived?.Invoke(mockLevels);
         yield break;
 #else
-        using UnityWebRequest req = UnityWebRequest.Get("/api/levels/all-info");
+        string url = "/api/levels/all-info?t=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        using UnityWebRequest req = UnityWebRequest.Get(url);
         yield return req.SendWebRequest();
 
         if (req.result != UnityWebRequest.Result.Success)
@@ -194,7 +196,8 @@ public class DevvitBridge : MonoBehaviour
             LeaderboardUI.Instance.DisplayLeaderboard(mockEntries);
         yield break;
 #else
-        using UnityWebRequest req = UnityWebRequest.Get("/api/leaderboard/top");
+        string url = "/api/leaderboard/top?t=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        using UnityWebRequest req = UnityWebRequest.Get(url);
         yield return req.SendWebRequest();
 
         if (req.result != UnityWebRequest.Result.Success)
@@ -245,7 +248,8 @@ public class DevvitBridge : MonoBehaviour
         yield break;
 #else
         // Use /me endpoint so the server uses context.userId (no userId in URL needed)
-        using UnityWebRequest req = UnityWebRequest.Get("/api/leaderboard/standing/me");
+        string url = "/api/leaderboard/standing/me?t=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        using UnityWebRequest req = UnityWebRequest.Get(url);
         yield return req.SendWebRequest();
 
         if (req.result != UnityWebRequest.Result.Success)

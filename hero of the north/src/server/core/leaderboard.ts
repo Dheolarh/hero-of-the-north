@@ -155,7 +155,7 @@ export async function getTopPlayers(
     try {
         const topMembers = await redis.zRange(getLeaderboardKey(), 0, limit - 1, {
             by: 'rank',
-            rev: true
+            reverse: true
         });
 
         const entries: LeaderboardEntry[] = [];
