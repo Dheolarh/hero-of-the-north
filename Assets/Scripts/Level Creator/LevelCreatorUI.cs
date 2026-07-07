@@ -117,6 +117,10 @@ public class LevelCreatorUI : MonoBehaviour
         }
 
         // Initialize UI display
+        if (playerMoveSpeed == 8f) playerMoveSpeed = 5f;
+        if (playerJumpForce == 12f) playerJumpForce = 7f;
+        if (playerMaxJumps == 2) playerMaxJumps = 1;
+
         UpdateToolText();
         SetPublishButtonState(false);
         if (validationSuccessPanel != null)
