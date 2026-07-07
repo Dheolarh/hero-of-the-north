@@ -630,7 +630,7 @@ MonoBehaviour:
   usernameText: {fileID: 8245548619280923311}
   pointsText: {fileID: 4548526561775432892}
   avatarImage: {fileID: 2875178929708128461}
-  defaultAvatar: {fileID: 21300000, guid: 0b945e09844296641a4e3a5027ef2175, type: 3}
+  defaultAvatar: {fileID: 21300000, guid: 1b31ad94c6e599b4e9eac7a5fb9b8f29, type: 3}
 --- !u!1 &7489320376367987512
 GameObject:
   m_ObjectHideFlags: 0

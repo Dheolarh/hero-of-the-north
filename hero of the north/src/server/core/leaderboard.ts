@@ -155,7 +155,7 @@ export async function getTopPlayers(
     try {
         const topMembers = await redis.zRange(getLeaderboardKey(), 0, limit - 1, {
             by: 'rank',
-            reverse: true
+            rev: true
         });
 
         const entries: LeaderboardEntry[] = [];
@@ -188,12 +188,11 @@ export async function getTopPlayers(
  */
 export async function getPlayerRank(redis: any, userId: string): Promise<number> {
     try {
-        const rank = await redis.zRank(getLeaderboardKey(), userId);
+        const rank = await redis.zRevRank(getLeaderboardKey(), userId);
 
         if (rank === undefined || rank === null) return 0;
 
-        const count = await redis.zCard(getLeaderboardKey());
-        return count - rank;
+        return rank + 1;
     } catch (e) {
         console.error('Error getting rank:', e);
         return 0;
@@ -214,4 +213,38 @@ export async function getPlayerStanding(redis: any, userId: string): Promise<Pla
         totalPoints: parseInt(stats.totalPoints),
         levelsCompleted: parseInt(stats.levelsCompleted),
     };
+}
+
+/**
+ * Clear scores and stats for specific usernames
+ */
+export async function clearPlayerScores(redis: any, usernames: string[]): Promise<string[]> {
+    const leaderboardKey = getLeaderboardKey();
+    const statsPrefix = getPlayerStatsPrefix();
+    const levelPrefix = getPlayerLevelPrefix();
+
+    const upperUsernames = usernames.map(u => u.toUpperCase());
+    const topMembers = await redis.zRange(leaderboardKey, 0, -1, { by: 'rank' });
+    const cleared: string[] = [];
+
+    for (const member of topMembers) {
+        const userId = member.member;
+        if (!userId) continue;
+
+        const stats = await redis.hGetAll(statsPrefix + userId);
+        const username = stats?.username;
+
+        if (username && upperUsernames.includes(username.toUpperCase())) {
+            // Delete from leaderboard
+            await redis.zRem(leaderboardKey, userId);
+            // Delete stats
+            await redis.del(statsPrefix + userId);
+            // Delete levels (0 to 31)
+            for (let lvl = 0; lvl <= 31; lvl++) {
+                await redis.del(`${levelPrefix}${userId}:${lvl}`);
+            }
+            cleared.push(username);
+        }
+    }
+    return cleared;
 }

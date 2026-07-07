@@ -2,10 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// A lightweight, serializable Vector2 replacement for clean JSON output
-/// and compatibility across Unity and web-based backends.
-/// </summary>
+
 [Serializable]
 public struct Vector2S
 {
@@ -78,4 +75,10 @@ public class CustomLevelData
 
     public List<CustomTileData> tiles = new List<CustomTileData>();
     public List<CustomTrapData> traps = new List<CustomTrapData>();
+
+    // Global Player Settings
+    public float playerMoveSpeed = 5f;
+    public float playerJumpForce = 7f;
+    public int playerMaxJumps = 1;
+    public bool playerEnableFallDamage = false;
 }

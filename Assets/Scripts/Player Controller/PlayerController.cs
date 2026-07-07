@@ -7,7 +7,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float speed;
     [SerializeField] float jumpForce;
     [SerializeField] bool enableFallDamage = false;
-    [SerializeField] float maxSafeFallHeight = 10f;
+    [SerializeField] float maxSafeFallHeight = 20f;
 
     // ── Shared component references (read by states) ───────────────────────
     public Transform     PlayerTransform  { get; private set; }
@@ -17,9 +17,9 @@ public class PlayerController : MonoBehaviour
     public CameraFollow  CameraFollow     { get; private set; }
 
     // ── Shared data properties (read / written by states) ─────────────────
-    public float Speed     => speed;
-    public float JumpForce => jumpForce;
-    public bool  EnableFallDamage => enableFallDamage;
+    public float Speed     { get => speed; set => speed = value; }
+    public float JumpForce { get => jumpForce; set => jumpForce = value; }
+    public bool  EnableFallDamage { get => enableFallDamage; set => enableFallDamage = value; }
     public float MaxSafeFallHeight => maxSafeFallHeight;
     public int   MaxMultiJumps { get; set; }
 

@@ -270,6 +270,12 @@ public class DevvitBridge : MonoBehaviour
             {
                 if (logMessages)
                     Debug.Log("[DevvitBridge] Player has no standing yet (no levels completed)");
+
+                if (LeaderboardUI.Instance != null)
+                {
+                    PlayerStanding fallback = new PlayerStanding { rank = 0, totalPoints = 0, levelsCompleted = 0 };
+                    LeaderboardUI.Instance.UpdatePlayerStanding(fallback);
+                }
             }
         }
         catch (Exception e)

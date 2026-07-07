@@ -939,6 +939,19 @@ public class GridPainter : MonoBehaviour
                 activePlaytestPlayer = playerStart.gameObject;
             }
 
+            if (activePlaytestPlayer != null && LevelCreatorUI.Instance != null)
+            {
+                var pc = activePlaytestPlayer.GetComponent<PlayerController>() ?? activePlaytestPlayer.GetComponentInChildren<PlayerController>();
+                if (pc != null)
+                {
+                    pc.Speed = LevelCreatorUI.Instance.playerMoveSpeed;
+                    pc.JumpForce = LevelCreatorUI.Instance.playerJumpForce;
+                    pc.MaxMultiJumps = LevelCreatorUI.Instance.playerMaxJumps;
+                    pc.EnableFallDamage = LevelCreatorUI.Instance.playerEnableFallDamage;
+                    Debug.Log($"[Playtest] Custom Player settings applied: Speed={pc.Speed}, JumpForce={pc.JumpForce}, MaxJumps={pc.MaxMultiJumps}, FallDamage={pc.EnableFallDamage}");
+                }
+            }
+
             var camFollow = Camera.main.GetComponent<CameraFollow>();
             if (camFollow != null)
             {
@@ -1116,6 +1129,20 @@ public class GridPainter : MonoBehaviour
     {
         ClearGrid();
 
+        // Load custom player settings
+        if (LevelCreatorUI.Instance != null)
+        {
+            LevelCreatorUI.Instance.playerMoveSpeed = data.playerMoveSpeed;
+            LevelCreatorUI.Instance.playerJumpForce = data.playerJumpForce;
+            LevelCreatorUI.Instance.playerMaxJumps = data.playerMaxJumps;
+            LevelCreatorUI.Instance.playerEnableFallDamage = data.playerEnableFallDamage;
+
+            if (ObjectTransformPanelController.Instance != null)
+            {
+                ObjectTransformPanelController.Instance.UpdatePlayerSettingsUI();
+            }
+        }
+
         // 1. Load Player Spawn & Goal
         PaletteItem startItem = GetPaletteItem("PlayerStart");
         if (startItem.editorPrefab != null)
@@ -1226,7 +1253,11 @@ public class GridPainter : MonoBehaviour
         CustomLevelData levelData = new CustomLevelData
         {
             levelName = levelName,
-            creator = creatorName
+            creator = creatorName,
+            playerMoveSpeed = LevelCreatorUI.Instance != null ? LevelCreatorUI.Instance.playerMoveSpeed : 8f,
+            playerJumpForce = LevelCreatorUI.Instance != null ? LevelCreatorUI.Instance.playerJumpForce : 12f,
+            playerMaxJumps = LevelCreatorUI.Instance != null ? LevelCreatorUI.Instance.playerMaxJumps : 2,
+            playerEnableFallDamage = LevelCreatorUI.Instance != null && LevelCreatorUI.Instance.playerEnableFallDamage
         };
 
         // Find PlayerStart and Goal

@@ -36,6 +36,15 @@ public class LevelCreatorUI : MonoBehaviour
     [SerializeField] private TMP_Text selectedToolText;
     [SerializeField] private TMP_InputField levelNameInputField;
 
+    [Header("Player Settings Data")]
+    public float playerMoveSpeed = 5f;
+    public float playerJumpForce = 7f;
+    public int playerMaxJumps = 1;
+    public bool playerEnableFallDamage = false;
+
+    [Header("Object Transform Panel")]
+    [SerializeField] private GameObject objectTransformPanel;
+
     [System.Serializable]
     public struct BrushPrefabMapping
     {
@@ -371,6 +380,19 @@ public class LevelCreatorUI : MonoBehaviour
         if (camOffsetXSlider != null) camOffsetXSlider.onValueChanged.AddListener(OnCamOffsetXChanged);
         if (camOffsetYSlider != null) camOffsetYSlider.onValueChanged.AddListener(OnCamOffsetYChanged);
         if (camOrthoSizeSlider != null) camOrthoSizeSlider.onValueChanged.AddListener(OnCamOrthoSizeChanged);
+
+        // Programmatically wire the third button under Tools to ToggleObjectTransformPanel
+        Transform toolsTrans = transform.Find("EditorUIRoot/Tools");
+        if (toolsTrans != null)
+        {
+            Button[] buttons = toolsTrans.GetComponentsInChildren<Button>(true);
+            if (buttons.Length >= 3)
+            {
+                buttons[2].onClick.RemoveAllListeners();
+                buttons[2].onClick.AddListener(ToggleObjectTransformPanel);
+                Debug.Log("[LevelCreatorUI] Programmatically wired the third tool button to ToggleObjectTransformPanel.");
+            }
+        }
     }
 
     private void InitializeCameraSettingsSliders()
@@ -577,6 +599,46 @@ public class LevelCreatorUI : MonoBehaviour
         else
         {
             Debug.LogError("[LevelCreatorUI] mechanicsPopupPanel is not assigned and could not be found in the scene.");
+        }
+    }
+
+    /// <summary>
+    /// Toggles the dynamic popup Object Transform Panel.
+    /// </summary>
+    public void ToggleObjectTransformPanel()
+    {
+        if (objectTransformPanel == null)
+        {
+            var trans = transform.Find("ObjectTransformPanel");
+            if (trans != null)
+            {
+                objectTransformPanel = trans.gameObject;
+            }
+            else
+            {
+                var ctrl = FindFirstObjectByType<ObjectTransformPanelController>(FindObjectsInactive.Include);
+                if (ctrl != null)
+                {
+                    objectTransformPanel = ctrl.gameObject;
+                }
+            }
+        }
+
+        if (objectTransformPanel != null)
+        {
+            objectTransformPanel.SetActive(!objectTransformPanel.activeSelf);
+            if (objectTransformPanel.activeSelf)
+            {
+                var panelCtrl = objectTransformPanel.GetComponent<ObjectTransformPanelController>();
+                if (panelCtrl != null)
+                {
+                    panelCtrl.UpdatePlayerSettingsUI();
+                }
+            }
+        }
+        else
+        {
+            Debug.LogError("[LevelCreatorUI] objectTransformPanel is not assigned and could not be found.");
         }
     }
 

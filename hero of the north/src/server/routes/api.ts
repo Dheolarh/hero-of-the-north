@@ -11,7 +11,8 @@ import {
 import {
     submitScore,
     getTopPlayers,
-    getPlayerStanding
+    getPlayerStanding,
+    clearPlayerScores
 } from '../core/leaderboard';
 
 export const api = new Hono();
@@ -209,4 +210,12 @@ api.get('/post/info', async (c) => {
 
     const player = context.username || 'Redditor';
     return c.json({ summoner, player });
+});
+
+// GET /api/leaderboard/clear-test
+// Wipes scores and stats for specific test players to reset the board.
+api.get('/leaderboard/clear-test', async (c) => {
+    const targets = ['LATTER_PRES', 'AUTOMATIC-FE'];
+    const cleared = await clearPlayerScores(redis, targets);
+    return c.json({ success: true, cleared });
 });

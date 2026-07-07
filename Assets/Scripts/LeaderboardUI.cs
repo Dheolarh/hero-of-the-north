@@ -163,12 +163,12 @@ public class LeaderboardUI : MonoBehaviour
 
         if (playerRankText != null)
         {
-            playerRankText.text = $"{standing.rank}";
+            playerRankText.text = standing.rank > 0 ? $"{standing.rank}" : "-";
         }
 
         if (playerPointsText != null)
         {
-            playerPointsText.text = $"{standing.totalPoints}";
+            playerPointsText.text = standing.rank > 0 ? $"{standing.totalPoints}" : "0";
         }
 
         UpdatePlayerStandingNameAndAvatar();
