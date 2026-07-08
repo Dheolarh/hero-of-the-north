@@ -27,24 +27,44 @@ public class CameraBorrowerSlider : MonoBehaviour
 
     private Slider xSlider;
     private Slider ySlider;
-    private GameObject targetObject;
+    private GameObject[] targetObjects;
 
     private bool isDragging = false;
-    private Vector3 initialObjectPosition;
+    private Vector3[] initialObjectPositions;
     private Vector3 initialCameraPosition;
     private CanvasGroup parentCanvasGroup;
     private Slider activeSlider = null;
-    private Vector3 targetObjectPos;
+    private Vector3 targetAnchorPos;
     private bool hasStoredInitialPositions = false;
+    private int anchorIndex = -1;
 
     public void Initialize(Slider xSlider, Slider ySlider, GameObject targetObject, Vector2 savedPosition, CanvasGroup parentGroup = null)
     {
+        Initialize(xSlider, ySlider, targetObject != null ? new GameObject[] { targetObject } : null, savedPosition, parentGroup);
+    }
+
+    public void Initialize(Slider xSlider, Slider ySlider, GameObject[] targetObjects, Vector2 savedPosition, CanvasGroup parentGroup = null)
+    {
         this.xSlider = xSlider;
         this.ySlider = ySlider;
-        this.targetObject = targetObject;
+        this.targetObjects = targetObjects;
         this.parentCanvasGroup = parentGroup;
 
-        // Ensure this Teleport panel itself fades with the parent editor group
+        // Find the first non-null target object as the anchor
+        anchorIndex = -1;
+        if (targetObjects != null)
+        {
+            for (int i = 0; i < targetObjects.Length; i++)
+            {
+                if (targetObjects[i] != null)
+                {
+                    anchorIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // Ensure this panel itself fades with the parent editor group
         CanvasGroup childCg = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
         childCg.ignoreParentGroups = false;
         childCg.alpha = 1f;
@@ -60,38 +80,42 @@ public class CameraBorrowerSlider : MonoBehaviour
             if (!isDragging)
             {
                 Vector2 startPos = savedPosition;
-                if (startPos == Vector2.zero && targetObject != null)
+                if (startPos == Vector2.zero && anchorIndex >= 0)
                 {
-                    startPos = targetObject.transform.position;
+                    startPos = targetObjects[anchorIndex].transform.position;
                 }
                 xSlider.value = Mathf.Clamp(startPos.x, xSlider.minValue, xSlider.maxValue);
                 ySlider.value = Mathf.Clamp(startPos.y, ySlider.minValue, ySlider.maxValue);
                 
-                if (targetObject != null)
+                if (anchorIndex >= 0)
                 {
-                    targetObjectPos = targetObject.transform.position;
+                    targetAnchorPos = targetObjects[anchorIndex].transform.position;
                 }
             }
 
             xSlider.onValueChanged.RemoveAllListeners();
             xSlider.onValueChanged.AddListener((val) =>
             {
-                if (isDragging && targetObject != null)
+                if (isDragging && anchorIndex >= 0)
                 {
-                    targetObjectPos.x = val;
+                    float snappedVal = Mathf.Round(val * 2f) / 2f;
+                    targetAnchorPos.x = snappedVal;
+                    xSlider.SetValueWithoutNotify(snappedVal);
                 }
             });
 
             ySlider.onValueChanged.RemoveAllListeners();
             ySlider.onValueChanged.AddListener((val) =>
             {
-                if (isDragging && targetObject != null)
+                if (isDragging && anchorIndex >= 0)
                 {
-                    targetObjectPos.y = val;
+                    float snappedVal = Mathf.Round(val * 2f) / 2f;
+                    targetAnchorPos.y = snappedVal;
+                    ySlider.SetValueWithoutNotify(snappedVal);
                 }
             });
 
-            if (targetObject != null)
+            if (anchorIndex >= 0)
             {
                 var dragX = xSlider.gameObject.GetComponent<SliderDragHandler>() ?? xSlider.gameObject.AddComponent<SliderDragHandler>();
                 dragX.OnDragStart = HandleDragStart;
@@ -131,17 +155,36 @@ public class CameraBorrowerSlider : MonoBehaviour
                 return;
             }
 
-            if (targetObject != null && Camera.main != null)
+            if (anchorIndex >= 0 && targetObjects != null && targetObjects[anchorIndex] != null && Camera.main != null)
             {
-                // 1. Smoothly glide the target object towards the target coordinate slider value
+                GameObject anchorObj = targetObjects[anchorIndex];
+                Vector3 oldAnchorPos = anchorObj.transform.position;
                 float speed = 8f; // Speed factor (smoothly glides the target)
-                targetObject.transform.position = Vector3.Lerp(
-                    targetObject.transform.position,
-                    new Vector3(targetObjectPos.x, targetObjectPos.y, targetObject.transform.position.z),
+
+                // 1. Smoothly glide the anchor object towards the target coordinate slider value
+                Vector3 newAnchorPos = Vector3.Lerp(
+                    oldAnchorPos,
+                    new Vector3(targetAnchorPos.x, targetAnchorPos.y, oldAnchorPos.z),
                     Time.deltaTime * speed
                 );
+                anchorObj.transform.position = newAnchorPos;
 
-                // 2. Smoothly follow with camera, applying clamping bounds
+                // 2. Glide all other target objects maintaining their relative distances
+                if (initialObjectPositions != null)
+                {
+                    Vector3 offset = newAnchorPos - initialObjectPositions[anchorIndex];
+                    for (int i = 0; i < targetObjects.Length; i++)
+                    {
+                        if (i == anchorIndex || targetObjects[i] == null || i >= initialObjectPositions.Length) continue;
+
+                        Vector3 currentObjPos = targetObjects[i].transform.position;
+                        Vector3 desiredObjPos = initialObjectPositions[i] + offset;
+
+                        targetObjects[i].transform.position = new Vector3(desiredObjPos.x, desiredObjPos.y, currentObjPos.z);
+                    }
+                }
+
+                // 3. Smoothly follow with camera, applying clamping bounds
                 Camera cam = Camera.main;
                 float halfHeight = cam.orthographicSize;
                 float halfWidth = halfHeight * cam.aspect;
@@ -151,8 +194,8 @@ public class CameraBorrowerSlider : MonoBehaviour
                 float minYBound = -25f;
                 float maxYBound = 25f;
 
-                // Focus on the smoothed target object position
-                Vector3 desiredCamPos = new Vector3(targetObject.transform.position.x, targetObject.transform.position.y, cam.transform.position.z);
+                // Focus on the smoothed anchor position
+                Vector3 desiredCamPos = new Vector3(anchorObj.transform.position.x, anchorObj.transform.position.y, cam.transform.position.z);
 
                 // Clamp camera target position to level bounds
                 if ((maxXBound - minXBound) > (2f * halfWidth))
@@ -181,12 +224,20 @@ public class CameraBorrowerSlider : MonoBehaviour
 
     private void OnSliderDragStart()
     {
-        if (targetObject == null) return;
+        if (anchorIndex < 0 || targetObjects == null || targetObjects[anchorIndex] == null) return;
         isDragging = true;
 
         if (!hasStoredInitialPositions)
         {
-            initialObjectPosition = targetObject.transform.position;
+            initialObjectPositions = new Vector3[targetObjects.Length];
+            for (int i = 0; i < targetObjects.Length; i++)
+            {
+                if (targetObjects[i] != null)
+                {
+                    initialObjectPositions[i] = targetObjects[i].transform.position;
+                }
+            }
+
             if (Camera.main != null)
             {
                 initialCameraPosition = Camera.main.transform.position;
@@ -194,7 +245,7 @@ public class CameraBorrowerSlider : MonoBehaviour
             hasStoredInitialPositions = true;
         }
 
-        targetObjectPos = targetObject.transform.position;
+        targetAnchorPos = targetObjects[anchorIndex].transform.position;
         
         if (parentCanvasGroup != null)
         {
@@ -207,17 +258,15 @@ public class CameraBorrowerSlider : MonoBehaviour
 
     private void OnSliderDragEnd()
     {
-        if (targetObject == null) return;
+        if (anchorIndex < 0 || targetObjects == null || targetObjects[anchorIndex] == null) return;
         isDragging = false;
 
-        Vector2 finalPos = targetObject.transform.position;
+        float finalX = Mathf.Round(targetObjects[anchorIndex].transform.position.x * 2f) / 2f;
+        float finalY = Mathf.Round(targetObjects[anchorIndex].transform.position.y * 2f) / 2f;
+        Vector2 finalPos = new Vector2(finalX, finalY);
 
         // Notify saved position
         OnPositionSaved?.Invoke(finalPos);
-
-        // DO NOT snap target object back and return camera on slider release anymore.
-        // Let it stay in place so user can review the position.
-        // Snap back will happen on save or close.
 
         if (parentCanvasGroup != null)
         {
@@ -230,24 +279,40 @@ public class CameraBorrowerSlider : MonoBehaviour
         activeSlider = null;
 
         // Reinitialize to clamp values
-        Initialize(xSlider, ySlider, targetObject, finalPos, parentCanvasGroup);
+        Initialize(xSlider, ySlider, targetObjects, finalPos, parentCanvasGroup);
     }
 
-    public void ResetToInitialState()
+
+    public void ResetToInitialState(bool restoreObjectPositions = true)
     {
+        Debug.Log($"[CameraBorrowerSlider] ResetToInitialState called. hasStoredInitialPositions={hasStoredInitialPositions}, restoreObjectPositions={restoreObjectPositions}, targetObjectsCount={(targetObjects != null ? targetObjects.Length : 0)}");
         if (hasStoredInitialPositions)
         {
-            if (targetObject != null)
+            if (restoreObjectPositions && targetObjects != null && initialObjectPositions != null)
             {
-                targetObject.transform.position = initialObjectPosition;
-            }
-
-            if (Camera.main != null && initialCameraPosition != Vector3.zero)
-            {
-                Camera.main.transform.position = initialCameraPosition;
+                for (int i = 0; i < targetObjects.Length; i++)
+                {
+                    if (targetObjects[i] != null && i < initialObjectPositions.Length)
+                    {
+                        Debug.Log($"[CameraBorrowerSlider] Restoring position of {targetObjects[i].name} to {initialObjectPositions[i]}");
+                        targetObjects[i].transform.position = initialObjectPositions[i];
+                    }
+                }
             }
 
             hasStoredInitialPositions = false;
+        }
+
+        // Always snap camera back to player start in the editor when closing/resetting
+        if (GridPainter.Instance != null)
+        {
+            Debug.Log("[CameraBorrowerSlider] Snapping camera back to player start.");
+            GridPainter.Instance.SnapCameraToPlayerStart();
+        }
+        else if (Camera.main != null && initialCameraPosition != Vector3.zero)
+        {
+            Debug.Log($"[CameraBorrowerSlider] Restoring camera to {initialCameraPosition}");
+            Camera.main.transform.position = initialCameraPosition;
         }
     }
 
@@ -261,38 +326,60 @@ public class CameraBorrowerSlider : MonoBehaviour
             {
                 SetCanvasGroupAlpha(child.gameObject, targetAlpha);
             }
-            else if (child.name == "Teleport") // This is the child panel
+            else
             {
-                foreach (Transform subChild in child)
+                // This is a sub-panel group (like Teleport or SingleMotion)
+                // Search inside it to see if it holds the active slider
+                bool containsActive = false;
+                if (activeSlider != null)
                 {
-                    if (subChild.name == "Object to teleport - scroll" || 
-                        subChild.name == "Coordinate Label")
+                    Slider[] sliders = child.GetComponentsInChildren<Slider>(true);
+                    foreach (var s in sliders)
                     {
-                        SetCanvasGroupAlpha(subChild.gameObject, targetAlpha);
-                    }
-                    else if (subChild.name == "X Coordinate" || subChild.name == "Y coordinate")
-                    {
-                        Slider sliderInChild = subChild.GetComponentInChildren<Slider>();
-                        if (sliderInChild != null)
+                        if (s == activeSlider)
                         {
-                            if (sliderInChild == activeSlider)
-                            {
-                                // Active coordinate panel: Hide its text label but keep the panel and slider visible
-                                Transform label = subChild.Find("Label");
-                                if (label != null)
-                                {
-                                    SetCanvasGroupAlpha(label.gameObject, targetAlpha);
-                                }
+                            containsActive = true;
+                            break;
+                        }
+                    }
+                }
 
-                                // Make sure this slider's panel itself ignores parent group fading and stays visible
-                                var cg = subChild.gameObject.GetComponent<CanvasGroup>() ?? subChild.gameObject.AddComponent<CanvasGroup>();
-                                cg.ignoreParentGroups = !active;
-                                cg.alpha = 1f;
-                            }
-                            else
+                if (!containsActive)
+                {
+                    // Hide entire group if active slider is not here
+                    SetCanvasGroupAlpha(child.gameObject, targetAlpha);
+                }
+                else
+                {
+                    // Keep this group visible, but hide non-active elements inside it
+                    foreach (Transform subChild in child)
+                    {
+                        bool isSubChildActive = false;
+                        if (activeSlider != null)
+                        {
+                            Slider s = subChild.GetComponentInChildren<Slider>(true);
+                            if (s != null && s == activeSlider)
                             {
-                                // Inactive slider panel: Hide it completely
-                                SetCanvasGroupAlpha(subChild.gameObject, targetAlpha);
+                                isSubChildActive = true;
+                            }
+                        }
+
+                        if (!isSubChildActive)
+                        {
+                            SetCanvasGroupAlpha(subChild.gameObject, targetAlpha);
+                        }
+                        else
+                        {
+                            // Keep active slider's parent container visible and ignore parent groups
+                            var cg = subChild.gameObject.GetComponent<CanvasGroup>() ?? subChild.gameObject.AddComponent<CanvasGroup>();
+                            cg.ignoreParentGroups = !active;
+                            cg.alpha = 1f;
+
+                            // Hide secondary labels inside the active slider container to clear space
+                            Transform label = subChild.Find("Label");
+                            if (label != null)
+                            {
+                                SetCanvasGroupAlpha(label.gameObject, targetAlpha);
                             }
                         }
                     }
@@ -308,5 +395,38 @@ public class CameraBorrowerSlider : MonoBehaviour
         cg.blocksRaycasts = (alpha > 0.01f);
         cg.interactable = (alpha > 0.01f);
         cg.ignoreParentGroups = false;
+    }
+
+    private void OnDestroy()
+    {
+        CleanUp();
+    }
+
+    public void CleanUp()
+    {
+        if (xSlider != null)
+        {
+            xSlider.onValueChanged.RemoveAllListeners();
+            var dragX = xSlider.gameObject.GetComponent<SliderDragHandler>();
+            if (dragX != null) Destroy(dragX);
+            if (xSlider.handleRect != null)
+            {
+                var handleDragX = xSlider.handleRect.gameObject.GetComponent<SliderDragHandler>();
+                if (handleDragX != null) Destroy(handleDragX);
+            }
+        }
+        if (ySlider != null)
+        {
+            ySlider.onValueChanged.RemoveAllListeners();
+            var dragY = ySlider.gameObject.GetComponent<SliderDragHandler>();
+            if (dragY != null) Destroy(dragY);
+            if (ySlider.handleRect != null)
+            {
+                var handleDragY = ySlider.handleRect.gameObject.GetComponent<SliderDragHandler>();
+                if (handleDragY != null) Destroy(handleDragY);
+            }
+        }
+        isDragging = false;
+        hasStoredInitialPositions = false;
     }
 }

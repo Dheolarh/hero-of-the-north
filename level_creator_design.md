@@ -53,38 +53,73 @@ To send levels over the network, Unity must convert the level layout into a ligh
 ```
 
 ### B. Unity Implementation
-Create a serializable scriptable schema in Unity:
+Create a serializable scriptable schema in Unity that mirrors the active code design:
 ```csharp
 [System.Serializable]
-public class LevelSaveData
+public struct Vector2S
+{
+    public float x;
+    public float y;
+
+    public Vector2S(Vector2 vector)
+    {
+        this.x = vector.x;
+        this.y = vector.y;
+    }
+
+    public Vector2 ToVector2() => new Vector2(x, y);
+}
+
+[System.Serializable]
+public class CustomTileData
+{
+    public string type;
+    public Vector2S position;
+    public Vector2S scale = new Vector2S(1f, 1f);
+    public float rotation = 0f;
+}
+
+[System.Serializable]
+public class CustomTrapData
+{
+    public string type;
+    public Vector2S spawnPos;
+    public Vector2S scale = new Vector2S(1f, 1f);
+    public float rotation = 0f;
+    
+    // Physics/Trigger settings
+    public string moveDir = "Down";
+    public float speed = 3f;
+    public float delay = 1f;
+
+    // Trigger wiring (connection target coordinates)
+    public bool hasTarget = false;
+    public Vector2S targetPos;
+}
+
+[System.Serializable]
+public class CustomLevelData
 {
     public string levelName;
     public string creator;
-    public Vector2 playerPosition;
-    public Vector2 goalPosition;
-    public List<TileData> tiles = new List<TileData>();
-    public List<TrapData> traps = new List<TrapData>();
-}
+    
+    public int gridWidth = 32;
+    public int gridHeight = 18;
 
-[System.Serializable]
-public class TileData
-{
-    public string type; // "Floor", "PlatformGround"
-    public int x;
-    public int y;
-}
+    public Vector2S playerStartPos;
+    public Vector2S goalPos;
 
-[System.Serializable]
-public class TrapData
-{
-    public string type; // "SingleMotion", "RotationTrap", etc.
-    public Vector2 spawnPos;
-    public string moveDir;
-    public float speed;
-    public float delay;
+    public List<CustomTileData> tiles = new List<CustomTileData>();
+    public List<CustomTrapData> traps = new List<CustomTrapData>();
+
+    // Global Player Settings
+    public float playerMoveSpeed = 5f;
+    public float playerJumpForce = 7f;
+    public int playerMaxJumps = 1;
+    public bool playerEnableFallDamage = false;
 }
 ```
-*Use `JsonUtility.ToJson(levelSaveData)` to serialize and `JsonUtility.FromJson<LevelSaveData>(jsonString)` to deserialize.*
+*Use `JsonUtility.ToJson(customLevelData)` to serialize and `JsonUtility.FromJson<CustomLevelData>(jsonString)` to deserialize.*
 
 ---
 
@@ -153,9 +188,50 @@ When Devvit renders the game WebGL container, it can pass the **Reddit Post ID**
 *   **Auto-Post Thread:** The thread automatically created on Reddit acts as the level's comment section, allowing players to discuss strategies, leave feedback, and write reviews natively.
 *   **Upvote Syncing:** Upvoting the Reddit post can automatically increment the level's score/rating in your database using Devvit's trigger events (`onPostUpvoted`).
 
+## 6. Play Mode Custom Level Loader Integration
+
+When a user launches a shared level, the WebGL container sends the JSON string to Unity via `LevelManager.LoadCustomLevel(string json)`. Instead of loading a static prefab, Unity dynamically reconstructs the level in the Game scene.
+
+### A. Level Loading Flow (Reconstructing from JSON)
+1. **Load Gameplay Scene:** `LevelManager` transitions the game to the dedicated `Game` scene.
+2. **Deserialize JSON:** We parse the string back into `CustomLevelData`.
+3. **Instantiate Terrain & Tiles:** Loops through `data.tiles` and instantiates the matching gameplay prefab from the palette, applying position, scale, and rotation.
+4. **Instantiate Traps & Physics Elements:** Loops through `data.traps` and instantiates the trap gameplay prefab. It attaches/configures the `CollisionsAndTriggers` component with:
+   - Speed (`speed`), delay (`delay`), target direction (`moveDir`), and target position (`targetPos`).
+   - Copy the trigger references and wire connection targets dynamically.
+   - Respect custom modifiers like `preserveRelativeDistance` for staggered movement triggers.
+5. **Spawn Player & Setup Controller:** Instantiates the player prefab at `data.playerStartPos`. Overrides the `PlayerController` fields with the custom properties defined in the level:
+   ```csharp
+   var pc = playerInstance.GetComponent<PlayerController>();
+   pc.Speed = data.playerMoveSpeed;
+   pc.JumpForce = data.playerJumpForce;
+   pc.MaxMultiJumps = data.playerMaxJumps;
+   pc.EnableFallDamage = data.playerEnableFallDamage;
+   ```
+6. **Instantiate Goal Portal:** Instantiates the Goal prefab at `data.goalPos`. Touch completion connects to:
+   ```csharp
+   LevelManager.Instance.CompleteLevel(); // Integrates directly into GameManager/ScoreManager flow
+   ```
+7. **Configure Custom Camera Settings:** Retrieves or adds a `LevelCameraSettings` component on the spawned level container to override the default follow offsets and orthographic size:
+   ```csharp
+   var settings = playerInstance.GetComponentInParent<LevelCameraSettings>() ?? playerInstance.gameObject.AddComponent<LevelCameraSettings>();
+   settings.offset = new Vector3(data.camOffsetX, data.camOffsetY, settings.offset.z);
+   settings.orthoSize = data.camOrthoSize;
+   if (!settings.followY) settings.fixedYHeight = data.camOffsetY;
+   ```
+8. **Refocus Camera:** Wires `CameraFollow` to the player clone:
+   ```csharp
+   CameraFollow.Instance.SetTarget(playerInstance.transform);
+   ```
+
+### B. Core Managers Integration
+*   **GameManager:** The global game states (`isGameOver`, `isLevelCompleted`, `isPaused`) work natively as they track the spawned player clone's life cycle. On player death/fall, the retry panel triggers `LevelManager.Instance.RestartLevel()` which clears custom objects and rebuilds them.
+*   **AudioManager:** Dynamically spawned objects containing audio triggers (e.g. traps playing SFX on collision) call `AudioManager.Instance.PlaySfx(clipName)` when triggered.
+*   **Control System:** The player movement controls and mechanics (double jumping, fall damage calculations) dynamically scale based on the properties read from `CustomLevelData`.
+
 ---
 
-## 6. Phase-by-Phase Implementation Plan
+## 7. Phase-by-Phase Implementation Plan
 
 > [!TIP]
 > Break the implementation into four small milestones to test systems independently.

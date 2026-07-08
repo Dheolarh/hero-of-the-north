@@ -25,8 +25,23 @@ public class MechanicsEditorPanelController : MonoBehaviour
     private PlacedEditorObject activeEditingTrigger;
     private CollisionsAndTriggers activeTriggerScript;
 
-    private List<PlacedEditorObject> allSelectableObjects = new List<PlacedEditorObject>();
+    private Vector2 initialEditingTargetPosition;
+    private float initialEditingTargetMoveSpeed;
+    private float initialEditingMoveStaggerInterval;
+    private bool initialEditingPreserveRelativeDistance;
+    private GameObject[] initialEditingObjectsToTrigger;
+
+    public List<PlacedEditorObject> allSelectableObjects = new List<PlacedEditorObject>();
     private List<PlacedEditorObject> savedTrps = new List<PlacedEditorObject>();
+
+    public static MechanicsEditorPanelController Instance { get; private set; }
+
+    private void Awake()
+    {
+        Instance = this;
+        if (teleportComponent == null) teleportComponent = GetComponentInChildren<Teleport>(true);
+        if (singleMotionComponent == null) singleMotionComponent = GetComponentInChildren<SingleMotion>(true);
+    }
 
 
 
@@ -51,6 +66,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
 
     [SerializeField] private Transform teleportObjectsScroll;
     [SerializeField] private Teleport teleportComponent;
+    [SerializeField] private SingleMotion singleMotionComponent;
 
     [SerializeField] private Transform singleMotionObjectsScroll;
 
@@ -230,6 +246,16 @@ public class MechanicsEditorPanelController : MonoBehaviour
             }
         }
 
+        // Store backup values
+        if (activeTriggerScript != null)
+        {
+            initialEditingTargetPosition = activeTriggerScript.targetPosition;
+            initialEditingTargetMoveSpeed = activeTriggerScript.targetMoveSpeed;
+            initialEditingMoveStaggerInterval = activeTriggerScript.moveStaggerInterval;
+            initialEditingPreserveRelativeDistance = activeTriggerScript.preserveRelativeDistance;
+            initialEditingObjectsToTrigger = activeTriggerScript.objectsToTrigger != null ? (GameObject[])activeTriggerScript.objectsToTrigger.Clone() : null;
+        }
+
         string trapDisplayName = GetTrapLetterName(candidate);
 
         if (activeTrapNameText != null)
@@ -300,7 +326,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
 
 
 
-    private void PopulateStaticScrollChecklist(Transform scrollTrans, HashSet<GameObject> currentSelections, Action<GameObject, bool> onToggleChanged, bool isMultiSelect)
+    public void PopulateStaticScrollChecklist(Transform scrollTrans, HashSet<GameObject> currentSelections, Action<GameObject, bool> onToggleChanged, bool isMultiSelect)
     {
         if (scrollTrans == null) return;
 
@@ -577,6 +603,11 @@ public class MechanicsEditorPanelController : MonoBehaviour
         // 5. Single Motion configuration details
         if (singleMotionGroup != null && singleMotionGroup.gameObject.activeSelf)
         {
+            if (singleMotionComponent != null)
+            {
+                singleMotionComponent.Setup(activeTriggerScript);
+            }
+
             if (singleMotionObjectsScroll != null)
             {
                 HashSet<GameObject> currentSelections = new HashSet<GameObject>();
@@ -587,6 +618,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
                 PopulateStaticScrollChecklist(singleMotionObjectsScroll, currentSelections, (itemGo, selected) =>
                 {
                     UpdateObjectsToTrigger(itemGo, selected);
+                    if (singleMotionComponent != null) singleMotionComponent.Setup(activeTriggerScript);
                 }, true);
             }
 
@@ -685,23 +717,46 @@ public class MechanicsEditorPanelController : MonoBehaviour
     private void SaveTrapAndClose()
     {
         Debug.Log("[MechanicsPanel] Save Trap and Close clicked.");
-        CloseAndReset();
+        CloseAndReset(true);
     }
 
     private void CancelAndClose()
     {
-        Debug.Log("[MechanicsPanel] Cancel and Close clicked.");
-        CloseAndReset();
+        Debug.Log("[MechanicsPanel] Cancel and Close clicked. Reverting trigger settings.");
+        if (activeTriggerScript != null)
+        {
+            activeTriggerScript.targetPosition = initialEditingTargetPosition;
+            activeTriggerScript.targetMoveSpeed = initialEditingTargetMoveSpeed;
+            activeTriggerScript.moveStaggerInterval = initialEditingMoveStaggerInterval;
+            activeTriggerScript.preserveRelativeDistance = initialEditingPreserveRelativeDistance;
+            activeTriggerScript.objectsToTrigger = initialEditingObjectsToTrigger;
+        }
+        CloseAndReset(false);
     }
 
-    private void CloseAndReset()
+    private void CloseAndReset(bool save)
     {
+        // We ALWAYS restore objects and camera to their initial spawn/view positions in the editor on panel close
+        bool restoreObjects = true;
+        Debug.Log($"[MechanicsPanel] CloseAndReset. save={save}, restoreObjects={restoreObjects}, teleportComponent={(teleportComponent != null ? "assigned" : "null")}, singleMotionComponent={(singleMotionComponent != null ? "assigned" : "null")}");
+
         if (teleportComponent != null)
         {
             var borrower = teleportComponent.GetComponent<CameraBorrowerSlider>();
+            Debug.Log($"[MechanicsPanel] Teleport borrower check: {(borrower != null ? "found" : "null")}");
             if (borrower != null)
             {
-                borrower.ResetToInitialState();
+                borrower.ResetToInitialState(restoreObjects);
+            }
+        }
+
+        if (singleMotionComponent != null)
+        {
+            var borrower = singleMotionComponent.GetComponent<CameraBorrowerSlider>();
+            Debug.Log($"[MechanicsPanel] SingleMotion borrower check: {(borrower != null ? "found" : "null")}");
+            if (borrower != null)
+            {
+                borrower.ResetToInitialState(restoreObjects);
             }
         }
 

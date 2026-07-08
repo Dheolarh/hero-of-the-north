@@ -58,6 +58,86 @@ public class PlacedEditorObject : MonoBehaviour
             data.targetPos = new Vector2S(targetObject.transform.position);
         }
 
+        var ct = GetComponent<CollisionsAndTriggers>();
+        if (ct != null)
+        {
+            data.activateOnStart = ct.activateOnStart;
+            data.triggerTypeStr = ct.triggerType.ToString();
+            data.componentActionStr = ct.componentAction.ToString();
+            data.setObjectActive = ct.setObjectActive;
+            data.activationModeStr = ct.activationMode.ToString();
+            data.enableMove = ct.enableMove;
+            data.moveDirectionStr = ct.moveDirection.ToString();
+            data.moveSpeed = ct.moveSpeed;
+            data.stopMoveOnExit = ct.stopMoveOnExit;
+            data.enableRotation = ct.enableRotation;
+            data.rotationDirectionStr = ct.rotationDirection.ToString();
+            data.rotationSpeed = ct.rotationSpeed;
+            data.stopRotationOnExit = ct.stopRotationOnExit;
+            data.useLocalCoordinates = ct.useLocalCoordinates;
+            data.targetPosition = new Vector2S(ct.targetPosition);
+            data.targetMoveSpeed = ct.targetMoveSpeed;
+            data.moveStaggerInterval = ct.moveStaggerInterval;
+            data.moveOnXOnly = ct.moveOnXOnly;
+            data.moveOnYOnly = ct.moveOnYOnly;
+            data.preserveRelativeDistance = ct.preserveRelativeDistance;
+            data.teleportPosition = new Vector2S(ct.teleportPosition);
+            data.useTargetX = ct.useTargetX;
+            data.useTargetY = ct.useTargetY;
+            data.newGravityScale = ct.newGravityScale;
+            data.fallSpeedMultiplier = ct.fallSpeedMultiplier;
+            data.applyOnEnter = ct.applyOnEnter;
+            data.resetOnExit = ct.resetOnExit;
+            data.newMaxJumpsValue = ct.newMaxJumpsValue;
+            data.triggerDelay = ct.triggerDelay;
+            data.deleteTriggerZone = ct.deleteTriggerZone;
+            data.modifyColliderState = ct.modifyColliderState;
+            data.makeSolid = ct.makeSolid;
+            data.modifyGravityState = ct.modifyGravityState;
+            data.makeSubjectToGravity = ct.makeSubjectToGravity;
+            data.appearOnTrigger = ct.appearOnTrigger;
+            data.playAudioOnTrigger = ct.playAudioOnTrigger;
+            data.audioClipName = ct.audioClipName;
+            data.loopAudio = ct.loopAudio;
+
+            // Camera Shake settings
+            data.enableCameraShake = ct.enableCameraShake;
+            data.playShakeSFX = ct.playShakeSFX;
+            data.cameraShakeIntensity = ct.cameraShakeIntensity;
+            data.cameraShakeFrequency = ct.cameraShakeFrequency;
+            data.stopShakeOnExitBoundary = ct.stopShakeOnExitBoundary;
+
+            // Serialize references as spawn positions
+            if (ct.objectToModify != null)
+            {
+                data.objectToModifyPos = new Vector2S(ct.objectToModify.transform.position);
+            }
+            if (ct.destinationTargetObject != null)
+            {
+                data.destinationTargetPos = new Vector2S(ct.destinationTargetObject.transform.position);
+            }
+            if (ct.objectsToTrigger != null)
+            {
+                foreach (var obj in ct.objectsToTrigger)
+                {
+                    if (obj != null)
+                    {
+                        data.objectsToTriggerPositions.Add(new Vector2S(obj.transform.position));
+                    }
+                }
+            }
+            if (ct.activationObjects != null)
+            {
+                foreach (var obj in ct.activationObjects)
+                {
+                    if (obj != null)
+                    {
+                        data.activationObjectsPositions.Add(new Vector2S(obj.transform.position));
+                    }
+                }
+            }
+        }
+
         return data;
     }
 }

@@ -55,6 +55,59 @@ public class CustomTrapData
     // Trigger wiring (connection target coordinates)
     public bool hasTarget = false;
     public Vector2S targetPos;
+
+    // Advanced Trigger settings (CollisionsAndTriggers fields)
+    public bool activateOnStart;
+    public string triggerTypeStr; // TriggerType enum
+    public string componentActionStr; // ComponentAction enum
+    public bool setObjectActive;
+    public string activationModeStr; // ActivationMode enum
+    public bool enableMove;
+    public string moveDirectionStr; // MoveDirection enum
+    public float moveSpeed;
+    public bool stopMoveOnExit;
+    public bool enableRotation;
+    public string rotationDirectionStr; // RotationDirection enum
+    public float rotationSpeed;
+    public bool stopRotationOnExit;
+    public bool useLocalCoordinates;
+    public Vector2S targetPosition;
+    public float targetMoveSpeed;
+    public float moveStaggerInterval;
+    public bool moveOnXOnly;
+    public bool moveOnYOnly;
+    public bool preserveRelativeDistance;
+    public Vector2S teleportPosition;
+    public bool useTargetX;
+    public bool useTargetY;
+    public float newGravityScale;
+    public float fallSpeedMultiplier;
+    public bool applyOnEnter;
+    public bool resetOnExit;
+    public int newMaxJumpsValue;
+    public float triggerDelay;
+    public bool deleteTriggerZone;
+    public bool modifyColliderState;
+    public bool makeSolid;
+    public bool modifyGravityState;
+    public bool makeSubjectToGravity;
+    public bool appearOnTrigger;
+    public bool playAudioOnTrigger;
+    public string audioClipName;
+    public bool loopAudio;
+
+    // Camera Shake settings
+    public bool enableCameraShake;
+    public bool playShakeSFX;
+    public float cameraShakeIntensity;
+    public float cameraShakeFrequency;
+    public bool stopShakeOnExitBoundary;
+
+    // Serialized Object References (represented as spawn coordinates)
+    public Vector2S objectToModifyPos;
+    public Vector2S destinationTargetPos;
+    public List<Vector2S> objectsToTriggerPositions = new List<Vector2S>();
+    public List<Vector2S> activationObjectsPositions = new List<Vector2S>();
 }
 
 /// <summary>
@@ -81,4 +134,9 @@ public class CustomLevelData
     public float playerJumpForce = 7f;
     public int playerMaxJumps = 1;
     public bool playerEnableFallDamage = false;
+
+    // Camera Settings
+    public float camOffsetX = 0f;
+    public float camOffsetY = 0f;
+    public float camOrthoSize = 5f;
 }

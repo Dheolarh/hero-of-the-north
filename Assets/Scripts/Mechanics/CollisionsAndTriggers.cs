@@ -94,6 +94,8 @@ public class CollisionsAndTriggers : MonoBehaviour
     public bool moveOnXOnly = false;
     [Tooltip("When enabled, objects only move on the Y axis. Their X position is preserved.")]
     public bool moveOnYOnly = false;
+    [Tooltip("If true, staggered moving objects preserve their relative distances instead of converging to the same coordinate.")]
+    public bool preserveRelativeDistance = false;
 
     [Header("Teleport Settings")]
     public Vector2 teleportPosition;
@@ -126,6 +128,7 @@ public class CollisionsAndTriggers : MonoBehaviour
     private bool isMovingToTarget = false;
     // Tracks which objects are actively moving toward the target (populated by stagger coroutine)
     private readonly HashSet<GameObject> _movingObjects = new HashSet<GameObject>();
+    private readonly Dictionary<GameObject, Vector2> _individualDestinations = new Dictionary<GameObject, Vector2>();
     // True while the stagger coroutine is still dispatching objects
     private bool _staggerRunning = false;
     private Rigidbody2D modifyRigidbody;
@@ -142,6 +145,15 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     [Header("Delete Trigger Zone")]
     public bool deleteTriggerZone;
+
+    [Header("Camera Shake Settings")]
+    public bool enableCameraShake = false;
+    public bool playShakeSFX = false;
+    public float cameraShakeIntensity = 0.3f;
+    public float cameraShakeFrequency = 10f;
+    public bool stopShakeOnExitBoundary = false;
+
+    private bool isActivelyShaking = false;
 
     [Header("Audio Settings")]
     public bool playAudioOnTrigger;
@@ -224,6 +236,37 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             ApplyFallSpeedMultiplier();
         }
+
+        // Check if camera shake should stop because all target objects moved out of level boundary
+        if (isActivelyShaking && stopShakeOnExitBoundary && objectsToTrigger != null && objectsToTrigger.Length > 0)
+        {
+            bool anyInBounds = false;
+            foreach (var obj in objectsToTrigger)
+            {
+                if (obj != null && IsObjectWithinLevelBoundaries(obj))
+                {
+                    anyInBounds = true;
+                    break;
+                }
+            }
+            if (!anyInBounds)
+            {
+                if (CameraShake.Instance != null)
+                {
+                    CameraShake.Instance.StopShake();
+                }
+                isActivelyShaking = false;
+                Debug.Log("[CollisionsAndTriggers] Stopped camera shake because all target objects moved out of level boundary.");
+            }
+        }
+    }
+
+    private bool IsObjectWithinLevelBoundaries(GameObject obj)
+    {
+        if (obj == null) return false;
+        float x = obj.transform.position.x;
+        float y = obj.transform.position.y;
+        return x >= -7f && x <= 50f && y >= -25f && y <= 25f;
     }
 
     // ========== MOVEMENT FUNCTIONS ==========
@@ -286,7 +329,7 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             if (obj == null) { toRemove.Add(obj); continue; }
 
-            Vector2 dest = GetTargetDestination(obj, targetPosition, false);
+            Vector2 dest = _individualDestinations.ContainsKey(obj) ? _individualDestinations[obj] : GetTargetDestination(obj, targetPosition, false);
 
             if (useLocalCoordinates)
             {
@@ -377,6 +420,47 @@ public class CollisionsAndTriggers : MonoBehaviour
     void StartMoveToTarget()
     {
         _movingObjects.Clear();
+        _individualDestinations.Clear();
+
+        if (objectsToTrigger != null && objectsToTrigger.Length > 0)
+        {
+            GameObject anchor = null;
+            Vector2 offset = Vector2.zero;
+
+            // Find first non-null object as anchor
+            for (int i = 0; i < objectsToTrigger.Length; i++)
+            {
+                if (objectsToTrigger[i] != null)
+                {
+                    anchor = objectsToTrigger[i];
+                    Vector2 anchorDest = GetTargetDestination(anchor, targetPosition, false);
+                    Vector2 anchorStart = useLocalCoordinates ? (Vector2)anchor.transform.localPosition : (Vector2)anchor.transform.position;
+                    offset = anchorDest - anchorStart;
+                    break;
+                }
+            }
+
+            // Calculate destination for each object
+            for (int i = 0; i < objectsToTrigger.Length; i++)
+            {
+                GameObject obj = objectsToTrigger[i];
+                if (obj == null) continue;
+
+                if (destinationTargetObject != null)
+                {
+                    _individualDestinations[obj] = GetTargetDestination(obj, targetPosition, false);
+                }
+                else if (preserveRelativeDistance)
+                {
+                    Vector2 startPos = useLocalCoordinates ? (Vector2)obj.transform.localPosition : (Vector2)obj.transform.position;
+                    _individualDestinations[obj] = startPos + offset;
+                }
+                else
+                {
+                    _individualDestinations[obj] = GetTargetDestination(obj, targetPosition, false);
+                }
+            }
+        }
 
         if (moveStaggerInterval <= 0f || objectsToTrigger == null || objectsToTrigger.Length == 0)
         {
@@ -667,6 +751,14 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     private void ExecuteTriggerActions()
     {
+        // Handle camera shake trigger if enabled
+        if (enableCameraShake && CameraShake.Instance != null)
+        {
+            string sfx = playShakeSFX ? (string.IsNullOrEmpty(audioClipName) ? "boulder" : audioClipName) : "";
+            CameraShake.Instance.StartShake(cameraShakeIntensity, cameraShakeFrequency, sfx, null, 9999f);
+            isActivelyShaking = true;
+            Debug.Log($"[CollisionsAndTriggers] Started camera shake. Intensity={cameraShakeIntensity}, Frequency={cameraShakeFrequency}, SFX={sfx}");
+        }
         // If configured to appear on trigger, make targets visible now
         if (appearOnTrigger && objectsToTrigger != null)
         {

@@ -399,7 +399,7 @@ public class LevelCreatorUI : MonoBehaviour
         }
     }
 
-    private void InitializeCameraSettingsSliders()
+    public void InitializeCameraSettingsSliders()
     {
         var settings = FindFirstObjectByType<LevelCameraSettings>();
         if (settings == null) return;

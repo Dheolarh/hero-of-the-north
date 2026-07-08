@@ -967,9 +967,10 @@ public class GridPainter : MonoBehaviour
         PlacedEditorObject goalObj = editorObjects.Find(o => o != null && MatchAssetType(o.assetTypeName, "Goal"));
         Vector3 goalPos = goalObj != null ? goalObj.transform.position : Vector3.zero;
         PaletteItem goalItem = GetPaletteItem("Goal");
-        if (goalItem.playtestPrefab != null)
+        GameObject goalPrefab = goalItem.playtestPrefab != null ? goalItem.playtestPrefab : goalItem.editorPrefab;
+        if (goalPrefab != null)
         {
-            GameObject portal = Instantiate(goalItem.playtestPrefab, goalPos, Quaternion.identity);
+            GameObject portal = Instantiate(goalPrefab, goalPos, Quaternion.identity);
             playtestClones.Add(portal);
 
             // goal completes test
@@ -977,7 +978,7 @@ public class GridPainter : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[GridPainter] Playtest Goal portal prefab is null! Make sure 'Goal' has a playtestPrefab assigned in the GridPainter inspector palette.");
+            Debug.LogWarning("[GridPainter] Playtest Goal portal prefab is null! Make sure 'Goal' has a playtestPrefab or editorPrefab assigned in the GridPainter inspector palette.");
         }
 
         // 4. Wire and configure trigger-to-target links dynamically on the playtest clones
@@ -1143,6 +1144,22 @@ public class GridPainter : MonoBehaviour
             }
         }
 
+        // Load custom camera settings
+        var cameraSettings = FindFirstObjectByType<LevelCameraSettings>();
+        if (cameraSettings != null)
+        {
+            cameraSettings.offset = new Vector3(data.camOffsetX, data.camOffsetY, cameraSettings.offset.z);
+            cameraSettings.orthoSize = data.camOrthoSize;
+            if (!cameraSettings.followY)
+            {
+                cameraSettings.fixedYHeight = data.camOffsetY;
+            }
+            if (LevelCreatorUI.Instance != null)
+            {
+                LevelCreatorUI.Instance.InitializeCameraSettingsSliders();
+            }
+        }
+
         // 1. Load Player Spawn & Goal
         PaletteItem startItem = GetPaletteItem("PlayerStart");
         if (startItem.editorPrefab != null)
@@ -1198,22 +1215,131 @@ public class GridPainter : MonoBehaviour
                 script.delay = trap.delay;
                 script.hasTarget = trap.hasTarget;
 
+                var ct = clone.GetComponent<CollisionsAndTriggers>();
+                if (ct == null && !string.IsNullOrEmpty(trap.triggerTypeStr))
+                {
+                    ct = clone.AddComponent<CollisionsAndTriggers>();
+                }
+                
+                if (ct != null)
+                {
+                    ct.activateOnStart = trap.activateOnStart;
+                    if (Enum.TryParse(trap.triggerTypeStr, out TriggerType triggerTypeVal)) ct.triggerType = triggerTypeVal;
+                    if (Enum.TryParse(trap.componentActionStr, out ComponentAction componentActionVal)) ct.componentAction = componentActionVal;
+                    ct.setObjectActive = trap.setObjectActive;
+                    if (Enum.TryParse(trap.activationModeStr, out ActivationMode activationModeVal)) ct.activationMode = activationModeVal;
+                    ct.enableMove = trap.enableMove;
+                    if (Enum.TryParse(trap.moveDirectionStr, out MoveDirection moveDirectionVal)) ct.moveDirection = moveDirectionVal;
+                    ct.moveSpeed = trap.moveSpeed;
+                    ct.stopMoveOnExit = trap.stopMoveOnExit;
+                    ct.enableRotation = trap.enableRotation;
+                    if (Enum.TryParse(trap.rotationDirectionStr, out RotationDirection rotationDirectionVal)) ct.rotationDirection = rotationDirectionVal;
+                    ct.rotationSpeed = trap.rotationSpeed;
+                    ct.stopRotationOnExit = trap.stopRotationOnExit;
+                    ct.useLocalCoordinates = trap.useLocalCoordinates;
+                    ct.targetPosition = trap.targetPosition.ToVector2();
+                    ct.targetMoveSpeed = trap.targetMoveSpeed;
+                    ct.moveStaggerInterval = trap.moveStaggerInterval;
+                    ct.moveOnXOnly = trap.moveOnXOnly;
+                    ct.moveOnYOnly = trap.moveOnYOnly;
+                    ct.preserveRelativeDistance = trap.preserveRelativeDistance;
+                    ct.teleportPosition = trap.teleportPosition.ToVector2();
+                    ct.useTargetX = trap.useTargetX;
+                    ct.useTargetY = trap.useTargetY;
+                    ct.newGravityScale = trap.newGravityScale;
+                    ct.fallSpeedMultiplier = trap.fallSpeedMultiplier;
+                    ct.applyOnEnter = trap.applyOnEnter;
+                    ct.resetOnExit = trap.resetOnExit;
+                    ct.newMaxJumpsValue = trap.newMaxJumpsValue;
+                    ct.triggerDelay = trap.triggerDelay;
+                    ct.deleteTriggerZone = trap.deleteTriggerZone;
+                    ct.modifyColliderState = trap.modifyColliderState;
+                    ct.makeSolid = trap.makeSolid;
+                    ct.modifyGravityState = trap.modifyGravityState;
+                    ct.makeSubjectToGravity = trap.makeSubjectToGravity;
+                    ct.appearOnTrigger = trap.appearOnTrigger;
+                    ct.playAudioOnTrigger = trap.playAudioOnTrigger;
+                    ct.audioClipName = trap.audioClipName;
+                    ct.loopAudio = trap.loopAudio;
+
+                    // Camera Shake settings
+                    ct.enableCameraShake = trap.enableCameraShake;
+                    ct.playShakeSFX = trap.playShakeSFX;
+                    ct.cameraShakeIntensity = trap.cameraShakeIntensity;
+                    ct.cameraShakeFrequency = trap.cameraShakeFrequency;
+                    ct.stopShakeOnExitBoundary = trap.stopShakeOnExitBoundary;
+                }
+
                 editorObjects.Add(script);
                 loadedObjects[pos] = script;
             }
         }
 
-        // 4. Restore wires
+        // 4. Reconstruct Trigger references and links
         foreach (var trap in data.traps)
         {
-            if (trap.hasTarget)
+            Vector2 sourcePos = trap.spawnPos.ToVector2();
+            if (loadedObjects.ContainsKey(sourcePos))
             {
-                Vector2 sourcePos = trap.spawnPos.ToVector2();
-                Vector2 targetPos = trap.targetPos.ToVector2();
-
-                if (loadedObjects.ContainsKey(sourcePos) && loadedObjects.ContainsKey(targetPos))
+                var sourceEditorObj = loadedObjects[sourcePos];
+                var ct = sourceEditorObj.GetComponent<CollisionsAndTriggers>();
+                if (ct != null)
                 {
-                    CreateLink(loadedObjects[sourcePos], loadedObjects[targetPos]);
+                    // Resolve objectToModify
+                    Vector2 modPos = trap.objectToModifyPos.ToVector2();
+                    if (modPos != Vector2.zero && loadedObjects.ContainsKey(modPos))
+                    {
+                        ct.objectToModify = loadedObjects[modPos].gameObject;
+                    }
+
+                    // Resolve destinationTargetObject
+                    Vector2 destPos = trap.destinationTargetPos.ToVector2();
+                    if (destPos != Vector2.zero && loadedObjects.ContainsKey(destPos))
+                    {
+                        ct.destinationTargetObject = loadedObjects[destPos].gameObject;
+                    }
+
+                    // Resolve objectsToTrigger list
+                    if (trap.objectsToTriggerPositions != null && trap.objectsToTriggerPositions.Count > 0)
+                    {
+                        List<GameObject> triggerList = new List<GameObject>();
+                        foreach (var targetPosS in trap.objectsToTriggerPositions)
+                        {
+                            Vector2 targetPos = targetPosS.ToVector2();
+                            if (loadedObjects.ContainsKey(targetPos))
+                            {
+                                triggerList.Add(loadedObjects[targetPos].gameObject);
+                            }
+                        }
+                        ct.objectsToTrigger = triggerList.ToArray();
+                    }
+
+                    // Resolve activationObjects list
+                    if (trap.activationObjectsPositions != null && trap.activationObjectsPositions.Count > 0)
+                    {
+                        List<GameObject> activList = new List<GameObject>();
+                        foreach (var actPosS in trap.activationObjectsPositions)
+                        {
+                            Vector2 actPos = actPosS.ToVector2();
+                            if (loadedObjects.ContainsKey(actPos))
+                            {
+                                activList.Add(loadedObjects[actPos].gameObject);
+                            }
+                        }
+                        ct.activationObjects = activList.ToArray();
+                    }
+                }
+
+                // Keep visual link representation
+                if (trap.hasTarget)
+                {
+                    Vector2 targetPos = trap.targetPos.ToVector2();
+                    if (loadedObjects.ContainsKey(targetPos))
+                    {
+                        sourceEditorObj.hasTarget = true;
+                        sourceEditorObj.targetObject = loadedObjects[targetPos];
+                        CreateLink(sourceEditorObj, loadedObjects[targetPos]);
+                    }
                 }
             }
         }
@@ -1250,6 +1376,17 @@ public class GridPainter : MonoBehaviour
 
     public CustomLevelData ExportLevelData(string levelName, string creatorName)
     {
+        var settings = FindFirstObjectByType<LevelCameraSettings>();
+        float camX = 0f;
+        float camY = 0f;
+        float camSize = 5f;
+        if (settings != null)
+        {
+            camX = settings.offset.x;
+            camY = settings.offset.y;
+            camSize = settings.orthoSize;
+        }
+
         CustomLevelData levelData = new CustomLevelData
         {
             levelName = levelName,
@@ -1257,7 +1394,10 @@ public class GridPainter : MonoBehaviour
             playerMoveSpeed = LevelCreatorUI.Instance != null ? LevelCreatorUI.Instance.playerMoveSpeed : 8f,
             playerJumpForce = LevelCreatorUI.Instance != null ? LevelCreatorUI.Instance.playerJumpForce : 12f,
             playerMaxJumps = LevelCreatorUI.Instance != null ? LevelCreatorUI.Instance.playerMaxJumps : 2,
-            playerEnableFallDamage = LevelCreatorUI.Instance != null && LevelCreatorUI.Instance.playerEnableFallDamage
+            playerEnableFallDamage = LevelCreatorUI.Instance != null && LevelCreatorUI.Instance.playerEnableFallDamage,
+            camOffsetX = camX,
+            camOffsetY = camY,
+            camOrthoSize = camSize
         };
 
         // Find PlayerStart and Goal
@@ -1366,6 +1506,14 @@ public class GridPainter : MonoBehaviour
         playtestTrigger.moveOnXOnly = editorTriggerScript.moveOnXOnly;
         playtestTrigger.moveOnYOnly = editorTriggerScript.moveOnYOnly;
         playtestTrigger.moveStaggerInterval = editorTriggerScript.moveStaggerInterval;
+        playtestTrigger.preserveRelativeDistance = editorTriggerScript.preserveRelativeDistance;
+
+        // Copy Camera Shake values
+        playtestTrigger.enableCameraShake = editorTriggerScript.enableCameraShake;
+        playtestTrigger.playShakeSFX = editorTriggerScript.playShakeSFX;
+        playtestTrigger.cameraShakeIntensity = editorTriggerScript.cameraShakeIntensity;
+        playtestTrigger.cameraShakeFrequency = editorTriggerScript.cameraShakeFrequency;
+        playtestTrigger.stopShakeOnExitBoundary = editorTriggerScript.stopShakeOnExitBoundary;
 
         // Copy reference fields mapped to playtest clones
         if (editorTriggerScript.objectToModify != null)
