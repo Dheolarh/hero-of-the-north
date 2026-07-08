@@ -70,6 +70,8 @@ public class PlacedEditorObject : MonoBehaviour
             data.moveDirectionStr = ct.moveDirection.ToString();
             data.moveSpeed = ct.moveSpeed;
             data.stopMoveOnExit = ct.stopMoveOnExit;
+            data.isPingPong = ct.isPingPong;
+            data.pingPongDistance = ct.pingPongDistance;
             data.enableRotation = ct.enableRotation;
             data.rotationDirectionStr = ct.rotationDirection.ToString();
             data.rotationSpeed = ct.rotationSpeed;

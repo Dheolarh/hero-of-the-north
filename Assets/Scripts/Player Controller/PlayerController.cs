@@ -51,7 +51,14 @@ public class PlayerController : MonoBehaviour
         CameraFollow     = Camera.main.GetComponent<CameraFollow>();
         _playerCollider  = GetComponent<Collider2D>();
 
-        if (LevelManager.Instance != null)
+        if (LevelCreatorUI.Instance != null && LevelCreatorUI.Instance.IsPlaytesting)
+        {
+            MaxMultiJumps = LevelCreatorUI.Instance.playerMaxJumps;
+            Speed = LevelCreatorUI.Instance.playerMoveSpeed;
+            JumpForce = LevelCreatorUI.Instance.playerJumpForce;
+            EnableFallDamage = LevelCreatorUI.Instance.playerEnableFallDamage;
+        }
+        else if (LevelManager.Instance != null)
         {
             MaxMultiJumps = LevelManager.Instance.CurrentLevelData?.multiJumpCount ?? 1;
         }
@@ -203,5 +210,22 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(delay);
         if (CameraFollow != null)
             CameraFollow.StopFollowing();
+    }
+
+    private bool _skipMovementFrame = false;
+
+    public void SkipMovementFrame()
+    {
+        _skipMovementFrame = true;
+    }
+
+    public bool CheckAndResetSkipMovementFrame()
+    {
+        if (_skipMovementFrame)
+        {
+            _skipMovementFrame = false;
+            return true;
+        }
+        return false;
     }
 }

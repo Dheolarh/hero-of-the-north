@@ -385,18 +385,7 @@ public class LevelCreatorUI : MonoBehaviour
         if (camOffsetYSlider != null) camOffsetYSlider.onValueChanged.AddListener(OnCamOffsetYChanged);
         if (camOrthoSizeSlider != null) camOrthoSizeSlider.onValueChanged.AddListener(OnCamOrthoSizeChanged);
 
-        // Programmatically wire the third button under Tools to ToggleObjectTransformPanel
-        Transform toolsTrans = transform.Find("EditorUIRoot/Tools");
-        if (toolsTrans != null)
-        {
-            Button[] buttons = toolsTrans.GetComponentsInChildren<Button>(true);
-            if (buttons.Length >= 3)
-            {
-                buttons[2].onClick.RemoveAllListeners();
-                buttons[2].onClick.AddListener(ToggleObjectTransformPanel);
-                Debug.Log("[LevelCreatorUI] Programmatically wired the third tool button to ToggleObjectTransformPanel.");
-            }
-        }
+
     }
 
     public void InitializeCameraSettingsSliders()

@@ -9,6 +9,7 @@ public class SingleMotion : MonoBehaviour
     [SerializeField] private Slider verticalDirectionSlider;
     [SerializeField] private Slider motionSpeedSlider;
     [SerializeField] private Slider timeIntervalSlider;
+    [SerializeField] private Slider rotationSpeedSlider;
 
     public void Setup(CollisionsAndTriggers trigger)
     {
@@ -42,6 +43,19 @@ public class SingleMotion : MonoBehaviour
             timeIntervalSlider.onValueChanged.AddListener((val) =>
             {
                 trigger.moveStaggerInterval = val;
+            });
+        }
+
+        // 3b. Setup Rotation Speed Slider
+        if (rotationSpeedSlider != null)
+        {
+            rotationSpeedSlider.minValue = 0f;
+            rotationSpeedSlider.maxValue = 360f;
+            rotationSpeedSlider.onValueChanged.RemoveAllListeners();
+            rotationSpeedSlider.value = trigger.rotationSpeed;
+            rotationSpeedSlider.onValueChanged.AddListener((val) =>
+            {
+                trigger.rotationSpeed = val;
             });
         }
 

@@ -83,7 +83,7 @@ public class PlayerJumpingState : PlayerStateBase
 
         // ── Mid-air horizontal movement ───────────────────────────────────
         float dir = ctx.InputDirection;
-        if (dir != 0f)
+        if (dir != 0f && !ctx.CheckAndResetSkipMovementFrame())
         {
             ctx.PlayerTransform.Translate(
                 UnityEngine.Vector3.right * dir * ctx.Speed * UnityEngine.Time.deltaTime);

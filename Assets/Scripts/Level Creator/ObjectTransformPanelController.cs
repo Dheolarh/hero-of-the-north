@@ -232,7 +232,7 @@ public class ObjectTransformPanelController : MonoBehaviour
     {
         if (LevelCreatorUI.Instance != null)
         {
-            LevelCreatorUI.Instance.playerMaxJumps = Mathf.Min(5, LevelCreatorUI.Instance.playerMaxJumps + 1);
+            LevelCreatorUI.Instance.playerMaxJumps = Mathf.Min(10, LevelCreatorUI.Instance.playerMaxJumps + 1);
             UpdatePlayerSettingsUI();
         }
     }

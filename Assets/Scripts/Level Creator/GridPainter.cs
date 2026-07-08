@@ -1232,6 +1232,8 @@ public class GridPainter : MonoBehaviour
                     if (Enum.TryParse(trap.moveDirectionStr, out MoveDirection moveDirectionVal)) ct.moveDirection = moveDirectionVal;
                     ct.moveSpeed = trap.moveSpeed;
                     ct.stopMoveOnExit = trap.stopMoveOnExit;
+                    ct.isPingPong = trap.isPingPong;
+                    ct.pingPongDistance = trap.pingPongDistance;
                     ct.enableRotation = trap.enableRotation;
                     if (Enum.TryParse(trap.rotationDirectionStr, out RotationDirection rotationDirectionVal)) ct.rotationDirection = rotationDirectionVal;
                     ct.rotationSpeed = trap.rotationSpeed;
@@ -1476,6 +1478,8 @@ public class GridPainter : MonoBehaviour
         playtestTrigger.moveDirection = editorTriggerScript.moveDirection;
         playtestTrigger.moveSpeed = editorTriggerScript.moveSpeed;
         playtestTrigger.stopMoveOnExit = editorTriggerScript.stopMoveOnExit;
+        playtestTrigger.isPingPong = editorTriggerScript.isPingPong;
+        playtestTrigger.pingPongDistance = editorTriggerScript.pingPongDistance;
         playtestTrigger.enableRotation = editorTriggerScript.enableRotation;
         playtestTrigger.rotationDirection = editorTriggerScript.rotationDirection;
         playtestTrigger.rotationSpeed = editorTriggerScript.rotationSpeed;

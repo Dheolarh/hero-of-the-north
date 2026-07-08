@@ -74,6 +74,8 @@ public class CollisionsAndTriggers : MonoBehaviour
     public MoveDirection moveDirection = MoveDirection.Right;
     public float moveSpeed;
     public bool stopMoveOnExit;
+    public bool isPingPong = false;
+    public float pingPongDistance = 5f;
 
     [Header("Rotation Settings")]
     public bool enableRotation;
@@ -524,17 +526,6 @@ public class CollisionsAndTriggers : MonoBehaviour
                 {
                     Vector2 dest = GetTargetDestination(obj, teleportPosition, true);
 
-                    Rigidbody2D rb = obj.GetComponent<Rigidbody2D>();
-                    if (rb != null)
-                    {
-                        rb.linearVelocity = Vector2.zero;
-                        rb.angularVelocity = 0f;
-                        if (!useLocalCoordinates)
-                        {
-                            rb.position = dest;
-                        }
-                    }
-
                     if (useLocalCoordinates)
                     {
                         obj.transform.localPosition = new Vector3(dest.x, dest.y, obj.transform.localPosition.z);
@@ -544,7 +535,30 @@ public class CollisionsAndTriggers : MonoBehaviour
                         obj.transform.position = new Vector3(dest.x, dest.y, obj.transform.position.z);
                     }
 
+                    Rigidbody2D rb = obj.GetComponent<Rigidbody2D>();
+                    if (rb != null)
+                    {
+                        rb.position = obj.transform.position;
+                        rb.linearVelocity = Vector2.zero;
+                        rb.angularVelocity = 0f;
+                    }
+
                     Physics2D.SyncTransforms();
+
+                    if (obj.CompareTag("Player"))
+                    {
+                        var cf = Camera.main.GetComponent<CameraFollow>();
+                        if (cf != null)
+                        {
+                            cf.InstantSnap();
+                        }
+
+                        var pc = obj.GetComponent<PlayerController>() ?? obj.GetComponentInChildren<PlayerController>();
+                        if (pc != null)
+                        {
+                            pc.SkipMovementFrame();
+                        }
+                    }
                 }
             }
         }
@@ -790,6 +804,7 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             case TriggerType.ContinousMotion:
                 enableMove = true;
+                if (rotationSpeed > 0f) enableRotation = true;
                 if (objectsToTrigger != null)
                 {
                     foreach (GameObject obj in objectsToTrigger)
@@ -797,7 +812,30 @@ public class CollisionsAndTriggers : MonoBehaviour
                         if (obj != null)
                         {
                             PingPongMovement ppm = obj.GetComponent<PingPongMovement>();
-                            if (ppm != null) ppm.Activate();
+                            if (isPingPong)
+                            {
+                                if (ppm == null) ppm = obj.AddComponent<PingPongMovement>();
+                                ppm.enabled = true;
+                                if (moveDirection == MoveDirection.Left || moveDirection == MoveDirection.Right)
+                                {
+                                    ppm.movementDirection = PingPongDirection.Horizontal;
+                                }
+                                else
+                                {
+                                    ppm.movementDirection = PingPongDirection.Vertical;
+                                }
+                                ppm.speed = moveSpeed;
+                                ppm.maxLeftOffset = pingPongDistance;
+                                ppm.maxRightOffset = pingPongDistance;
+                                ppm.Activate();
+                            }
+                            else
+                            {
+                                if (ppm != null)
+                                {
+                                    ppm.enabled = false;
+                                }
+                            }
                         }
                     }
                 }
@@ -809,6 +847,7 @@ public class CollisionsAndTriggers : MonoBehaviour
 
             case TriggerType.SingleMotion:
                 StartMoveToTarget();
+                if (rotationSpeed > 0f) enableRotation = true;
                 Debug.Log("Trap triggered!");
                 break;
 
@@ -901,7 +940,7 @@ public class CollisionsAndTriggers : MonoBehaviour
                 }
             }
 
-            if (triggerType == TriggerType.RotationTrap && stopRotationOnExit)
+            if ((triggerType == TriggerType.RotationTrap || triggerType == TriggerType.ContinousMotion || triggerType == TriggerType.SingleMotion) && stopRotationOnExit)
             {
                 StopRotation();
             }

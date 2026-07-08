@@ -52,9 +52,12 @@ public class PlayerWalkingState : PlayerStateBase
         }
 
         // ── Horizontal movement ───────────────────────────────────────────
-        ctx.PlayerTransform.Translate(
-            UnityEngine.Vector3.right * dir * ctx.Speed * UnityEngine.Time.deltaTime);
-        ctx.PlayerSprite.flipX = (dir < 0);
+        if (!ctx.CheckAndResetSkipMovementFrame())
+        {
+            ctx.PlayerTransform.Translate(
+                UnityEngine.Vector3.right * dir * ctx.Speed * UnityEngine.Time.deltaTime);
+            ctx.PlayerSprite.flipX = (dir < 0);
+        }
     }
 
     public override void Exit()

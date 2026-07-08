@@ -66,6 +66,8 @@ public class CustomTrapData
     public string moveDirectionStr; // MoveDirection enum
     public float moveSpeed;
     public bool stopMoveOnExit;
+    public bool isPingPong;
+    public float pingPongDistance;
     public bool enableRotation;
     public string rotationDirectionStr; // RotationDirection enum
     public float rotationSpeed;

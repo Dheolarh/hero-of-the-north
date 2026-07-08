@@ -41,6 +41,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
         Instance = this;
         if (teleportComponent == null) teleportComponent = GetComponentInChildren<Teleport>(true);
         if (singleMotionComponent == null) singleMotionComponent = GetComponentInChildren<SingleMotion>(true);
+        if (continuousMotionComponent == null) continuousMotionComponent = GetComponentInChildren<ContinousMotion>(true);
     }
 
 
@@ -53,6 +54,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
     [SerializeField] private Transform continuousMotionGroup;
     [SerializeField] private Transform objectPropertiesGroup;
     [SerializeField] private Transform triggerDeleteGroup;
+    [SerializeField] private Transform jumpModifierGroup;
 
     [Header("Static Toggle Slots")]
     [SerializeField] private Toggle noneToggle;
@@ -60,6 +62,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
     [SerializeField] private Toggle continuousMotionToggle;
     [SerializeField] private Toggle singleMotionToggle;
     [SerializeField] private Toggle objPropToggle;
+    [SerializeField] private Toggle jumpModifierToggle;
 
     [Header("UI Element Slots")]
     [SerializeField] private Transform activationObjectsScroll;
@@ -67,12 +70,25 @@ public class MechanicsEditorPanelController : MonoBehaviour
     [SerializeField] private Transform teleportObjectsScroll;
     [SerializeField] private Teleport teleportComponent;
     [SerializeField] private SingleMotion singleMotionComponent;
+    [SerializeField] private ContinousMotion continuousMotionComponent;
 
     [SerializeField] private Transform singleMotionObjectsScroll;
 
     [SerializeField] private Transform continuousMotionObjectsScroll;
 
     [SerializeField] private Transform objectPropertiesObjectsScroll;
+
+    [Header("Jump Modifier Controls")]
+    [SerializeField] private Button jumpModifierMinusButton;
+    [SerializeField] private Button jumpModifierPlusButton;
+    [SerializeField] private TMP_Text jumpModifierValueText;
+
+    [Header("Camera Shake UI Slots")]
+    [SerializeField] private Toggle enableCameraShakeToggle;
+    [SerializeField] private Toggle playShakeSFXToggle;
+    [SerializeField] private Slider cameraShakeIntensitySlider;
+    [SerializeField] private Slider cameraShakeFrequencySlider;
+    [SerializeField] private Toggle stopShakeOnExitBoundaryToggle;
 
     private TMP_InputField singleMotionSpeedInput;
     private TMP_InputField singleMotionIntervalInput;
@@ -276,7 +292,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
         if (singleMotionGroup != null) singleMotionGroup.gameObject.SetActive(false);
         if (continuousMotionGroup != null) continuousMotionGroup.gameObject.SetActive(false);
         if (objectPropertiesGroup != null) objectPropertiesGroup.gameObject.SetActive(false);
-        if (triggerDeleteGroup != null) triggerDeleteGroup.gameObject.SetActive(false);
+        if (triggerDeleteGroup != null) triggerDeleteGroup.gameObject.SetActive(true);
         if (triggerSelectorGroup != null) triggerSelectorGroup.gameObject.SetActive(false);
 
         BindStaticUI();
@@ -533,6 +549,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
             if (singleMotionToggle != null && singleMotionToggle != toggledOn) singleMotionToggle.SetIsOnWithoutNotify(false);
             if (continuousMotionToggle != null && continuousMotionToggle != toggledOn) continuousMotionToggle.SetIsOnWithoutNotify(false);
             if (objPropToggle != null && objPropToggle != toggledOn) objPropToggle.SetIsOnWithoutNotify(false);
+            if (jumpModifierToggle != null && jumpModifierToggle != toggledOn) jumpModifierToggle.SetIsOnWithoutNotify(false);
 
             BindStaticUI();
         };
@@ -567,13 +584,20 @@ public class MechanicsEditorPanelController : MonoBehaviour
             objPropToggle.isOn = (activeTriggerScript.triggerType == TriggerType.PhysicsModifier);
             objPropToggle.onValueChanged.AddListener((val) => { if (val) onToggleSelected(TriggerType.PhysicsModifier, objPropToggle); });
         }
+        if (jumpModifierToggle != null)
+        {
+            jumpModifierToggle.onValueChanged.RemoveAllListeners();
+            jumpModifierToggle.isOn = (activeTriggerScript.triggerType == TriggerType.JumpModifier);
+            jumpModifierToggle.onValueChanged.AddListener((val) => { if (val) onToggleSelected(TriggerType.JumpModifier, jumpModifierToggle); });
+        }
 
         // 3. Show/hide trap configuration blocks
         if (teleportGroup != null) teleportGroup.gameObject.SetActive(activeTriggerScript.triggerType == TriggerType.Teleport);
         if (singleMotionGroup != null) singleMotionGroup.gameObject.SetActive(activeTriggerScript.triggerType == TriggerType.SingleMotion);
         if (continuousMotionGroup != null) continuousMotionGroup.gameObject.SetActive(activeTriggerScript.triggerType == TriggerType.ContinousMotion);
         if (objectPropertiesGroup != null) objectPropertiesGroup.gameObject.SetActive(activeTriggerScript.triggerType == TriggerType.PhysicsModifier);
-        if (triggerDeleteGroup != null) triggerDeleteGroup.gameObject.SetActive(activeTriggerScript.triggerType != TriggerType.None);
+        if (jumpModifierGroup != null) jumpModifierGroup.gameObject.SetActive(activeTriggerScript.triggerType == TriggerType.JumpModifier);
+        if (triggerDeleteGroup != null) triggerDeleteGroup.gameObject.SetActive(true);
 
         // 4. Teleport configuration details
         if (teleportGroup != null && teleportGroup.gameObject.activeSelf)
@@ -652,14 +676,13 @@ public class MechanicsEditorPanelController : MonoBehaviour
                 PopulateStaticScrollChecklist(continuousMotionObjectsScroll, currentSelections, (itemGo, selected) =>
                 {
                     UpdateObjectsToTrigger(itemGo, selected);
+                    if (continuousMotionComponent != null) continuousMotionComponent.Setup(activeTriggerScript);
                 }, true);
             }
 
-            if (continuousMotionSpeedInput != null)
+            if (continuousMotionComponent != null)
             {
-                continuousMotionSpeedInput.onEndEdit.RemoveAllListeners();
-                continuousMotionSpeedInput.text = activeTriggerScript.moveSpeed.ToString();
-                continuousMotionSpeedInput.onEndEdit.AddListener((val) => { if (float.TryParse(val, out float res)) activeTriggerScript.moveSpeed = res; });
+                continuousMotionComponent.Setup(activeTriggerScript);
             }
         }
 
@@ -678,6 +701,92 @@ public class MechanicsEditorPanelController : MonoBehaviour
                     UpdateObjectsToTrigger(itemGo, selected);
                 }, true);
             }
+        }
+
+        // 8. Jump Modifier configuration details
+        if (jumpModifierGroup != null && jumpModifierGroup.gameObject.activeSelf)
+        {
+            if (jumpModifierValueText != null)
+            {
+                jumpModifierValueText.text = activeTriggerScript.newMaxJumpsValue.ToString();
+            }
+
+            if (jumpModifierMinusButton != null)
+            {
+                jumpModifierMinusButton.onClick.RemoveAllListeners();
+                jumpModifierMinusButton.onClick.AddListener(() =>
+                {
+                    activeTriggerScript.newMaxJumpsValue = Mathf.Max(0, activeTriggerScript.newMaxJumpsValue - 1);
+                    if (jumpModifierValueText != null)
+                    {
+                        jumpModifierValueText.text = activeTriggerScript.newMaxJumpsValue.ToString();
+                    }
+                });
+            }
+
+            if (jumpModifierPlusButton != null)
+            {
+                jumpModifierPlusButton.onClick.RemoveAllListeners();
+                jumpModifierPlusButton.onClick.AddListener(() =>
+                {
+                    activeTriggerScript.newMaxJumpsValue = Mathf.Min(10, activeTriggerScript.newMaxJumpsValue + 1);
+                    if (jumpModifierValueText != null)
+                    {
+                        jumpModifierValueText.text = activeTriggerScript.newMaxJumpsValue.ToString();
+                    }
+                });
+            }
+        }
+
+        // 9. Camera Shake configuration details
+        if (enableCameraShakeToggle != null)
+        {
+            enableCameraShakeToggle.onValueChanged.RemoveAllListeners();
+            enableCameraShakeToggle.isOn = activeTriggerScript.enableCameraShake;
+            enableCameraShakeToggle.onValueChanged.AddListener((val) =>
+            {
+                activeTriggerScript.enableCameraShake = val;
+            });
+        }
+
+        if (playShakeSFXToggle != null)
+        {
+            playShakeSFXToggle.onValueChanged.RemoveAllListeners();
+            playShakeSFXToggle.isOn = activeTriggerScript.playShakeSFX;
+            playShakeSFXToggle.onValueChanged.AddListener((val) =>
+            {
+                activeTriggerScript.playShakeSFX = val;
+            });
+        }
+
+        if (cameraShakeIntensitySlider != null)
+        {
+            cameraShakeIntensitySlider.onValueChanged.RemoveAllListeners();
+            cameraShakeIntensitySlider.value = activeTriggerScript.cameraShakeIntensity;
+            cameraShakeIntensitySlider.onValueChanged.AddListener((val) =>
+            {
+                activeTriggerScript.cameraShakeIntensity = val;
+            });
+        }
+
+        if (cameraShakeFrequencySlider != null)
+        {
+            cameraShakeFrequencySlider.onValueChanged.RemoveAllListeners();
+            cameraShakeFrequencySlider.value = activeTriggerScript.cameraShakeFrequency;
+            cameraShakeFrequencySlider.onValueChanged.AddListener((val) =>
+            {
+                activeTriggerScript.cameraShakeFrequency = val;
+            });
+        }
+
+        if (stopShakeOnExitBoundaryToggle != null)
+        {
+            stopShakeOnExitBoundaryToggle.onValueChanged.RemoveAllListeners();
+            stopShakeOnExitBoundaryToggle.isOn = activeTriggerScript.stopShakeOnExitBoundary;
+            stopShakeOnExitBoundaryToggle.onValueChanged.AddListener((val) =>
+            {
+                activeTriggerScript.stopShakeOnExitBoundary = val;
+            });
         }
     }
 

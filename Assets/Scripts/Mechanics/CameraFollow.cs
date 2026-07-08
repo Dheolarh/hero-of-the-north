@@ -121,4 +121,20 @@ public class CameraFollow : MonoBehaviour
             isFollowing = true;
         }
     }
+
+    public void InstantSnap()
+    {
+        if (player == null) return;
+        
+        bool currentFollowX = activeSettings != null ? activeSettings.followX : followX;
+        bool currentFollowY = activeSettings != null ? activeSettings.followY : followY;
+        Vector3 currentOffset = activeSettings != null ? activeSettings.offset : offset;
+        float currentFixedY = activeSettings != null ? activeSettings.fixedYHeight : (player.position.y + currentOffset.y);
+
+        float startX = currentFollowX ? (player.position.x + currentOffset.x) : (activeSettings != null ? activeSettings.transform.position.x + currentOffset.x : transform.position.x);
+        float startY = currentFollowY ? (player.position.y + currentOffset.y) : currentFixedY;
+        
+        logicalPosition = new Vector3(startX, startY, player.position.z + currentOffset.z);
+        transform.position = logicalPosition;
+    }
 }

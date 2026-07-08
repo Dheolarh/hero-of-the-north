@@ -25,6 +25,8 @@ public class CameraBorrowerSlider : MonoBehaviour
 {
     public Action<Vector2> OnPositionSaved;
 
+    public float snapIncrement;
+
     private Slider xSlider;
     private Slider ySlider;
     private GameObject[] targetObjects;
@@ -98,7 +100,8 @@ public class CameraBorrowerSlider : MonoBehaviour
             {
                 if (isDragging && anchorIndex >= 0)
                 {
-                    float snappedVal = Mathf.Round(val * 2f) / 2f;
+                    float snap = snapIncrement > 0f ? snapIncrement : 0.001f;
+                    float snappedVal = Mathf.Round(val / snap) * snap;
                     targetAnchorPos.x = snappedVal;
                     xSlider.SetValueWithoutNotify(snappedVal);
                 }
@@ -109,7 +112,8 @@ public class CameraBorrowerSlider : MonoBehaviour
             {
                 if (isDragging && anchorIndex >= 0)
                 {
-                    float snappedVal = Mathf.Round(val * 2f) / 2f;
+                    float snap = snapIncrement > 0f ? snapIncrement : 0.01f;
+                    float snappedVal = Mathf.Round(val / snap) * snap;
                     targetAnchorPos.y = snappedVal;
                     ySlider.SetValueWithoutNotify(snappedVal);
                 }
@@ -161,12 +165,8 @@ public class CameraBorrowerSlider : MonoBehaviour
                 Vector3 oldAnchorPos = anchorObj.transform.position;
                 float speed = 8f; // Speed factor (smoothly glides the target)
 
-                // 1. Smoothly glide the anchor object towards the target coordinate slider value
-                Vector3 newAnchorPos = Vector3.Lerp(
-                    oldAnchorPos,
-                    new Vector3(targetAnchorPos.x, targetAnchorPos.y, oldAnchorPos.z),
-                    Time.deltaTime * speed
-                );
+                // 1. Instantly place the anchor object at the target coordinate slider value
+                Vector3 newAnchorPos = new Vector3(targetAnchorPos.x, targetAnchorPos.y, oldAnchorPos.z);
                 anchorObj.transform.position = newAnchorPos;
 
                 // 2. Glide all other target objects maintaining their relative distances
@@ -261,8 +261,9 @@ public class CameraBorrowerSlider : MonoBehaviour
         if (anchorIndex < 0 || targetObjects == null || targetObjects[anchorIndex] == null) return;
         isDragging = false;
 
-        float finalX = Mathf.Round(targetObjects[anchorIndex].transform.position.x * 2f) / 2f;
-        float finalY = Mathf.Round(targetObjects[anchorIndex].transform.position.y * 2f) / 2f;
+        float snap = snapIncrement > 0f ? snapIncrement : 0.01f;
+        float finalX = Mathf.Round(targetObjects[anchorIndex].transform.position.x / snap) * snap;
+        float finalY = Mathf.Round(targetObjects[anchorIndex].transform.position.y / snap) * snap;
         Vector2 finalPos = new Vector2(finalX, finalY);
 
         // Notify saved position
