@@ -112,10 +112,6 @@ public class CustomTrapData
     public List<Vector2S> activationObjectsPositions = new List<Vector2S>();
 }
 
-/// <summary>
-/// Root data structure representing a complete custom level configuration.
-/// Can be fully serialized to a JSON string via JsonUtility.ToJson.
-/// </summary>
 [Serializable]
 public class CustomLevelData
 {
@@ -141,4 +137,9 @@ public class CustomLevelData
     public float camOffsetX = 0f;
     public float camOffsetY = 0f;
     public float camOrthoSize = 5f;
+
+    // Level status and stats
+    public bool isLive = false;       // true = published/Live (green), false = Draft (red)
+    public int playCount = 0;
+    public string topPlayer = "";
 }

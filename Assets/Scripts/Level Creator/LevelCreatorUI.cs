@@ -18,6 +18,8 @@ public class LevelCreatorUI : MonoBehaviour
     [SerializeField] private GameObject editorUIRoot;
     [Tooltip("Panel shown when playtest validation is successful.")]
     [SerializeField] private GameObject validationSuccessPanel;
+    [Tooltip("Validator / confirmation panel controller.")]
+    [SerializeField] private ValidatorPanelController validatorPanel;
 
     [Header("Palette Category Sub-Panels")]
     [SerializeField] private GameObject terrainPalettePanel;
@@ -32,15 +34,24 @@ public class LevelCreatorUI : MonoBehaviour
 
     [Header("Controls & Buttons")]
     [SerializeField] private Button playtestButton;
-    [SerializeField] private Button publishButton;
+    [SerializeField] private Button publishButton; // kept for serialization compat; hidden at runtime
     [SerializeField] private TMP_Text selectedToolText;
     [SerializeField] private TMP_InputField levelNameInputField;
+
+    // Tracks which save slot is currently being edited (0 = new, unsaved level)
+    private int currentLevelSlot = 0;
+    // Deferred level load fired in Start() when navigating from the menu
+    private CustomLevelData _pendingLoadData = null;
 
     [Header("Player Settings Data")]
     public float playerMoveSpeed = 5f;
     public float playerJumpForce = 7f;
     public int playerMaxJumps = 1;
     public bool playerEnableFallDamage = false;
+
+    [Header("Editor Drag Settings")]
+    [Tooltip("Increment value that teleport and single motion coordinates snap to during slider dragging.")]
+    public float dragSnapIncrement = 0.05f;
 
     [Header("Object Transform Panel")]
     [SerializeField] private GameObject objectTransformPanel;
@@ -121,10 +132,48 @@ public class LevelCreatorUI : MonoBehaviour
         if (playerJumpForce == 12f) playerJumpForce = 7f;
         if (playerMaxJumps == 2) playerMaxJumps = 1;
 
+        // Restore the level slot that the menu requested us to edit.
+        // LevelListManager sets "EditLevelSlot" before loading this scene.
+        if (PlayerPrefs.HasKey("EditLevelSlot"))
+        {
+            currentLevelSlot = PlayerPrefs.GetInt("EditLevelSlot", 0);
+            PlayerPrefs.DeleteKey("EditLevelSlot"); // consume the key
+            PlayerPrefs.Save();
+
+            if (currentLevelSlot > 0)
+            {
+                // Load the saved level data into the editor immediately
+                string saveKey = $"CustomLevel_{currentLevelSlot}";
+                string json = PlayerPrefs.GetString(saveKey, "");
+                if (!string.IsNullOrEmpty(json))
+                {
+                    try
+                    {
+                        var data = JsonUtility.FromJson<CustomLevelData>(json);
+                        if (data != null)
+                        {
+                            // We fire the load event after Start() so GridPainter is ready.
+                            // Store for deferred load in Start().
+                            _pendingLoadData = data;
+                        }
+                    }
+                    catch { /* ignore parse errors, start blank */ }
+                }
+            }
+
+            Debug.Log($"[LevelCreatorUI] Resuming edit on slot {currentLevelSlot}.");
+        }
+
         UpdateToolText();
-        SetPublishButtonState(false);
+
+        // Publish button lives behind the publish confirm panel now — hide it from toolbar
+        if (publishButton != null) publishButton.gameObject.SetActive(false);
+
         if (validationSuccessPanel != null)
             validationSuccessPanel.SetActive(false);
+
+        // Auto-set level name for the current editing session
+        RefreshLevelNameDisplay();
 
         // Dynamically inject Exit Playtest button (non-destructive)
         CreateDynamicExitPlaytestButton();
@@ -247,86 +296,137 @@ public class LevelCreatorUI : MonoBehaviour
         if (!IsPlaytesting) return;
 
         HasValidatedPlaytest = true;
-        SetPublishButtonState(true);
 
         if (validationSuccessPanel != null)
             validationSuccessPanel.SetActive(true);
 
-        Debug.Log("[LevelCreatorUI] Custom level playtest validation success! Publish button unlocked.");
+        Debug.Log("[LevelCreatorUI] Playtest validation success! Showing publish confirmation.");
+
+        // Show the dialog WHILE STILL IN PLAYTEST so the user sees it in the game view.
+        // Cancel returns them to editor mode; Proceed publishes and goes to Main.
+        var panel = validatorPanel != null ? validatorPanel : ValidatorPanelController.Instance;
+        if (panel != null)
+        {
+            panel.ShowPublishConfirm(
+                onConfirm: () =>
+                {
+                    PublishLevel();  // marks isLive = true, saves, sends to Devvit
+                    UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
+                },
+                onCancel: () =>
+                {
+                    // Return player to editor so they can adjust and re-test
+                    if (IsPlaytesting) TogglePlaytest();
+                    Debug.Log("[LevelCreatorUI] Publish cancelled — returned to editor.");
+                }
+            );
+        }
     }
 
     private void SetPublishButtonState(bool interactable)
     {
         if (publishButton != null)
-        {
             publishButton.interactable = interactable;
-        }
     }
 
     // ── Local Saving & Loading (Drafts) ──────────────────────────────────────
 
+    // ── Auto level naming ─────────────────────────────────────────────────
+
+    /// <summary>Returns "Level N" for the given slot (or next slot for new levels).</summary>
+    private string GetAutoLevelName(int slot) => $"Level {slot}";
+
+    /// <summary>Updates the level name input field to match the current slot's auto name.</summary>
+    private void RefreshLevelNameDisplay()
+    {
+        if (levelNameInputField == null) return;
+        if (currentLevelSlot == 0)
+        {
+            int nextSlot = ValidatorPanelController.GetNextSlotNumber();
+            levelNameInputField.text = GetAutoLevelName(nextSlot);
+        }
+        else
+        {
+            levelNameInputField.text = GetAutoLevelName(currentLevelSlot);
+        }
+    }
+
+    // ── Save (multi-slot) ─────────────────────────────────────────────────
+
     public void SaveLevelDraft()
     {
-        string levelName = levelNameInputField != null ? levelNameInputField.text : "My Custom Level";
-        if (string.IsNullOrWhiteSpace(levelName))
-            levelName = "Untitled Draft";
-
         string creatorName = DevvitBridge.Instance != null ? DevvitBridge.Instance.username : "EditorPlayer";
 
-        CustomLevelData levelData = null;
+        // Determine slot: new level gets the next slot, existing levels overwrite their slot
+        if (currentLevelSlot == 0)
+        {
+            currentLevelSlot = ValidatorPanelController.GetNextSlotNumber();
+            PlayerPrefs.SetInt("CustomLevel_Count", currentLevelSlot);
+        }
+
+        string levelName = GetAutoLevelName(currentLevelSlot);
+        string saveKey   = $"CustomLevel_{currentLevelSlot}";
+
+        CustomLevelData levelData;
         if (GridPainter.Instance != null)
         {
             levelData = GridPainter.Instance.ExportLevelData(levelName, creatorName);
         }
         else
         {
-            levelData = new CustomLevelData
-            {
-                levelName = levelName,
-                creator = creatorName
-            };
+            levelData = new CustomLevelData { levelName = levelName, creator = creatorName };
         }
 
         string json = JsonUtility.ToJson(levelData, true);
-        PlayerPrefs.SetString("CustomLevel_Draft", json);
+        PlayerPrefs.SetString(saveKey, json);
         PlayerPrefs.Save();
 
-        Debug.Log($"[LevelCreatorUI] Draft saved successfully! Name: {levelName}\nJSON Size: {json.Length} chars");
+        // Update the display
+        if (levelNameInputField != null) levelNameInputField.text = levelName;
+
+        Debug.Log($"[LevelCreatorUI] Saved '{levelName}' to slot {currentLevelSlot}. JSON: {json.Length} chars.");
+
+        // Show success notification
+        var panel = validatorPanel != null ? validatorPanel : ValidatorPanelController.Instance;
+        if (panel != null) panel.ShowSaveSuccess();
     }
 
-    /// <summary>
-    /// Loads the level layout draft from PlayerPrefs if it exists.
-    /// Triggered by the Load button.
-    /// </summary>
+    // ── Load (panel with level list) ──────────────────────────────────────
+
+    /// <summary>Opens the Validator Panel's load mode showing all saved levels.</summary>
     public void LoadLevelDraft()
     {
-        if (!PlayerPrefs.HasKey("CustomLevel_Draft"))
+        var panel = validatorPanel != null ? validatorPanel : ValidatorPanelController.Instance;
+        if (panel == null)
         {
-            Debug.LogWarning("[LevelCreatorUI] No saved draft found in PlayerPrefs.");
+            Debug.LogWarning("[LevelCreatorUI] No ValidatorPanelController found for load panel.");
             return;
         }
 
-        string json = PlayerPrefs.GetString("CustomLevel_Draft");
-        try
+        panel.ShowLoadPanel(onLoadKey: (key) =>
         {
-            CustomLevelData data = JsonUtility.FromJson<CustomLevelData>(json);
-            if (data != null)
+            string json = PlayerPrefs.GetString(key, "");
+            if (string.IsNullOrEmpty(json)) { Debug.LogWarning($"[LevelCreatorUI] Save key '{key}' is empty."); return; }
+
+            try
             {
-                if (levelNameInputField != null)
-                    levelNameInputField.text = data.levelName;
+                CustomLevelData data = JsonUtility.FromJson<CustomLevelData>(json);
+                if (data == null) return;
 
+                // Parse the slot number from the key (CustomLevel_N)
+                string slotStr = key.Replace("CustomLevel_", "");
+                if (int.TryParse(slotStr, out int slot)) currentLevelSlot = slot;
+
+                if (levelNameInputField != null) levelNameInputField.text = data.levelName;
                 OnLoadLevelRequest?.Invoke(data);
-                // Reset validation status on load since design might have changed
                 HasValidatedPlaytest = false;
-                SetPublishButtonState(false);
-
-                Debug.Log($"[LevelCreatorUI] Draft loaded successfully! Name: {data.levelName}");
+                Debug.Log($"[LevelCreatorUI] Loaded '{data.levelName}' from slot {currentLevelSlot}.");
             }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[LevelCreatorUI] Failed to parse loaded draft JSON: {e.Message}");
-        }
+            catch (Exception e)
+            {
+                Debug.LogError($"[LevelCreatorUI] Failed to parse level JSON: {e.Message}");
+            }
+        });
     }
 
     // ── Publish to Reddit / Devvit ───────────────────────────────────────────
@@ -343,33 +443,34 @@ public class LevelCreatorUI : MonoBehaviour
             return;
         }
 
-        string levelName = levelNameInputField != null ? levelNameInputField.text : "My Shared Level";
-        if (string.IsNullOrWhiteSpace(levelName))
-            levelName = "Shared Level";
-
+        string levelName  = GetAutoLevelName(currentLevelSlot > 0 ? currentLevelSlot : 1);
         string creatorName = DevvitBridge.Instance != null ? DevvitBridge.Instance.username : "EditorPlayer";
 
-        CustomLevelData levelData = null;
+        CustomLevelData levelData;
         if (GridPainter.Instance != null)
         {
             levelData = GridPainter.Instance.ExportLevelData(levelName, creatorName);
         }
         else
         {
-            levelData = new CustomLevelData
-            {
-                levelName = levelName,
-                creator = creatorName
-            };
+            levelData = new CustomLevelData { levelName = levelName, creator = creatorName };
+        }
+
+        // Mark as Live so the menu card turns green
+        levelData.isLive = true;
+
+        // Persist the updated data back to the save slot
+        if (currentLevelSlot > 0)
+        {
+            string saveKey = $"CustomLevel_{currentLevelSlot}";
+            PlayerPrefs.SetString(saveKey, JsonUtility.ToJson(levelData, true));
+            PlayerPrefs.Save();
         }
 
         string json = JsonUtility.ToJson(levelData);
-
-        Debug.Log($"[LevelCreatorUI] Publishing level to Reddit: {levelName} by {levelData.creator}");
+        Debug.Log($"[LevelCreatorUI] Publishing '{levelName}' (slot {currentLevelSlot}) by {creatorName}.");
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-        // Send WebGL post message to the Devvit parent context
-        // In Devvit, we listen to this event to save to Redis and generate a subreddit post.
         Application.ExternalCall("publishCustomLevel", json);
 #else
         Debug.Log($"[LevelCreatorUI] [Editor Mock] Published event sent. JSON size: {json.Length} chars");
@@ -385,7 +486,18 @@ public class LevelCreatorUI : MonoBehaviour
         if (camOffsetYSlider != null) camOffsetYSlider.onValueChanged.AddListener(OnCamOffsetYChanged);
         if (camOrthoSizeSlider != null) camOrthoSizeSlider.onValueChanged.AddListener(OnCamOrthoSizeChanged);
 
-
+        // Fire deferred level load from menu navigation (slot set in Awake)
+        if (_pendingLoadData != null)
+        {
+            if (levelNameInputField != null) levelNameInputField.text = _pendingLoadData.levelName;
+            OnLoadLevelRequest?.Invoke(_pendingLoadData);
+            _pendingLoadData = null;
+            Debug.Log($"[LevelCreatorUI] Deferred load fired for slot {currentLevelSlot}.");
+        }
+        else
+        {
+            RefreshLevelNameDisplay();
+        }
     }
 
     public void InitializeCameraSettingsSliders()
@@ -485,15 +597,43 @@ public class LevelCreatorUI : MonoBehaviour
 
     public void RequestClearGrid()
     {
-        OnClearGridRequest?.Invoke();
-        HasValidatedPlaytest = false;
-        SetPublishButtonState(false);
-        Debug.Log("[LevelCreatorUI] Grid clear requested.");
+        var panel = validatorPanel != null ? validatorPanel : ValidatorPanelController.Instance;
+        if (panel != null)
+        {
+            panel.ShowDeleteConfirm(
+                onConfirm: () =>
+                {
+                    OnClearGridRequest?.Invoke();
+                    HasValidatedPlaytest = false;
+                    // NOTE: currentLevelSlot is NOT reset — deleting just clears the scene
+                    // objects. The level slot (e.g. "Level 1") stays the same until you
+                    // exit back to the menu and press "Create New Level" there.
+                    Debug.Log($"[LevelCreatorUI] Scene cleared (staying on Level {currentLevelSlot}).");
+                },
+                onCancel: () => Debug.Log("[LevelCreatorUI] Delete cancelled — scene kept.")
+            );
+        }
+        else
+        {
+            OnClearGridRequest?.Invoke();
+            HasValidatedPlaytest = false;
+            Debug.Log($"[LevelCreatorUI] Scene cleared (no confirm panel, staying on Level {currentLevelSlot}).");
+        }
     }
 
     public void ExitEditor()
     {
-        // Go back to the main menu scene
+        // Auto-save the current level before going to the menu
+        if (currentLevelSlot > 0)
+        {
+            SaveLevelDraft();  // overwrites existing slot
+            Debug.Log($"[LevelCreatorUI] Auto-saved Level {currentLevelSlot} before exiting.");
+        }
+
+        // Store the last edited slot so the menu can highlight it
+        PlayerPrefs.SetInt("LastEditedLevelSlot", currentLevelSlot);
+        PlayerPrefs.Save();
+
         UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
     }
 

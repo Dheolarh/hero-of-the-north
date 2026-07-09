@@ -42,6 +42,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
         if (teleportComponent == null) teleportComponent = GetComponentInChildren<Teleport>(true);
         if (singleMotionComponent == null) singleMotionComponent = GetComponentInChildren<SingleMotion>(true);
         if (continuousMotionComponent == null) continuousMotionComponent = GetComponentInChildren<ContinousMotion>(true);
+        if (objectPropertiesComponent == null) objectPropertiesComponent = GetComponentInChildren<ObjectProperties>(true);
     }
 
 
@@ -71,6 +72,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
     [SerializeField] private Teleport teleportComponent;
     [SerializeField] private SingleMotion singleMotionComponent;
     [SerializeField] private ContinousMotion continuousMotionComponent;
+    [SerializeField] private ObjectProperties objectPropertiesComponent;
 
     [SerializeField] private Transform singleMotionObjectsScroll;
 
@@ -689,6 +691,11 @@ public class MechanicsEditorPanelController : MonoBehaviour
         // 7. Object Properties configuration details
         if (objectPropertiesGroup != null && objectPropertiesGroup.gameObject.activeSelf)
         {
+            if (objectPropertiesComponent != null)
+            {
+                objectPropertiesComponent.Setup(activeTriggerScript);
+            }
+
             if (objectPropertiesObjectsScroll != null)
             {
                 HashSet<GameObject> currentSelections = new HashSet<GameObject>();
@@ -699,6 +706,7 @@ public class MechanicsEditorPanelController : MonoBehaviour
                 PopulateStaticScrollChecklist(objectPropertiesObjectsScroll, currentSelections, (itemGo, selected) =>
                 {
                     UpdateObjectsToTrigger(itemGo, selected);
+                    if (objectPropertiesComponent != null) objectPropertiesComponent.Setup(activeTriggerScript);
                 }, true);
             }
         }

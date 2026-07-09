@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9222136831131528713}
   - component: {fileID: 290312284555048463}
+  - component: {fileID: -6728016980139552534}
   m_Layer: 0
   m_Name: Allies
   m_TagString: Selectable
@@ -92,6 +93,27 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &-6728016980139552534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3264271234073716532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Ally
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1001 &994951262254100555
 PrefabInstance:
   m_ObjectHideFlags: 0

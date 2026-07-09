@@ -100,10 +100,9 @@ public class CameraBorrowerSlider : MonoBehaviour
             {
                 if (isDragging && anchorIndex >= 0)
                 {
-                    float snap = snapIncrement > 0f ? snapIncrement : 0.001f;
+                    float snap = GetSnapIncrement();
                     float snappedVal = Mathf.Round(val / snap) * snap;
                     targetAnchorPos.x = snappedVal;
-                    xSlider.SetValueWithoutNotify(snappedVal);
                 }
             });
 
@@ -112,10 +111,9 @@ public class CameraBorrowerSlider : MonoBehaviour
             {
                 if (isDragging && anchorIndex >= 0)
                 {
-                    float snap = snapIncrement > 0f ? snapIncrement : 0.01f;
+                    float snap = GetSnapIncrement();
                     float snappedVal = Mathf.Round(val / snap) * snap;
                     targetAnchorPos.y = snappedVal;
-                    ySlider.SetValueWithoutNotify(snappedVal);
                 }
             });
 
@@ -165,22 +163,26 @@ public class CameraBorrowerSlider : MonoBehaviour
                 Vector3 oldAnchorPos = anchorObj.transform.position;
                 float speed = 8f; // Speed factor (smoothly glides the target)
 
-                // 1. Instantly place the anchor object at the target coordinate slider value
-                Vector3 newAnchorPos = new Vector3(targetAnchorPos.x, targetAnchorPos.y, oldAnchorPos.z);
+                // 1. Smoothly place the anchor object toward the target coordinate slider value
+                Vector3 newAnchorPos = Vector3.Lerp(oldAnchorPos, new Vector3(targetAnchorPos.x, targetAnchorPos.y, oldAnchorPos.z), Time.deltaTime * speed);
                 anchorObj.transform.position = newAnchorPos;
 
                 // 2. Glide all other target objects maintaining their relative distances
                 if (initialObjectPositions != null)
                 {
-                    Vector3 offset = newAnchorPos - initialObjectPositions[anchorIndex];
+                    Vector3 anchorDelta = newAnchorPos - initialObjectPositions[anchorIndex];
                     for (int i = 0; i < targetObjects.Length; i++)
                     {
                         if (i == anchorIndex || targetObjects[i] == null || i >= initialObjectPositions.Length) continue;
 
                         Vector3 currentObjPos = targetObjects[i].transform.position;
-                        Vector3 desiredObjPos = initialObjectPositions[i] + offset;
+                        Vector3 desiredObjPos = new Vector3(
+                            initialObjectPositions[i].x + anchorDelta.x,
+                            initialObjectPositions[i].y + anchorDelta.y,
+                            currentObjPos.z);
 
-                        targetObjects[i].transform.position = new Vector3(desiredObjPos.x, desiredObjPos.y, currentObjPos.z);
+                        // Lerp each companion object at the same speed as the anchor
+                        targetObjects[i].transform.position = Vector3.Lerp(currentObjPos, desiredObjPos, Time.deltaTime * speed);
                     }
                 }
 
@@ -256,15 +258,43 @@ public class CameraBorrowerSlider : MonoBehaviour
         SetAllExceptActiveSlider(false);
     }
 
+    private float GetSnapIncrement()
+    {
+        if (LevelCreatorUI.Instance != null)
+        {
+            return LevelCreatorUI.Instance.dragSnapIncrement;
+        }
+        return snapIncrement > 0f ? snapIncrement : 0.05f;
+    }
+
     private void OnSliderDragEnd()
     {
         if (anchorIndex < 0 || targetObjects == null || targetObjects[anchorIndex] == null) return;
         isDragging = false;
 
-        float snap = snapIncrement > 0f ? snapIncrement : 0.01f;
+        float snap = GetSnapIncrement();
         float finalX = Mathf.Round(targetObjects[anchorIndex].transform.position.x / snap) * snap;
         float finalY = Mathf.Round(targetObjects[anchorIndex].transform.position.y / snap) * snap;
         Vector2 finalPos = new Vector2(finalX, finalY);
+
+        // Snap anchor precisely to grid
+        Vector3 anchorOldPos = targetObjects[anchorIndex].transform.position;
+        targetObjects[anchorIndex].transform.position = new Vector3(finalX, finalY, anchorOldPos.z);
+
+        // Snap all companion objects precisely too, preserving their relative offset
+        if (initialObjectPositions != null)
+        {
+            Vector3 anchorDelta = new Vector3(finalX, finalY, 0f) - new Vector3(initialObjectPositions[anchorIndex].x, initialObjectPositions[anchorIndex].y, 0f);
+            for (int i = 0; i < targetObjects.Length; i++)
+            {
+                if (i == anchorIndex || targetObjects[i] == null || i >= initialObjectPositions.Length) continue;
+                Vector3 companionPos = targetObjects[i].transform.position;
+                targetObjects[i].transform.position = new Vector3(
+                    initialObjectPositions[i].x + anchorDelta.x,
+                    initialObjectPositions[i].y + anchorDelta.y,
+                    companionPos.z);
+            }
+        }
 
         // Notify saved position
         OnPositionSaved?.Invoke(finalPos);

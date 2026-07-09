@@ -566,6 +566,19 @@ public class GridPainter : MonoBehaviour
         CancelLinkingMode();
         ClearSelection();
 
+        // Hero/PlayerStart is a single-instance object — block duplicates
+        if (IsPlayerAsset(typeName))
+        {
+            bool alreadyExists = editorObjects.Exists(o => o != null && IsPlayerAsset(o.assetTypeName));
+            if (alreadyExists)
+            {
+                Debug.LogWarning($"[GridPainter] Tried to spawn '{typeName}' but a Hero already exists in the scene.");
+                var panel = ValidatorPanelController.Instance;
+                if (panel != null) panel.ShowSingleInstanceWarning("Hero");
+                return;
+            }
+        }
+
         PaletteItem item = GetPaletteItem(typeName);
         if (item.editorPrefab != null)
         {
@@ -964,22 +977,43 @@ public class GridPainter : MonoBehaviour
             Debug.LogWarning("[GridPainter] Playtest Player is missing! Please make sure a PlayerStart object is present under LevelPrefab.");
         }
 
+        // 3b. Attach PlaytestGoalValidator to the already-spawned goal clone (main loop already instantiated it)
         PlacedEditorObject goalObj = editorObjects.Find(o => o != null && MatchAssetType(o.assetTypeName, "Goal"));
-        Vector3 goalPos = goalObj != null ? goalObj.transform.position : Vector3.zero;
-        PaletteItem goalItem = GetPaletteItem("Goal");
-        GameObject goalPrefab = goalItem.playtestPrefab != null ? goalItem.playtestPrefab : goalItem.editorPrefab;
-        if (goalPrefab != null)
+        if (goalObj != null && playtestPairs.ContainsKey(goalObj))
         {
-            GameObject portal = Instantiate(goalPrefab, goalPos, Quaternion.identity);
-            playtestClones.Add(portal);
+            GameObject portalRoot = playtestPairs[goalObj];
 
-            // goal completes test
-            portal.AddComponent<PlaytestGoalValidator>();
+            // The Selectable parent is just a drag container. The actual collidable portal
+            // child is what OnTriggerEnter2D fires on. Find the first child with a Collider2D.
+            Collider2D[] childColliders = portalRoot.GetComponentsInChildren<Collider2D>(true);
+            GameObject validatorTarget = childColliders.Length > 0 ? childColliders[0].gameObject : portalRoot;
+
+            if (validatorTarget.GetComponent<PlaytestGoalValidator>() == null)
+            {
+                validatorTarget.AddComponent<PlaytestGoalValidator>();
+            }
+            Debug.Log($"[GridPainter] PlaytestGoalValidator attached to '{validatorTarget.name}' (tag={validatorTarget.tag}) inside LevelPrefab.");
         }
         else
         {
-            Debug.LogWarning("[GridPainter] Playtest Goal portal prefab is null! Make sure 'Goal' has a playtestPrefab or editorPrefab assigned in the GridPainter inspector palette.");
+            // Fallback: goal had no playtest prefab in palette, create one now
+            PaletteItem goalItem = GetPaletteItem("Goal");
+            GameObject goalPrefab = goalItem.playtestPrefab != null ? goalItem.playtestPrefab : goalItem.editorPrefab;
+            if (goalPrefab != null && goalObj != null)
+            {
+                GameObject portalRoot = Instantiate(goalPrefab, goalObj.transform.position, Quaternion.identity, levelContainer);
+                playtestClones.Add(portalRoot);
+                Collider2D[] childColliders = portalRoot.GetComponentsInChildren<Collider2D>(true);
+                GameObject validatorTarget = childColliders.Length > 0 ? childColliders[0].gameObject : portalRoot;
+                validatorTarget.AddComponent<PlaytestGoalValidator>();
+                Debug.Log($"[GridPainter] Goal fallback — PlaytestGoalValidator on '{validatorTarget.name}' inside LevelPrefab.");
+            }
+            else
+            {
+                Debug.LogWarning("[GridPainter] Playtest Goal portal prefab is null! Make sure 'Goal' has a playtestPrefab or editorPrefab assigned in the GridPainter inspector palette.");
+            }
         }
+
 
         // 4. Wire and configure trigger-to-target links dynamically on the playtest clones
         foreach (var editorObj in editorObjects)
@@ -1599,6 +1633,18 @@ public class GridPainter : MonoBehaviour
         {
             col.isTrigger = true;
         }
+
+        // If this trap uses "Appear on Trigger", hide target objects' renderers right now
+        // so they start invisible in playtest. They'll be re-enabled when the trap fires.
+        if (playtestTrigger.appearOnTrigger && playtestTrigger.objectsToTrigger != null)
+        {
+            foreach (var targetObj in playtestTrigger.objectsToTrigger)
+            {
+                if (targetObj == null) continue;
+                var renderers = targetObj.GetComponentsInChildren<Renderer>(true);
+                foreach (var r in renderers) r.enabled = false;
+            }
+        }
     }
 }
 
@@ -1608,14 +1654,54 @@ public class GridPainter : MonoBehaviour
 /// </summary>
 public class PlaytestGoalValidator : MonoBehaviour
 {
+    void Start()
+    {
+        // Force all colliders on this portal to be triggers so OnTriggerEnter2D fires
+        var colliders = GetComponentsInChildren<Collider2D>(true);
+        if (colliders.Length == 0)
+        {
+            var newCol = gameObject.AddComponent<BoxCollider2D>();
+            newCol.isTrigger = true;
+            Debug.Log("[PlaytestGoalValidator] No collider found — BoxCollider2D added automatically.");
+        }
+        else
+        {
+            foreach (var col in colliders) col.isTrigger = true;
+            Debug.Log($"[PlaytestGoalValidator] Ready on '{gameObject.name}'. Colliders={colliders.Length}, all isTrigger=true. Tag={gameObject.tag}");
+        }
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        // Walk up the hierarchy — the colliding object might be a child of the player root
+        Transform t = other.transform;
+        bool isPlayer = false;
+        while (t != null)
         {
-            if (LevelCreatorUI.Instance != null)
+            if (t.CompareTag("Player"))
             {
-                LevelCreatorUI.Instance.ValidatePlaytestSuccess();
+                isPlayer = true;
+                break;
             }
+            t = t.parent;
+        }
+
+        Debug.Log($"[PlaytestGoalValidator] OnTriggerEnter2D: hit by '{other.gameObject.name}' tag='{other.tag}' isPlayer={isPlayer}");
+        if (isPlayer)
+        {
+            Debug.Log("[PlaytestGoalValidator] Player reached the Goal portal! Validating playtest success.");
+            if (LevelCreatorUI.Instance != null)
+                LevelCreatorUI.Instance.ValidatePlaytestSuccess();
+        }
+    }
+
+    // Fallback: fires if collider is somehow NOT a trigger
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            Debug.LogWarning("[PlaytestGoalValidator] Hit player via solid collision — forcing isTrigger and retrying next frame.");
+            foreach (var col in GetComponentsInChildren<Collider2D>(true)) col.isTrigger = true;
         }
     }
 }

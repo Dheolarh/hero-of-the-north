@@ -59,7 +59,6 @@ public class SingleMotion : MonoBehaviour
             });
         }
 
-        // Always force distance preservation for Single Motion traps configured in the editor
         trigger.preserveRelativeDistance = true;
 
         // 4. Setup the Horizontal/Vertical direction sliders using CameraBorrowerSlider

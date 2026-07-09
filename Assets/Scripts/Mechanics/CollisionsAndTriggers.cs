@@ -863,13 +863,13 @@ public class CollisionsAndTriggers : MonoBehaviour
                     {
                         if (obj == null) continue;
 
-                        // 1. Handle Collider
+                        // 1. Handle Collider — disable ALL colliders (parent + children) for pass-through
                         if (modifyColliderState)
                         {
-                            var col = obj.GetComponent<Collider2D>();
-                            if (col != null)
+                            var colliders = obj.GetComponentsInChildren<Collider2D>(true);
+                            foreach (var col in colliders)
                             {
-                                col.enabled = makeSolid;
+                                col.enabled = makeSolid; // true = solid, false = pass-through (disabled)
                             }
                         }
 
