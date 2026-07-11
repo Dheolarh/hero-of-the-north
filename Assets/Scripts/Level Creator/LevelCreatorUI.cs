@@ -364,7 +364,9 @@ public class LevelCreatorUI : MonoBehaviour
             PlayerPrefs.SetInt("CustomLevel_Count", currentLevelSlot);
         }
 
-        string levelName = GetAutoLevelName(currentLevelSlot);
+        string levelName = (levelNameInputField != null && !string.IsNullOrWhiteSpace(levelNameInputField.text)) 
+            ? levelNameInputField.text 
+            : GetAutoLevelName(currentLevelSlot);
         string saveKey   = $"CustomLevel_{currentLevelSlot}";
 
         CustomLevelData levelData;

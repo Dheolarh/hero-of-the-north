@@ -651,6 +651,19 @@ public class GridPainter : MonoBehaviour
         CancelLinkingMode();
         ClearSelection();
 
+        // Hero/PlayerStart is a single-instance object — block duplicates
+        if (IsPlayerAsset(typeName))
+        {
+            bool alreadyExists = editorObjects.Exists(o => o != null && IsPlayerAsset(o.assetTypeName));
+            if (alreadyExists)
+            {
+                Debug.LogWarning($"[GridPainter] Tried to drag-place '{typeName}' but a Hero already exists in the scene.");
+                var panel = ValidatorPanelController.Instance;
+                if (panel != null) panel.ShowSingleInstanceWarning("Hero");
+                return;
+            }
+        }
+
         PaletteItem item = GetPaletteItem(typeName);
         if (item.editorPrefab != null)
         {
@@ -1195,22 +1208,28 @@ public class GridPainter : MonoBehaviour
         }
 
         // 1. Load Player Spawn & Goal
-        PaletteItem startItem = GetPaletteItem("PlayerStart");
-        if (startItem.editorPrefab != null)
+        if (data.hasPlayerStart)
         {
-            GameObject flag = Instantiate(startItem.editorPrefab, data.playerStartPos.ToVector2(), Quaternion.identity, levelContainer);
-            var flagScript = flag.GetComponent<PlacedEditorObject>() ?? flag.AddComponent<PlacedEditorObject>();
-            flagScript.assetTypeName = "PlayerStart";
-            editorObjects.Add(flagScript);
+            PaletteItem startItem = GetPaletteItem("PlayerStart");
+            if (startItem.editorPrefab != null)
+            {
+                GameObject flag = Instantiate(startItem.editorPrefab, data.playerStartPos.ToVector2(), Quaternion.identity, levelContainer);
+                var flagScript = flag.GetComponent<PlacedEditorObject>() ?? flag.AddComponent<PlacedEditorObject>();
+                flagScript.assetTypeName = "PlayerStart";
+                editorObjects.Add(flagScript);
+            }
         }
 
-        PaletteItem goalItem = GetPaletteItem("Goal");
-        if (goalItem.editorPrefab != null)
+        if (data.hasGoal)
         {
-            GameObject portal = Instantiate(goalItem.editorPrefab, data.goalPos.ToVector2(), Quaternion.identity, levelContainer);
-            var portalScript = portal.GetComponent<PlacedEditorObject>() ?? portal.AddComponent<PlacedEditorObject>();
-            portalScript.assetTypeName = "Goal";
-            editorObjects.Add(portalScript);
+            PaletteItem goalItem = GetPaletteItem("Goal");
+            if (goalItem.editorPrefab != null)
+            {
+                GameObject portal = Instantiate(goalItem.editorPrefab, data.goalPos.ToVector2(), Quaternion.identity, levelContainer);
+                var portalScript = portal.GetComponent<PlacedEditorObject>() ?? portal.AddComponent<PlacedEditorObject>();
+                portalScript.assetTypeName = "Goal";
+                editorObjects.Add(portalScript);
+            }
         }
 
         Dictionary<Vector2, PlacedEditorObject> loadedObjects = new Dictionary<Vector2, PlacedEditorObject>();
@@ -1438,10 +1457,18 @@ public class GridPainter : MonoBehaviour
 
         // Find PlayerStart and Goal
         PlacedEditorObject playerStart = editorObjects.Find(o => o != null && IsPlayerAsset(o.assetTypeName));
-        if (playerStart != null) levelData.playerStartPos = new Vector2S(playerStart.transform.position);
+        if (playerStart != null)
+        {
+            levelData.playerStartPos = new Vector2S(playerStart.transform.position);
+            levelData.hasPlayerStart = true;
+        }
 
         PlacedEditorObject goalObj = editorObjects.Find(o => o != null && MatchAssetType(o.assetTypeName, "Goal"));
-        if (goalObj != null) levelData.goalPos = new Vector2S(goalObj.transform.position);
+        if (goalObj != null)
+        {
+            levelData.goalPos = new Vector2S(goalObj.transform.position);
+            levelData.hasGoal = true;
+        }
 
         // Export all other placed tiles and traps
         foreach (var obj in editorObjects)

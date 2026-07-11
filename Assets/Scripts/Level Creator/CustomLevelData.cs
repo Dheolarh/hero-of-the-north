@@ -122,7 +122,9 @@ public class CustomLevelData
     public int gridHeight = 18;
 
     public Vector2S playerStartPos;
+    public bool hasPlayerStart = false;
     public Vector2S goalPos;
+    public bool hasGoal = false;
 
     public List<CustomTileData> tiles = new List<CustomTileData>();
     public List<CustomTrapData> traps = new List<CustomTrapData>();

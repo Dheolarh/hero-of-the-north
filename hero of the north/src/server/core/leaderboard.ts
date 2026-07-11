@@ -153,10 +153,14 @@ export async function getTopPlayers(
     limit: number = 50
 ): Promise<LeaderboardEntry[]> {
     try {
-        const topMembers = await redis.zRange(getLeaderboardKey(), 0, limit - 1, {
-            by: 'rank',
-            reverse: true
+        // Query the highest scores by using negative offsets (e.g. -50 to -1) in ascending order,
+        // then reverse the list in JavaScript to get them in descending order (highest score first).
+        const topMembers = await redis.zRange(getLeaderboardKey(), -limit, -1, {
+            by: 'rank'
         });
+
+        // Reverse the array so highest score is index 0
+        topMembers.reverse();
 
         const entries: LeaderboardEntry[] = [];
         for (let i = 0; i < topMembers.length; i++) {
@@ -188,11 +192,14 @@ export async function getTopPlayers(
  */
 export async function getPlayerRank(redis: any, userId: string): Promise<number> {
     try {
-        const rank = await redis.zRevRank(getLeaderboardKey(), userId);
+        // zRevRank is not supported in the Devvit Redis client API.
+        // We use zRank (which returns 0-based ascending index) and calculate (count - rank).
+        const rank = await redis.zRank(getLeaderboardKey(), userId);
 
         if (rank === undefined || rank === null) return 0;
 
-        return rank + 1;
+        const count = await redis.zCard(getLeaderboardKey());
+        return count - rank;
     } catch (e) {
         console.error('Error getting rank:', e);
         return 0;
