@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5798665443413224114}
   - component: {fileID: 5631132410593520270}
   - component: {fileID: 4542227557838256460}
+  - component: {fileID: 3215312419836968705}
   m_Layer: 0
   m_Name: Ground
   m_TagString: Death
@@ -138,6 +139,19 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1.009378}
   m_EdgeRadius: 0
+--- !u!114 &3215312419836968705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 20666115824638061}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47c8e93021384ec4187deaaa577a4682, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ColorFix
+  editorColor: {r: 0.7264151, g: 0.054031115, b: 0, a: 0.5}
 --- !u!1 &4504548688484699201
 GameObject:
   m_ObjectHideFlags: 0

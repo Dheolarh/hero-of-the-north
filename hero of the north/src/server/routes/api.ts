@@ -76,6 +76,114 @@ api.get('/levels/:number/unlocked', async (c) => {
     return c.json({ isUnlocked: unlocked });
 });
 
+// ========== COMMUNITY LEVEL SYSTEM ==========
+
+// POST /api/levels/publish
+api.post('/levels/publish', async (c) => {
+    const userId = context.userId;
+    let username = context.username || 'Anonymous';
+    let avatarUrl = '';
+
+    if (userId) {
+        try {
+            const user = await reddit.getUserById(userId);
+            if (user) {
+                username = user.username ?? username;
+                avatarUrl = await user.getSnoovatarUrl() ?? '';
+            }
+        } catch (e) {
+            console.warn('[API] Failed to fetch Reddit user details for publishing:', e);
+        }
+    }
+
+    const body = await c.req.json();
+    const { levelName } = body;
+
+    if (!levelName) {
+        return c.json({ success: false, error: 'Missing levelName' }, 400);
+    }
+
+    // Generate a unique level ID using get/set counter
+    const idStr = await redis.get('community:level:counter');
+    const idNum = idStr ? parseInt(idStr) + 1 : 1;
+    await redis.set('community:level:counter', idNum.toString());
+    const levelId = `lvl_${idNum}`;
+
+    const newLevel = {
+        id: levelId,
+        levelName,
+        creator: username,
+        levelData: JSON.stringify(body),
+        playCount: 0,
+        topPlayer: '',
+        avatarUrl
+    };
+
+    // Store level payload in a Hash
+    await redis.hSet('community:levels', {
+        [levelId]: JSON.stringify(newLevel)
+    });
+
+    // Append level ID to list stored as a JSON array in a string key
+    const listStr = await redis.get('community:levels:list');
+    const levelIds: string[] = listStr ? JSON.parse(listStr) : [];
+    levelIds.push(levelId);
+    await redis.set('community:levels:list', JSON.stringify(levelIds));
+
+    console.log(`[API] Successfully published community level ${levelId} (${levelName}) by ${username}`);
+    return c.json({ success: true, levelId });
+});
+
+// GET /api/levels/community
+api.get('/levels/community', async (c) => {
+    try {
+        const listStr = await redis.get('community:levels:list');
+        const levelIds: string[] = listStr ? JSON.parse(listStr) : [];
+        if (levelIds.length === 0) {
+            return c.json({ levels: [] });
+        }
+
+        const levels: any[] = [];
+        for (const levelId of levelIds) {
+            const dataStr = await redis.hGet('community:levels', levelId);
+            if (dataStr) {
+                try {
+                    levels.push(JSON.parse(dataStr));
+                } catch (err) {
+                    console.error('[API] Error parsing community level data:', err);
+                }
+            }
+        }
+
+        return c.json({ levels });
+    } catch (e) {
+        console.error('[API] Error fetching community levels:', e);
+        return c.json({ levels: [] });
+    }
+});
+
+// POST /api/levels/:id/play
+api.post('/levels/:id/play', async (c) => {
+    const levelId = c.req.param('id');
+    try {
+        const dataStr = await redis.hGet('community:levels', levelId);
+        if (!dataStr) {
+            return c.json({ success: false, error: 'Level not found' }, 404);
+        }
+
+        const level = JSON.parse(dataStr);
+        level.playCount = (level.playCount || 0) + 1;
+
+        await redis.hSet('community:levels', {
+            [levelId]: JSON.stringify(level)
+        });
+        return c.json({ success: true, playCount: level.playCount });
+    } catch (e) {
+        console.error('[API] Error incrementing play count:', e);
+        return c.json({ success: false }, 500);
+    }
+});
+
 // ========== SCORE SUBMISSION ==========
 
 // POST /api/score/submit

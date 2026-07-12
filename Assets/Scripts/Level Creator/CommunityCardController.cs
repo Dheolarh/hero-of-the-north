@@ -22,6 +22,7 @@ public class CommunityCardController : MonoBehaviour
     [Tooltip("Fallback Sprite if the creator has no custom avatar url.")]
     [SerializeField] private Sprite defaultAvatar;
 
+    private string levelId;
     private string levelDataJson;
     private static System.Collections.Generic.Dictionary<string, Sprite> avatarCache = new System.Collections.Generic.Dictionary<string, Sprite>();
 
@@ -38,8 +39,9 @@ public class CommunityCardController : MonoBehaviour
     /// <summary>
     /// Populates the card UI with community level details and starts loading the creator's avatar.
     /// </summary>
-    public void Initialize(string levelName, string creatorName, int playCount, string topPlayer, string json, string avatarUrl)
+    public void Initialize(string id, string levelName, string creatorName, int playCount, string topPlayer, string json, string avatarUrl)
     {
+        levelId = id;
         if (levelNameText != null) levelNameText.text = levelName;
         if (creatorText != null) creatorText.text = $"by {creatorName}";
         if (playsText != null) playsText.text = $"Plays: {playCount}";
@@ -116,6 +118,12 @@ public class CommunityCardController : MonoBehaviour
     private void PlayLevel()
     {
         if (string.IsNullOrEmpty(levelDataJson)) return;
+
+        // Report play count to Devvit API
+        if (DevvitBridge.Instance != null && !string.IsNullOrEmpty(levelId))
+        {
+            DevvitBridge.Instance.ReportLevelPlay(levelId);
+        }
 
         if (LevelManager.Instance != null)
         {

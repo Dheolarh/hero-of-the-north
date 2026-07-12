@@ -401,6 +401,39 @@ public class DevvitBridge : MonoBehaviour
     }
 
     /// <summary>
+    /// POST /api/levels/:id/play — reports that a community level has been played.
+    /// </summary>
+    public void ReportLevelPlay(string levelId)
+    {
+        if (string.IsNullOrEmpty(levelId)) return;
+        StartCoroutine(PostLevelPlay(levelId));
+    }
+
+    private IEnumerator PostLevelPlay(string levelId)
+    {
+#if UNITY_EDITOR
+        if (logMessages)
+            Debug.Log($"[DevvitBridge] [Editor Mock] Play reported for community level {levelId}.");
+        yield break;
+#else
+        string url = $"/api/levels/{levelId}/play";
+        using UnityWebRequest req = new UnityWebRequest(url, "POST");
+        req.downloadHandler = new DownloadHandlerBuffer();
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[DevvitBridge] Failed to report play for level {levelId}: {req.error}");
+        }
+        else
+        {
+            if (logMessages)
+                Debug.Log($"[DevvitBridge] Play reported for level {levelId}. Response: {req.downloadHandler.text}");
+        }
+#endif
+    }
+
+    /// <summary>
     /// GET /api/levels/community — fetches all levels published by the community.
     /// </summary>
     public void RequestCommunityLevels(System.Action<CommunityLevelInfo[]> onReceived)

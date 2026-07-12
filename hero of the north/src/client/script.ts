@@ -128,6 +128,25 @@ script.onload = () => {
     // No message routing needed here — DevvitBridge.cs handles everything via HTTP.
     console.log("[Devvit] Unity loaded. DevvitBridge will handle all API communication via UnityWebRequest.");
 
+    // Expose publishCustomLevel globally so Unity WebGL can trigger level publishing
+    (window as any).publishCustomLevel = function (jsonStr: string) {
+      console.log("[Devvit] publishCustomLevel triggered from Unity WebGL.");
+      fetch("/api/levels/publish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: jsonStr
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log("[Devvit] Successfully published level:", data);
+      })
+      .catch(err => {
+        console.error("[Devvit] Error publishing level via WebGL bridge:", err);
+      });
+    };
+
   }).catch((message: unknown) => {
     alert(message);
     console.error(message);

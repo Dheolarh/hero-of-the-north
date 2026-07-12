@@ -124,7 +124,7 @@ public class CommunityListManager : MonoBehaviour
                 string cleanCreator = DevvitBridge.TrimUsername(lvl.creator, "Unknown");
                 string cleanTopPlayer = string.IsNullOrEmpty(lvl.topPlayer) ? "" : DevvitBridge.TrimUsername(lvl.topPlayer, "");
 
-                cardCtrl.Initialize(lvl.levelName, cleanCreator, lvl.playCount, cleanTopPlayer, lvl.levelData, lvl.avatarUrl);
+                cardCtrl.Initialize(lvl.id, lvl.levelName, cleanCreator, lvl.playCount, cleanTopPlayer, lvl.levelData, lvl.avatarUrl);
             }
 
             Debug.Log($"[CommunityListManager] Successfully populated {levels.Length} community levels.");

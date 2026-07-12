@@ -6349,7 +6349,7 @@ MonoBehaviour:
   defaultCloudsPrefab: {fileID: 3287702478241420915, guid: d323f53f804afcc41831371a7644383e, type: 3}
   mainMenu: Main
   gameScene: Game
-  bypassLevelLock: 1
+  bypassLevelLock: 0
 --- !u!222 &5617624842651148519
 CanvasRenderer:
   m_ObjectHideFlags: 0

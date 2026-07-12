@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 2106344481376418670}
   - component: {fileID: 8508661373093626087}
   - component: {fileID: 7332849742601622752}
+  - component: {fileID: 4337934195764250723}
   m_Layer: 0
   m_Name: Square
   m_TagString: Untagged
@@ -230,3 +231,16 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &4337934195764250723
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1285650888826046027}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47c8e93021384ec4187deaaa577a4682, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ColorFix
+  editorColor: {r: 0.9056604, g: 0.41519162, b: 0, a: 0.5}
