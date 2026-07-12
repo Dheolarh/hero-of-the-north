@@ -186,19 +186,34 @@ public class PlayerController : MonoBehaviour
     // ── Physics callbacks — forwarded straight to the active state ─────────
 
     private void OnTriggerEnter2D(Collider2D other)
-        => StateMachine.OnTriggerEnter2D(other);
+    {
+        if (LevelCreatorUI.Instance != null && !LevelCreatorUI.Instance.IsPlaytesting) return;
+        StateMachine.OnTriggerEnter2D(other);
+    }
 
     private void OnTriggerExit2D(Collider2D other)
-        => StateMachine.OnTriggerExit2D(other);
+    {
+        if (LevelCreatorUI.Instance != null && !LevelCreatorUI.Instance.IsPlaytesting) return;
+        StateMachine.OnTriggerExit2D(other);
+    }
 
     private void OnCollisionEnter2D(Collision2D collision)
-        => StateMachine.OnCollisionEnter2D(collision);
+    {
+        if (LevelCreatorUI.Instance != null && !LevelCreatorUI.Instance.IsPlaytesting) return;
+        StateMachine.OnCollisionEnter2D(collision);
+    }
 
     private void OnCollisionStay2D(Collision2D collision)
-        => StateMachine.OnCollisionStay2D(collision);
+    {
+        if (LevelCreatorUI.Instance != null && !LevelCreatorUI.Instance.IsPlaytesting) return;
+        StateMachine.OnCollisionStay2D(collision);
+    }
 
     private void OnCollisionExit2D(Collision2D collision)
-        => StateMachine.OnCollisionExit2D(collision);
+    {
+        if (LevelCreatorUI.Instance != null && !LevelCreatorUI.Instance.IsPlaytesting) return;
+        StateMachine.OnCollisionExit2D(collision);
+    }
 
     // ── Coroutine helpers (called by states via ctx.StartCoroutine) ────────
 

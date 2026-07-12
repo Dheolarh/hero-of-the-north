@@ -166,6 +166,12 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void Start()
     {
+        // Skip behavior during Level Creator editor mode
+        if (LevelCreatorUI.Instance != null && !LevelCreatorUI.Instance.IsPlaytesting)
+        {
+            return;
+        }
+
         // Cache the Rigidbody2D component if objectToModify is set
         if (objectToModify != null)
         {
@@ -215,6 +221,12 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     void Update()
     {
+        // Skip behavior during Level Creator editor mode
+        if (LevelCreatorUI.Instance != null && !LevelCreatorUI.Instance.IsPlaytesting)
+        {
+            return;
+        }
+
         // Handle continuous motion (independent)
         if (enableMove)
         {
@@ -785,7 +797,16 @@ public class CollisionsAndTriggers : MonoBehaviour
         }
 
         // Handle audio playback first (before teleporting/moving the player)
-        if (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName))
+        if (triggerType == TriggerType.Teleport)
+        {
+            if (AudioManager.Instance != null)
+            {
+                // Play configured sound if set, otherwise default to "Teleport"
+                string soundToPlay = (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName)) ? audioClipName : "Teleport";
+                AudioManager.Instance.PlaySfx(soundToPlay);
+            }
+        }
+        else if (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName))
         {
             if (AudioManager.Instance != null)
             {

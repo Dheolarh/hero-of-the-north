@@ -20,6 +20,17 @@ public class UIManager : MonoBehaviour
     public GameObject creatorPanel;
     public GameObject HUD;
 
+    [Header("Community Panel Settings")]
+    [Tooltip("Drag the 'Community Levels' card prefab here.")]
+    public GameObject communityCardPrefab;
+    [Tooltip("Drag the Scroll View Content container of the showcase section here.")]
+    public Transform communityCardContainer;
+
+    [Header("Playtest Direction Controls")]
+    [Tooltip("Drag the 'Controls' prefab here to enable UI controls in playtest/mobile mode.")]
+    public GameObject directionControlsPrefab;
+    [HideInInspector] public GameObject directionControlsInstance;
+
     [Header("Tutorial Settings")]
     public string scrollOpenSoundName = "ScrollOpen";
 
@@ -300,6 +311,14 @@ public class UIManager : MonoBehaviour
         messagePanel = ResolvePanelGameObject(messagePanel);
         communityPanel = ResolvePanelGameObject(communityPanel);
         creatorPanel = ResolvePanelGameObject(creatorPanel);
+
+        // Dynamically add CommunityListManager to the community panel if found
+        if (communityPanel != null && communityPanel.GetComponent<CommunityListManager>() == null)
+        {
+            var manager = communityPanel.AddComponent<CommunityListManager>();
+            manager.Setup(communityCardPrefab, communityCardContainer);
+            Debug.Log("[UIManager] Programmatically added and configured CommunityListManager component on communityPanel.");
+        }
     }
 
     void Update()
@@ -396,6 +415,25 @@ public class UIManager : MonoBehaviour
 
         HUD.transform.localScale = Vector3.one;
         HUD.SetActive(active);
+    }
+
+    public void SetDirectionControlsActive(bool active)
+    {
+        if (directionControlsPrefab == null) return;
+
+        if (directionControlsInstance == null)
+        {
+            var parent = HUD != null ? HUD.transform.parent : transform;
+            directionControlsInstance = Instantiate(directionControlsPrefab, parent, false);
+            Debug.Log("[UIManager] Instantiated direction controls prefab.");
+        }
+
+        if (directionControlsInstance != null)
+        {
+            directionControlsInstance.SetActive(active);
+            directionControlsInstance.transform.SetAsLastSibling(); // bring to front
+            Debug.Log($"[UIManager] Direction controls visibility set to: {active}");
+        }
     }
 
     public void ToggleLeaderboardUI()

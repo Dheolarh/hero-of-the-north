@@ -53,6 +53,13 @@ public class LevelCreatorUI : MonoBehaviour
     [Tooltip("Increment value that teleport and single motion coordinates snap to during slider dragging.")]
     public float dragSnapIncrement = 0.05f;
 
+    [Header("Playtest Simulation Prefabs (Spawned if missing)")]
+    [SerializeField] private GameObject uiManagerPrefab;
+    [SerializeField] private GameObject audioManagerPrefab;
+    [SerializeField] private GameObject gameManagerPrefab;
+    [SerializeField] private GameObject levelManagerPrefab;
+    [SerializeField] private GameObject scoreManagerPrefab;
+
     [Header("Object Transform Panel")]
     [SerializeField] private GameObject objectTransformPanel;
 
@@ -127,10 +134,65 @@ public class LevelCreatorUI : MonoBehaviour
             return;
         }
 
+        // Instantiate core managers if missing (e.g. running LevelCreator scene directly in Editor)
+        if (GameManager.Instance == null && gameManagerPrefab != null)
+        {
+            Instantiate(gameManagerPrefab);
+            Debug.Log("[LevelCreatorUI] GameManager was null. Instantiated prefab.");
+        }
+        if (AudioManager.Instance == null && audioManagerPrefab != null)
+        {
+            Instantiate(audioManagerPrefab);
+            Debug.Log("[LevelCreatorUI] AudioManager was null. Instantiated prefab.");
+        }
+        if (LevelManager.Instance == null && levelManagerPrefab != null)
+        {
+            Instantiate(levelManagerPrefab);
+            Debug.Log("[LevelCreatorUI] LevelManager was null. Instantiated prefab.");
+        }
+        if (ScoreManager.Instance == null && scoreManagerPrefab != null)
+        {
+            Instantiate(scoreManagerPrefab);
+            Debug.Log("[LevelCreatorUI] ScoreManager was null. Instantiated prefab.");
+        }
+        if (UIManager.Instance == null && uiManagerPrefab != null)
+        {
+            Instantiate(uiManagerPrefab);
+            Debug.Log("[LevelCreatorUI] UIManager was null. Instantiated prefab.");
+        }
+
         // Initialize UI display
         if (playerMoveSpeed == 8f) playerMoveSpeed = 5f;
         if (playerJumpForce == 12f) playerJumpForce = 7f;
         if (playerMaxJumps == 2) playerMaxJumps = 1;
+
+        // Check if loading a community level for direct playtest
+        if (PlayerPrefs.HasKey("PlayCommunityLevelJSON"))
+        {
+            string comJson = PlayerPrefs.GetString("PlayCommunityLevelJSON", "");
+            PlayerPrefs.DeleteKey("PlayCommunityLevelJSON");
+            PlayerPrefs.Save();
+
+            if (!string.IsNullOrEmpty(comJson))
+            {
+                try
+                {
+                    var data = JsonUtility.FromJson<CustomLevelData>(comJson);
+                    if (data != null)
+                    {
+                        currentLevelSlot = -1; // special slot
+                        _pendingLoadData = data;
+                        PlayerPrefs.SetInt("PlaytestOnLoad", 1);
+                        PlayerPrefs.Save();
+                        Debug.Log($"[LevelCreatorUI] Loading community level '{data.levelName}' for direct playtest.");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[LevelCreatorUI] Failed to parse community level JSON: {e.Message}");
+                }
+            }
+        }
 
         // Restore the level slot that the menu requested us to edit.
         // LevelListManager sets "EditLevelSlot" before loading this scene.
@@ -267,6 +329,13 @@ public class LevelCreatorUI : MonoBehaviour
                 if (text != null) text.text = "Stop Test";
             }
             Debug.Log("[LevelCreatorUI] Playtest started.");
+
+            // Enable HUD and Direction Controls for playtesting
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.SetHUDActive(true);
+                UIManager.Instance.SetDirectionControlsActive(true);
+            }
         }
         else
         {
@@ -280,6 +349,13 @@ public class LevelCreatorUI : MonoBehaviour
             }
             if (validationSuccessPanel != null)
                 validationSuccessPanel.SetActive(false);
+
+            // Disable HUD and Direction Controls when leaving playtest
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.SetHUDActive(false);
+                UIManager.Instance.SetDirectionControlsActive(false);
+            }
 
             Debug.Log("[LevelCreatorUI] Playtest stopped. Returned to Editor.");
         }
@@ -358,7 +434,7 @@ public class LevelCreatorUI : MonoBehaviour
         string creatorName = DevvitBridge.Instance != null ? DevvitBridge.Instance.username : "EditorPlayer";
 
         // Determine slot: new level gets the next slot, existing levels overwrite their slot
-        if (currentLevelSlot == 0)
+        if (currentLevelSlot <= 0)
         {
             currentLevelSlot = ValidatorPanelController.GetNextSlotNumber();
             PlayerPrefs.SetInt("CustomLevel_Count", currentLevelSlot);
@@ -495,6 +571,14 @@ public class LevelCreatorUI : MonoBehaviour
             OnLoadLevelRequest?.Invoke(_pendingLoadData);
             _pendingLoadData = null;
             Debug.Log($"[LevelCreatorUI] Deferred load fired for slot {currentLevelSlot}.");
+
+            // Direct playtest mode entry if requested
+            if (PlayerPrefs.GetInt("PlaytestOnLoad", 0) == 1)
+            {
+                PlayerPrefs.DeleteKey("PlaytestOnLoad");
+                PlayerPrefs.Save();
+                TogglePlaytest();
+            }
         }
         else
         {

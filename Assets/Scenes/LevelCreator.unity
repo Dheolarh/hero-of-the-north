@@ -257,7 +257,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1571731548}
   m_SourcePrefab: {fileID: 100100000, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
 --- !u!4 &15047870 stripped
 Transform:
@@ -9318,13 +9321,37 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 556608723}
   m_SourcePrefab: {fileID: 100100000, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
 --- !u!4 &556608722 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
   m_PrefabInstance: {fileID: 556608721}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &556608723
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 196024003}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Barrier
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &557147623 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
@@ -11930,13 +11957,37 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 720942524}
   m_SourcePrefab: {fileID: 100100000, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
 --- !u!4 &720942523 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
   m_PrefabInstance: {fileID: 720942522}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &720942524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 557147623}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Barrier
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &722779573
 GameObject:
   m_ObjectHideFlags: 0
@@ -12934,9 +12985,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdcc51c6f05c74c438fc6e1866978e28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridPainter
-  palette: []
   editorCamera: {fileID: 472095161}
   wireColor: {r: 0, g: 0.8, b: 1, a: 0.7}
+  defaultLevelPrefabs:
+  - {fileID: 1511547677}
+  - {fileID: 1077233985}
+  - {fileID: 1687489696}
+  - {fileID: 526507029}
+  - {fileID: 516258394}
+  - {fileID: 6579843214837606492}
+  - {fileID: 2011783492}
+  - {fileID: 7697926673349322491}
+  - {fileID: 3227005724701610692}
+  - {fileID: 3242004625936803063}
+  - {fileID: 1602335731}
+  - {fileID: 1424841351}
+  - {fileID: 839735881}
+  - {fileID: 2052815478}
+  - {fileID: 1174041552}
+  - {fileID: 467264780}
+  - {fileID: 704241722}
+  - {fileID: 1631056106}
+  - {fileID: 1395300397}
+  - {fileID: 2132968127}
+  - {fileID: 1504741906}
+  - {fileID: 557147623}
+  - {fileID: 1571731547}
+  - {fileID: 196024003}
 --- !u!4 &809023220
 Transform:
   m_ObjectHideFlags: 0
@@ -13289,7 +13364,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1631056107}
   m_SourcePrefab: {fileID: 100100000, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
 --- !u!1 &819396894
 GameObject:
@@ -13517,7 +13595,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1602335732}
   m_SourcePrefab: {fileID: 100100000, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
 --- !u!1 &839735881 stripped
 GameObject:
@@ -14833,6 +14914,27 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 680885724870844012, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
   m_PrefabInstance: {fileID: 1308465809}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &985565030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 467264780}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Cloud
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &996541515
 GameObject:
   m_ObjectHideFlags: 0
@@ -20105,7 +20207,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 985565030}
   m_SourcePrefab: {fileID: 100100000, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
 --- !u!1 &1315389951
 GameObject:
@@ -21096,7 +21201,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1504741907}
   m_SourcePrefab: {fileID: 100100000, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
 --- !u!1 &1373511478
 GameObject:
@@ -21494,6 +21602,27 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
   m_PrefabInstance: {fileID: 1545409118}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1395300398
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1395300397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Cloud
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &1397839756
 GameObject:
   m_ObjectHideFlags: 0
@@ -22484,6 +22613,27 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
   m_PrefabInstance: {fileID: 2142840644}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1424841352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1424841351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Cloud
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &1429007111
 GameObject:
   m_ObjectHideFlags: 0
@@ -23235,6 +23385,27 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
   m_PrefabInstance: {fileID: 1371680718}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1504741907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1504741906}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Cloud
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1001 &1506575444
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23298,7 +23469,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2132968128}
   m_SourcePrefab: {fileID: 100100000, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
 --- !u!1 &1508615059
 GameObject:
@@ -24052,7 +24226,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1395300398}
   m_SourcePrefab: {fileID: 100100000, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
 --- !u!1001 &1550465814
 PrefabInstance:
@@ -24117,7 +24294,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2052815479}
   m_SourcePrefab: {fileID: 100100000, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
 --- !u!1 &1553414518
 GameObject:
@@ -24322,6 +24502,27 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
   m_PrefabInstance: {fileID: 15047869}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1571731548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1571731547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Barrier
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &1576837329
 GameObject:
   m_ObjectHideFlags: 0
@@ -24677,13 +24878,37 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2124452841}
   m_SourcePrefab: {fileID: 100100000, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
 --- !u!1 &1602335731 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
   m_PrefabInstance: {fileID: 826631263}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1602335732
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1602335731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Cloud
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &1604499638
 GameObject:
   m_ObjectHideFlags: 0
@@ -24857,6 +25082,27 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
   m_PrefabInstance: {fileID: 819116911}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1631056107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1631056106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Cloud
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &1633144063
 GameObject:
   m_ObjectHideFlags: 0
@@ -28772,7 +29018,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1931149267}
   m_SourcePrefab: {fileID: 100100000, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
 --- !u!1 &1882859945
 GameObject:
@@ -29420,6 +29669,27 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 680885724870844012, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
   m_PrefabInstance: {fileID: 1882083044}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1931149267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 704241722}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Cloud
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &1934756959
 GameObject:
   m_ObjectHideFlags: 0
@@ -29728,6 +29998,27 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 680885724870844012, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
   m_PrefabInstance: {fileID: 2034691730}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1977223061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1174041552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Cloud
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &1994800927
 GameObject:
   m_ObjectHideFlags: 0
@@ -30311,6 +30602,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c8dbf1da7119ac644935bab919cbe5c4, type: 3}
+--- !u!1 &2011783492 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6166835626507304880, guid: c8dbf1da7119ac644935bab919cbe5c4, type: 3}
+  m_PrefabInstance: {fileID: 2011783491}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2015798383
 GameObject:
   m_ObjectHideFlags: 0
@@ -30652,7 +30948,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1977223061}
   m_SourcePrefab: {fileID: 100100000, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
 --- !u!1 &2037058728
 GameObject:
@@ -30917,6 +31216,27 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
   m_PrefabInstance: {fileID: 1550465814}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2052815479
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2052815478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Cloud
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &2069814668
 GameObject:
   m_ObjectHideFlags: 0
@@ -31834,6 +32154,27 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 680885724870844012, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
   m_PrefabInstance: {fileID: 1588664081}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2124452841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 839735881}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Cloud
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &2131264002
 GameObject:
   m_ObjectHideFlags: 0
@@ -31875,6 +32216,27 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
   m_PrefabInstance: {fileID: 1506575444}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2132968128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2132968127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Cloud
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1001 &2142840644
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -31938,7 +32300,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1574962405026792867, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1424841352}
   m_SourcePrefab: {fileID: 100100000, guid: ac174ed396ef1654faf95b23401b6184, type: 3}
 --- !u!114 &23778673101181723
 MonoBehaviour:
@@ -51838,12 +52203,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3242004625936803063}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
-  assetTypeName: 
+  assetTypeName: Background
   customToolDisplayName: 
   customPlaytestPrefab: {fileID: 788331729440276289, guid: 11fcf993dc7c00447be38b0e8366b9eb, type: 3}
   moveDir: Down
@@ -52935,6 +53300,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2700127386820695558, guid: d28e6113fc8bf404ca91b828110a87ca, type: 3}
+      propertyPath: customToolDisplayName
+      value: PlayerStart
+      objectReference: {fileID: 0}
     - target: {fileID: 8659338582507528727, guid: d28e6113fc8bf404ca91b828110a87ca, type: 3}
       propertyPath: m_Name
       value: Hero
@@ -52944,6 +53313,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d28e6113fc8bf404ca91b828110a87ca, type: 3}
+--- !u!1 &6579843214837606492 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8659338582507528727, guid: d28e6113fc8bf404ca91b828110a87ca, type: 3}
+  m_PrefabInstance: {fileID: 6579843214837606491}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &6580797580523448817
 RectTransform:
   m_ObjectHideFlags: 0
@@ -55249,7 +55623,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
-  assetTypeName: 
+  assetTypeName: CameraSettings
   customToolDisplayName: 
   customPlaytestPrefab: {fileID: 144142097838962673, guid: 723fb4cb8f0fd0b408026b53f8d3fd3e, type: 3}
   moveDir: Down
@@ -55727,6 +56101,7 @@ GameObject:
   - component: {fileID: 4398638022519098627}
   - component: {fileID: 1054999751242946832}
   - component: {fileID: 8976335430130355433}
+  - component: {fileID: 8976335430130355434}
   m_Layer: 0
   m_Name: Snowstorm
   m_TagString: Untagged
@@ -59401,6 +59776,27 @@ ParticleSystemRenderer:
   m_MeshWeighting1: 1
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
+--- !u!114 &8976335430130355434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7697926673349322491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Snow
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
 --- !u!1 &8979058672592766677
 GameObject:
   m_ObjectHideFlags: 0

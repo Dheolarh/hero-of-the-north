@@ -30,11 +30,17 @@ public class LevelListManager : MonoBehaviour
 
     // ── Unity lifecycle ─────────────────────────────────────────────────────
 
-    void Start()
+    void Awake()
     {
         if (createNewLevelButton != null)
+        {
+            createNewLevelButton.onClick.RemoveAllListeners();
             createNewLevelButton.onClick.AddListener(CreateNewLevel);
+        }
+    }
 
+    void OnEnable()
+    {
         RefreshList();
     }
 
@@ -43,6 +49,9 @@ public class LevelListManager : MonoBehaviour
     /// <summary>Destroys and rebuilds all level cards from PlayerPrefs.</summary>
     public void RefreshList()
     {
+        // Consolidate slots to heal any gaps from legacy saves
+        ConsolidateSaveSlots();
+
         // Clear old cards
         foreach (var card in spawnedCards)
             if (card != null) Destroy(card);
@@ -113,6 +122,53 @@ public class LevelListManager : MonoBehaviour
     }
 
     // ── Save key helpers ────────────────────────────────────────────────────
+
+    private void ConsolidateSaveSlots()
+    {
+        int count = PlayerPrefs.GetInt("CustomLevel_Count", 0);
+        int currentNewIndex = 1;
+
+        for (int i = 1; i <= count; i++)
+        {
+            string oldKey = $"CustomLevel_{i}";
+            if (PlayerPrefs.HasKey(oldKey))
+            {
+                string json = PlayerPrefs.GetString(oldKey, "");
+
+                // If this slot has a gap behind it, shift it down to the next contiguous slot
+                if (i != currentNewIndex)
+                {
+                    string newKey = $"CustomLevel_{currentNewIndex}";
+
+                    // Rename default name inside JSON if it matches 'Level N'
+                    try
+                    {
+                        var data = JsonUtility.FromJson<CustomLevelData>(json);
+                        if (data != null && data.levelName == $"Level {i}")
+                        {
+                            data.levelName = $"Level {currentNewIndex}";
+                            json = JsonUtility.ToJson(data, true);
+                        }
+                    }
+                    catch { }
+
+                    PlayerPrefs.SetString(newKey, json);
+                    PlayerPrefs.DeleteKey(oldKey);
+                    Debug.Log($"[LevelListManager] Consolidate: Moved slot {i} -> {currentNewIndex}");
+                }
+
+                currentNewIndex++;
+            }
+        }
+
+        int finalCount = currentNewIndex - 1;
+        if (finalCount != count)
+        {
+            PlayerPrefs.SetInt("CustomLevel_Count", finalCount);
+            PlayerPrefs.Save();
+            Debug.Log($"[LevelListManager] Consolidate: Adjusted CustomLevel_Count from {count} to {finalCount}");
+        }
+    }
 
     private static List<string> GetAllSavedLevelKeys()
     {

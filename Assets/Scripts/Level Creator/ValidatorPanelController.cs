@@ -81,10 +81,11 @@ public class ValidatorPanelController : MonoBehaviour
 
         onProceedAction = () =>
         {
-            if (!string.IsNullOrEmpty(selectedLevelKey))
+            string keyToLoad = selectedLevelKey; // Capture to prevent it from becoming null in HidePanel
+            if (!string.IsNullOrEmpty(keyToLoad))
             {
-                onLoadKey?.Invoke(selectedLevelKey);
                 HidePanel();
+                onLoadKey?.Invoke(keyToLoad);
             }
         };
         onCancelAction = HidePanel;
@@ -203,17 +204,19 @@ public class ValidatorPanelController : MonoBehaviour
             btnObj = Instantiate(levelButtonPrefab, levelsContent);
             btnObj.name = $"LvlBtn_{label}";
 
-            // Find the named text child and set the level name
-            Transform textChild = btnObj.transform.Find(levelNameTextField);
-            if (textChild == null)
+            // Find the text component in children (checks TMP_Text first, then fallback to standard Text)
+            var tmpText = btnObj.GetComponentInChildren<TMP_Text>(true);
+            if (tmpText != null)
             {
-                // Fall back to first TMP_Text found anywhere in the prefab
-                textChild = btnObj.GetComponentInChildren<TextMeshProUGUI>(true)?.transform;
+                tmpText.text = label;
             }
-            if (textChild != null)
+            else
             {
-                var txt = textChild.GetComponent<TextMeshProUGUI>();
-                if (txt != null) txt.text = label;
+                var standardText = btnObj.GetComponentInChildren<Text>(true);
+                if (standardText != null)
+                {
+                    standardText.text = label;
+                }
             }
 
             // Reset normal colour to the configured tint

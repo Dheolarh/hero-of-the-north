@@ -3,10 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-/// <summary>
-/// Controls the level editor workspace: free-form drag placement, selection,
-/// double-click properties, drawing wire links, and instantiating playtest entities.
-/// </summary>
 public class GridPainter : MonoBehaviour
 {
     public static GridPainter Instance { get; private set; }
@@ -21,14 +17,12 @@ public class GridPainter : MonoBehaviour
         public GameObject playtestPrefab;
     }
 
-    [Header("Palette Prefabs")]
-    [SerializeField] private List<PaletteItem> palette = new List<PaletteItem>();
+
 
     [Header("Editor References")]
     [SerializeField] private Camera editorCamera;
     [SerializeField] private Color wireColor = new Color(0f, 0.8f, 1f, 0.7f);
 
-    // ── Placed Objects ────────────────────────────────────────────────────────
     
     // Root level container to organize placed items
     private Transform levelContainer;
@@ -155,7 +149,7 @@ public class GridPainter : MonoBehaviour
 
         foreach (GameObject go in allTargets)
         {
-            if (go == null || go.name.Contains("Wire") || go.GetComponent<LineRenderer>() != null)
+            if (go == null || go.name.Contains("Wire") || go.name.Contains("Background") || go.name.Contains("Cloud") || go.name.Contains("Barrier") || go.GetComponent<LineRenderer>() != null)
                 continue;
 
             // Fix degenerate Z-scale (Z scale = 0 breaks Unity 2D physics colliders)
@@ -720,8 +714,17 @@ public class GridPainter : MonoBehaviour
         var colliders = activeDragObject.GetComponentsInChildren<Collider2D>();
         foreach (var col in colliders) col.enabled = true;
 
+        // Double check placed object script & type assignment
+        if (activeDragScript != null && string.IsNullOrEmpty(activeDragScript.assetTypeName))
+        {
+            activeDragScript.assetTypeName = activeDragObject.name.Replace("(Clone)", "").Trim();
+        }
+
         // Add to active placed list
-        editorObjects.Add(activeDragScript);
+        if (activeDragScript != null && !editorObjects.Contains(activeDragScript))
+        {
+            editorObjects.Add(activeDragScript);
+        }
 
         PlacedEditorObject placedObj = activeDragScript;
         SelectObject(placedObj);
@@ -1162,6 +1165,9 @@ public class GridPainter : MonoBehaviour
         ClearSelection();
         CancelLinkingMode();
 
+        // Find all editor objects in the scene (including defaults) to clear them all
+        FindExistingSceneObjects();
+
         foreach (var obj in editorObjects)
         {
             if (obj != null)
@@ -1406,10 +1412,26 @@ public class GridPainter : MonoBehaviour
 
     private PaletteItem GetPaletteItem(string name)
     {
-        // 1. Check if LevelCreatorUI defines a custom drag-and-drop prefab for this type
         if (LevelCreatorUI.Instance != null)
         {
             GameObject customPrefab = LevelCreatorUI.Instance.GetPrefabForType(name);
+            
+            // Fallback lookup for player start variations
+            if (customPrefab == null && IsPlayerAsset(name))
+            {
+                customPrefab = LevelCreatorUI.Instance.GetPrefabForType("Hero");
+                if (customPrefab == null) customPrefab = LevelCreatorUI.Instance.GetPrefabForType("PlayerStart");
+                if (customPrefab == null) customPrefab = LevelCreatorUI.Instance.GetPrefabForType("Player");
+                if (customPrefab == null) customPrefab = LevelCreatorUI.Instance.GetPrefabForType("Spawn");
+            }
+
+            // Fallback lookup for goal variations
+            if (customPrefab == null && MatchAssetType(name, "Goal"))
+            {
+                customPrefab = LevelCreatorUI.Instance.GetPrefabForType("Goal");
+                if (customPrefab == null) customPrefab = LevelCreatorUI.Instance.GetPrefabForType("Portal");
+            }
+
             if (customPrefab != null)
             {
                 return new PaletteItem
@@ -1419,12 +1441,6 @@ public class GridPainter : MonoBehaviour
                     playtestPrefab = customPrefab // Use the same prefab for gameplay
                 };
             }
-        }
-
-        // 2. Fallback to old palette registry list
-        foreach (var item in palette)
-        {
-            if (MatchAssetType(item.typeName, name)) return item;
         }
         return new PaletteItem();
     }

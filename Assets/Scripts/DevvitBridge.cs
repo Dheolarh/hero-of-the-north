@@ -398,7 +398,78 @@ public class DevvitBridge : MonoBehaviour
         if (logMessages)
             Debug.Log("[DevvitBridge] Auto-refreshing leaderboard after score submission...");
         RequestLeaderboard();
-        RequestPlayerStanding();
+    }
+
+    /// <summary>
+    /// GET /api/levels/community — fetches all levels published by the community.
+    /// </summary>
+    public void RequestCommunityLevels(System.Action<CommunityLevelInfo[]> onReceived)
+    {
+        StartCoroutine(FetchCommunityLevels(onReceived));
+    }
+
+    private IEnumerator FetchCommunityLevels(System.Action<CommunityLevelInfo[]> onReceived)
+    {
+#if UNITY_EDITOR
+        if (logMessages)
+            Debug.Log("[DevvitBridge] [Editor Mock] Mocking community levels.");
+
+        CommunityLevelInfo[] mockLevels = new CommunityLevelInfo[3];
+        mockLevels[0] = new CommunityLevelInfo
+        {
+            id = "post_1",
+            levelName = "Winter Parkour",
+            creator = "Redditor_Alpha",
+            playCount = 12,
+            topPlayer = "HeroPlayer",
+            avatarUrl = "https://www.redditstatic.com/avatars/defaults/v2/avatar_default_0.png",
+            levelData = "{\"levelName\":\"Winter Parkour\",\"creator\":\"Redditor_Alpha\",\"gridWidth\":32,\"gridHeight\":18,\"playerStartPos\":{\"x\":5,\"y\":5},\"hasPlayerStart\":true,\"goalPos\":{\"x\":25,\"y\":5},\"hasGoal\":true,\"tiles\":[{\"type\":\"Floor\",\"position\":{\"x\":5,\"y\":4},\"scale\":{\"x\":1,\"y\":1},\"rotation\":0}],\"traps\":[]}"
+        };
+        mockLevels[1] = new CommunityLevelInfo
+        {
+            id = "post_2",
+            levelName = "Spike Valley",
+            creator = "Redditor_Beta",
+            playCount = 45,
+            topPlayer = "Speedrunner",
+            avatarUrl = "", // Empty to trigger fallback avatar
+            levelData = "{\"levelName\":\"Spike Valley\",\"creator\":\"Redditor_Beta\",\"gridWidth\":32,\"gridHeight\":18,\"playerStartPos\":{\"x\":5,\"y\":5},\"hasPlayerStart\":true,\"goalPos\":{\"x\":25,\"y\":5},\"hasGoal\":true,\"tiles\":[{\"type\":\"Floor\",\"position\":{\"x\":5,\"y\":4},\"scale\":{\"x\":1,\"y\":1},\"rotation\":0}],\"traps\":[]}"
+        };
+        mockLevels[2] = new CommunityLevelInfo
+        {
+            id = "post_3",
+            levelName = "Ice Slopes",
+            creator = "Redditor_Gamma",
+            playCount = 5,
+            topPlayer = "NorthHero",
+            avatarUrl = "https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png",
+            levelData = "{\"levelName\":\"Ice Slopes\",\"creator\":\"Redditor_Gamma\",\"gridWidth\":32,\"gridHeight\":18,\"playerStartPos\":{\"x\":5,\"y\":5},\"hasPlayerStart\":true,\"goalPos\":{\"x\":25,\"y\":5},\"hasGoal\":true,\"tiles\":[{\"type\":\"Floor\",\"position\":{\"x\":5,\"y\":4},\"scale\":{\"x\":1,\"y\":1},\"rotation\":0}],\"traps\":[]}"
+        };
+        onReceived?.Invoke(mockLevels);
+        yield break;
+#else
+        string url = "/api/levels/community?t=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        using UnityWebRequest req = UnityWebRequest.Get(url);
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[DevvitBridge] Could not fetch community levels: {req.error}");
+            onReceived?.Invoke(new CommunityLevelInfo[0]);
+            yield break;
+        }
+
+        try
+        {
+            CommunityLevelsResponse resp = JsonUtility.FromJson<CommunityLevelsResponse>(req.downloadHandler.text);
+            onReceived?.Invoke(resp.levels ?? new CommunityLevelInfo[0]);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[DevvitBridge] Error parsing community levels response: {e.Message}");
+            onReceived?.Invoke(new CommunityLevelInfo[0]);
+        }
+#endif
     }
 
     // ========== UTILITIES ==========
@@ -493,5 +564,23 @@ public class DevvitBridge : MonoBehaviour
     public class UnlockedLevelsData
     {
         public LevelUnlockInfo[] levels;
+    }
+
+    [Serializable]
+    public class CommunityLevelInfo
+    {
+        public string id;
+        public string levelName;
+        public string creator;
+        public string levelData;
+        public int playCount;
+        public string topPlayer;
+        public string avatarUrl;
+    }
+
+    [Serializable]
+    public class CommunityLevelsResponse
+    {
+        public CommunityLevelInfo[] levels;
     }
 }
