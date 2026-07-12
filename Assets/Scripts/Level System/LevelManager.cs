@@ -10,6 +10,17 @@ public class LevelManager : MonoBehaviour
     [Header("Level Configuration")]
     [SerializeField] private List<LevelData> allLevels = new List<LevelData>();
 
+    [System.Serializable]
+    public struct CommunityPrefabMapping
+    {
+        public string toolName;
+        public GameObject prefab;
+    }
+
+    [Header("Community Level Builders")]
+    [Tooltip("Prefabs mapping list used to dynamically build community levels inside the Game scene.")]
+    [SerializeField] private List<CommunityPrefabMapping> communityPrefabs = new List<CommunityPrefabMapping>();
+
     [Header("Scene Names")]
     public string mainMenu = "Main";
     [Tooltip("The dedicated empty scene for gameplay. Keep game UI here, separate from Main menu UI.")]
@@ -24,6 +35,7 @@ public class LevelManager : MonoBehaviour
     private int          _highestUnlockedLevel = 1;
     private LevelData    _currentLevelData;
     private GameObject   _currentLevelInstance;
+    private string       _queuedCommunityLevelJson = "";
 
     private DevvitBridge.LevelUnlockInfo[] _serverUnlockData;
 
@@ -66,6 +78,15 @@ public class LevelManager : MonoBehaviour
     {
         if (DevvitBridge.Instance != null)
             DevvitBridge.Instance.RequestUnlockedLevels();
+
+        // Check if loading a community level from playerprefs
+        if (PlayerPrefs.HasKey("PlayCommunityLevelJSON"))
+        {
+            string json = PlayerPrefs.GetString("PlayCommunityLevelJSON", "");
+            PlayerPrefs.DeleteKey("PlayCommunityLevelJSON");
+            PlayerPrefs.Save();
+            PlayCommunityLevel(json);
+        }
     }
 
     /// <summary>
@@ -73,16 +94,20 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log($"[LevelManager] OnSceneLoaded: Loaded scene '{scene.name}', currentLevelData={(_currentLevelData != null ? _currentLevelData.levelName : "null")}");
+        Debug.Log($"[LevelManager] OnSceneLoaded: Loaded scene '{scene.name}'");
         if (scene.name == gameScene)
         {
-            if (_currentLevelData != null)
+            if (!string.IsNullOrEmpty(_queuedCommunityLevelJson))
+            {
+                SpawnCommunityLevel();
+            }
+            else if (_currentLevelData != null)
             {
                 SpawnLevel();
             }
             else
             {
-                Debug.LogWarning("[LevelManager] OnSceneLoaded: _currentLevelData is NULL, cannot spawn level!");
+                Debug.LogWarning("[LevelManager] OnSceneLoaded: No level queued to spawn!");
             }
         }
     }
@@ -187,28 +212,277 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     public void RestartLevel()
     {
+        // Always reset time scale — if the player retried from the pause menu,
+        // timeScale is still 0 and the game would appear frozen after restart
+        Time.timeScale = 1f;
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.isPaused        = false;
+            GameManager.Instance.isGameOver      = false;
+            GameManager.Instance.isLevelCompleted = false;
+        }
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.StopAllSoundsExceptMusic();
+
+        if (UIManager.Instance != null)
+            UIManager.Instance.HidePanels();
+
+        // If we are playtesting in the Level Creator scene, restart the playtest dynamically
+        if (LevelCreatorUI.Instance != null && LevelCreatorUI.Instance.IsPlaytesting)
+        {
+            // Toggle playtest off and on to clear and rebuild the level instantly
+            LevelCreatorUI.Instance.TogglePlaytest(); // turn off
+            LevelCreatorUI.Instance.TogglePlaytest(); // turn on
+            
+            // Re-hide HUD in playtest mode
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.SetHUDActive(false);
+            }
+            return;
+        }
+
+        // If we are playing a community level in the Game scene, rebuild it instantly to restart
+        if (!string.IsNullOrEmpty(_queuedCommunityLevelJson))
+        {
+            SpawnCommunityLevel();
+            return;
+        }
+
         if (_currentLevelData == null)
         {
             Debug.LogWarning("[LevelManager] RestartLevel called but no level is loaded!");
             return;
         }
 
-        // Always reset time scale — if the player retried from the pause menu,
-        // timeScale is still 0 and the game would appear frozen after restart
-        Time.timeScale = 1f;
-        GameManager.Instance.isPaused        = false;
-        GameManager.Instance.isGameOver      = false;
-        GameManager.Instance.isLevelCompleted = false;
-
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.StopAllSoundsExceptMusic();
-
         if (ScoreManager.Instance != null)
             ScoreManager.Instance.IncrementRetryCount();
 
-        UIManager.Instance.HidePanels();
-
         SpawnLevel(); // Re-instantiate prefab in place
+    }
+
+    public void PlayCommunityLevel(string json)
+    {
+        _queuedCommunityLevelJson = json;
+        _currentLevelData = null; // custom level
+        
+        // Reset state
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.isGameOver = false;
+            GameManager.Instance.isLevelCompleted = false;
+        }
+
+        if (ScoreManager.Instance != null)
+            ScoreManager.Instance.ResetForNewLevel(-1); // community level index
+
+        if (SceneManager.GetActiveScene().name == gameScene)
+            SpawnCommunityLevel();
+        else
+            SceneManager.LoadScene(gameScene);
+    }
+
+    private GameObject GetCommunityPrefab(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return null;
+        string norm = name.Replace(" ", "").ToLower();
+        foreach (var mapping in communityPrefabs)
+        {
+            if (!string.IsNullOrEmpty(mapping.toolName) && mapping.toolName.Replace(" ", "").ToLower() == norm)
+            {
+                return mapping.prefab;
+            }
+        }
+        return null;
+    }
+
+    private void SpawnCommunityLevel()
+    {
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.StopAllSoundsExceptMusic();
+
+        // Destroy previous level instance
+        if (_currentLevelInstance != null)
+        {
+            Destroy(_currentLevelInstance);
+            _currentLevelInstance = null;
+        }
+
+        if (string.IsNullOrEmpty(_queuedCommunityLevelJson))
+        {
+            Debug.LogError("[LevelManager] No custom community level JSON queued!");
+            return;
+        }
+
+        CustomLevelData data = JsonUtility.FromJson<CustomLevelData>(_queuedCommunityLevelJson);
+        if (data == null)
+        {
+            Debug.LogError("[LevelManager] Failed to parse custom level JSON!");
+            return;
+        }
+
+        // Create a root object for the spawned level
+        _currentLevelInstance = new GameObject("CommunityLevel_Spawned");
+
+        // 1. Spawn Player
+        if (data.hasPlayerStart)
+        {
+            GameObject playerPrefab = GetCommunityPrefab("Hero") ?? GetCommunityPrefab("PlayerStart") ?? GetCommunityPrefab("Player");
+            if (playerPrefab != null)
+            {
+                GameObject playerObj = Instantiate(playerPrefab, data.playerStartPos.ToVector2(), Quaternion.identity, _currentLevelInstance.transform);
+                playerObj.name = "Player";
+                
+                // Set custom stats
+                PlayerController pc = playerObj.GetComponent<PlayerController>() ?? playerObj.GetComponentInChildren<PlayerController>();
+                if (pc != null)
+                {
+                    pc.Speed = data.playerMoveSpeed;
+                    pc.JumpForce = data.playerJumpForce;
+                    pc.MaxMultiJumps = data.playerMaxJumps;
+                    pc.EnableFallDamage = data.playerEnableFallDamage;
+                }
+
+                // Wire Camera
+                CameraFollow cam = FindFirstObjectByType<CameraFollow>();
+                if (cam != null)
+                {
+                    cam.SetTarget(playerObj.transform);
+                    cam.StartFollowing();
+                }
+            }
+        }
+
+        // 2. Spawn Goal Portal
+        if (data.hasGoal)
+        {
+            GameObject goalPrefab = GetCommunityPrefab("Goal") ?? GetCommunityPrefab("Portal");
+            if (goalPrefab != null)
+            {
+                GameObject goalObj = Instantiate(goalPrefab, data.goalPos.ToVector2(), Quaternion.identity, _currentLevelInstance.transform);
+                goalObj.name = "GoalPortal";
+                
+                // Add LevelGoal component if not present
+                if (goalObj.GetComponent<LevelGoal>() == null && goalObj.GetComponentInChildren<LevelGoal>() == null)
+                {
+                    Collider2D[] cols = goalObj.GetComponentsInChildren<Collider2D>(true);
+                    GameObject target = cols.Length > 0 ? cols[0].gameObject : goalObj;
+                    if (target.GetComponent<LevelGoal>() == null)
+                    {
+                        target.AddComponent<LevelGoal>();
+                    }
+                }
+            }
+        }
+
+        // Keep track of spawned traps to copy links/wiring afterwards
+        Dictionary<Vector2, GameObject> spawnedTraps = new Dictionary<Vector2, GameObject>();
+        Dictionary<Vector2, CustomTrapData> trapDataMap = new Dictionary<Vector2, CustomTrapData>();
+
+        // 3. Spawn Tiles
+        foreach (var tile in data.tiles)
+        {
+            GameObject tilePrefab = GetCommunityPrefab(tile.type);
+            if (tilePrefab != null)
+            {
+                Vector2 pos = tile.position.ToVector2();
+                GameObject tileObj = Instantiate(tilePrefab, pos, Quaternion.Euler(0f, 0f, tile.rotation), _currentLevelInstance.transform);
+                tileObj.transform.localScale = tile.scale.ToVector2();
+            }
+        }
+
+        // 4. Spawn Traps
+        foreach (var trap in data.traps)
+        {
+            GameObject trapPrefab = GetCommunityPrefab(trap.type);
+            if (trapPrefab != null)
+            {
+                Vector2 pos = trap.spawnPos.ToVector2();
+                GameObject trapObj = Instantiate(trapPrefab, pos, Quaternion.Euler(0f, 0f, trap.rotation), _currentLevelInstance.transform);
+                trapObj.transform.localScale = trap.scale.ToVector2();
+
+                spawnedTraps[pos] = trapObj;
+                trapDataMap[pos] = trap;
+            }
+        }
+
+        // 5. Wire connections (Triggers to Targets)
+        foreach (var pair in spawnedTraps)
+        {
+            Vector2 pos = pair.Key;
+            GameObject trapObj = pair.Value;
+            CustomTrapData trapData = trapDataMap[pos];
+
+            CollisionsAndTriggers ct = trapObj.GetComponent<CollisionsAndTriggers>() ?? trapObj.GetComponentInChildren<CollisionsAndTriggers>();
+            if (ct != null)
+            {
+                // Restore basic properties
+                ct.activateOnStart = trapData.activateOnStart;
+                ct.enableMove = trapData.enableMove;
+                ct.moveSpeed = trapData.moveSpeed;
+                ct.isPingPong = trapData.isPingPong;
+                ct.pingPongDistance = trapData.pingPongDistance;
+                ct.enableRotation = trapData.enableRotation;
+                ct.rotationSpeed = trapData.rotationSpeed;
+                ct.useLocalCoordinates = trapData.useLocalCoordinates;
+                ct.targetPosition = trapData.targetPosition.ToVector2();
+                ct.targetMoveSpeed = trapData.targetMoveSpeed;
+                ct.teleportPosition = trapData.teleportPosition.ToVector2();
+                ct.moveOnXOnly = trapData.moveOnXOnly;
+                ct.moveOnYOnly = trapData.moveOnYOnly;
+                ct.playAudioOnTrigger = trapData.playAudioOnTrigger;
+                ct.audioClipName = trapData.audioClipName;
+                ct.loopAudio = trapData.loopAudio;
+
+                // Wire target objects
+                if (trapData.hasTarget)
+                {
+                    Vector2 targetPos = trapData.targetPos.ToVector2();
+                    if (spawnedTraps.ContainsKey(targetPos))
+                    {
+                        ct.objectToModify = spawnedTraps[targetPos];
+                    }
+                }
+
+                // Wire multiple objects
+                if (trapData.objectsToTriggerPositions != null && trapData.objectsToTriggerPositions.Count > 0)
+                {
+                    List<GameObject> targetList = new List<GameObject>();
+                    foreach (var objPos in trapData.objectsToTriggerPositions)
+                    {
+                        Vector2 oPos = objPos.ToVector2();
+                        if (spawnedTraps.ContainsKey(oPos))
+                        {
+                            targetList.Add(spawnedTraps[oPos]);
+                        }
+                    }
+                    ct.objectsToTrigger = targetList.ToArray();
+                }
+            }
+        }
+
+        // Configure Camera Settings
+        var camFollowSettings = FindFirstObjectByType<LevelCameraSettings>();
+        if (camFollowSettings != null)
+        {
+            camFollowSettings.offset = new Vector3(data.camOffsetX, data.camOffsetY, camFollowSettings.offset.z);
+            camFollowSettings.orthoSize = data.camOrthoSize;
+            
+            // Force Main Camera viewport update
+            var mainCam = Camera.main;
+            if (mainCam != null)
+            {
+                mainCam.orthographicSize = data.camOrthoSize;
+            }
+        }
+
+        // Enable HUD and Controls in game scene
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetHUDActive(true);
+            UIManager.Instance.SetDirectionControlsActive(true);
+        }
     }
 
     /// <summary>

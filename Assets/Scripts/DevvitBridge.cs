@@ -414,8 +414,33 @@ public class DevvitBridge : MonoBehaviour
         if (logMessages)
             Debug.Log("[DevvitBridge] [Editor Mock] Mocking community levels.");
 
-        CommunityLevelInfo[] mockLevels = new CommunityLevelInfo[3];
-        mockLevels[0] = new CommunityLevelInfo
+        System.Collections.Generic.List<CommunityLevelInfo> communityList = new System.Collections.Generic.List<CommunityLevelInfo>();
+
+        string publishedList = PlayerPrefs.GetString("EditorPublishedLevelsList", "");
+        if (!string.IsNullOrEmpty(publishedList))
+        {
+            string[] levelNames = publishedList.Split(',');
+            foreach (var name in levelNames)
+            {
+                if (string.IsNullOrEmpty(name)) continue;
+                string json = PlayerPrefs.GetString("EditorPublishedLevelData_" + name, "");
+                if (string.IsNullOrEmpty(json)) continue;
+
+                communityList.Add(new CommunityLevelInfo
+                {
+                    id = "local_pub_" + name,
+                    levelName = name,
+                    creator = string.IsNullOrEmpty(username) ? "EditorPlayer" : username,
+                    playCount = 0,
+                    topPlayer = "None",
+                    avatarUrl = "", // fallback avatar
+                    levelData = json
+                });
+            }
+        }
+
+        // Add standard default mock levels
+        communityList.Add(new CommunityLevelInfo
         {
             id = "post_1",
             levelName = "Winter Parkour",
@@ -424,8 +449,8 @@ public class DevvitBridge : MonoBehaviour
             topPlayer = "HeroPlayer",
             avatarUrl = "https://www.redditstatic.com/avatars/defaults/v2/avatar_default_0.png",
             levelData = "{\"levelName\":\"Winter Parkour\",\"creator\":\"Redditor_Alpha\",\"gridWidth\":32,\"gridHeight\":18,\"playerStartPos\":{\"x\":5,\"y\":5},\"hasPlayerStart\":true,\"goalPos\":{\"x\":25,\"y\":5},\"hasGoal\":true,\"tiles\":[{\"type\":\"Floor\",\"position\":{\"x\":5,\"y\":4},\"scale\":{\"x\":1,\"y\":1},\"rotation\":0}],\"traps\":[]}"
-        };
-        mockLevels[1] = new CommunityLevelInfo
+        });
+        communityList.Add(new CommunityLevelInfo
         {
             id = "post_2",
             levelName = "Spike Valley",
@@ -434,8 +459,8 @@ public class DevvitBridge : MonoBehaviour
             topPlayer = "Speedrunner",
             avatarUrl = "", // Empty to trigger fallback avatar
             levelData = "{\"levelName\":\"Spike Valley\",\"creator\":\"Redditor_Beta\",\"gridWidth\":32,\"gridHeight\":18,\"playerStartPos\":{\"x\":5,\"y\":5},\"hasPlayerStart\":true,\"goalPos\":{\"x\":25,\"y\":5},\"hasGoal\":true,\"tiles\":[{\"type\":\"Floor\",\"position\":{\"x\":5,\"y\":4},\"scale\":{\"x\":1,\"y\":1},\"rotation\":0}],\"traps\":[]}"
-        };
-        mockLevels[2] = new CommunityLevelInfo
+        });
+        communityList.Add(new CommunityLevelInfo
         {
             id = "post_3",
             levelName = "Ice Slopes",
@@ -444,8 +469,9 @@ public class DevvitBridge : MonoBehaviour
             topPlayer = "NorthHero",
             avatarUrl = "https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png",
             levelData = "{\"levelName\":\"Ice Slopes\",\"creator\":\"Redditor_Gamma\",\"gridWidth\":32,\"gridHeight\":18,\"playerStartPos\":{\"x\":5,\"y\":5},\"hasPlayerStart\":true,\"goalPos\":{\"x\":25,\"y\":5},\"hasGoal\":true,\"tiles\":[{\"type\":\"Floor\",\"position\":{\"x\":5,\"y\":4},\"scale\":{\"x\":1,\"y\":1},\"rotation\":0}],\"traps\":[]}"
-        };
-        onReceived?.Invoke(mockLevels);
+        });
+
+        onReceived?.Invoke(communityList.ToArray());
         yield break;
 #else
         string url = "/api/levels/community?t=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

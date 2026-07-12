@@ -6,6 +6,9 @@ public class LevelGoal : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        // Ignore in level creator/playtest mode (handled by PlaytestGoalValidator instead)
+        if (LevelCreatorUI.Instance != null) return;
+
         if (_triggered) return;
         if (GameManager.Instance != null && GameManager.Instance.isGameOver) return;
         if (!collision.CompareTag("Player")) return;

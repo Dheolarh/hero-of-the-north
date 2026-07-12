@@ -202,6 +202,14 @@ public class LevelCardController : MonoBehaviour
     {
         if (levelData == null) return;
         Debug.Log($"[LevelCardController] Share requested for '{levelData.levelName}'.");
-        // TODO: wire to your Devvit share / copy-link flow
+        
+        string levelJson = JsonUtility.ToJson(levelData);
+#if UNITY_WEBGL && !UNITY_EDITOR
+        Application.ExternalCall("shareCustomLevel", levelJson);
+#else
+        // Mock share copy-to-clipboard in editor
+        GUIUtility.systemCopyBuffer = levelJson;
+        Debug.Log("[LevelCardController] [Editor Mock] Copied level JSON payload to clipboard!");
+#endif
     }
 }

@@ -117,10 +117,17 @@ public class CommunityCardController : MonoBehaviour
     {
         if (string.IsNullOrEmpty(levelDataJson)) return;
 
-        PlayerPrefs.SetString("PlayCommunityLevelJSON", levelDataJson);
-        PlayerPrefs.Save();
+        if (LevelManager.Instance != null)
+        {
+            LevelManager.Instance.PlayCommunityLevel(levelDataJson);
+        }
+        else
+        {
+            PlayerPrefs.SetString("PlayCommunityLevelJSON", levelDataJson);
+            PlayerPrefs.Save();
 
-        Debug.Log($"[CommunityCardController] Launching community level '{levelNameText?.text}' in direct Playtest mode.");
-        UnityEngine.SceneManagement.SceneManager.LoadScene("LevelCreator");
+            Debug.Log($"[CommunityCardController] Launching community level '{levelNameText?.text}' in Game scene.");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Game");
+        }
     }
 }

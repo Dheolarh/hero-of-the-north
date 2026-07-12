@@ -994,7 +994,7 @@ public class GridPainter : MonoBehaviour
         }
 
         // 3b. Attach PlaytestGoalValidator to the already-spawned goal clone (main loop already instantiated it)
-        PlacedEditorObject goalObj = editorObjects.Find(o => o != null && MatchAssetType(o.assetTypeName, "Goal"));
+        PlacedEditorObject goalObj = editorObjects.Find(o => o != null && IsGoalAsset(o.assetTypeName));
         if (goalObj != null && playtestPairs.ContainsKey(goalObj))
         {
             GameObject portalRoot = playtestPairs[goalObj];
@@ -1423,6 +1423,21 @@ public class GridPainter : MonoBehaviour
                 if (customPrefab == null) customPrefab = LevelCreatorUI.Instance.GetPrefabForType("PlayerStart");
                 if (customPrefab == null) customPrefab = LevelCreatorUI.Instance.GetPrefabForType("Player");
                 if (customPrefab == null) customPrefab = LevelCreatorUI.Instance.GetPrefabForType("Spawn");
+                
+                // Fuzzy fallback search
+                if (customPrefab == null && LevelCreatorUI.Instance.CustomBrushes != null)
+                {
+                    foreach (var mapping in LevelCreatorUI.Instance.CustomBrushes)
+                    {
+                        if (string.IsNullOrEmpty(mapping.toolName)) continue;
+                        string lowerTool = mapping.toolName.ToLower();
+                        if (lowerTool.Contains("player") || lowerTool.Contains("hero") || lowerTool.Contains("spawn"))
+                        {
+                            customPrefab = mapping.prefab;
+                            break;
+                        }
+                    }
+                }
             }
 
             // Fallback lookup for goal variations
@@ -1430,6 +1445,21 @@ public class GridPainter : MonoBehaviour
             {
                 customPrefab = LevelCreatorUI.Instance.GetPrefabForType("Goal");
                 if (customPrefab == null) customPrefab = LevelCreatorUI.Instance.GetPrefabForType("Portal");
+                
+                // Fuzzy fallback search
+                if (customPrefab == null && LevelCreatorUI.Instance.CustomBrushes != null)
+                {
+                    foreach (var mapping in LevelCreatorUI.Instance.CustomBrushes)
+                    {
+                        if (string.IsNullOrEmpty(mapping.toolName)) continue;
+                        string lowerTool = mapping.toolName.ToLower();
+                        if (lowerTool.Contains("goal") || lowerTool.Contains("portal"))
+                        {
+                            customPrefab = mapping.prefab;
+                            break;
+                        }
+                    }
+                }
             }
 
             if (customPrefab != null)
@@ -1479,7 +1509,7 @@ public class GridPainter : MonoBehaviour
             levelData.hasPlayerStart = true;
         }
 
-        PlacedEditorObject goalObj = editorObjects.Find(o => o != null && MatchAssetType(o.assetTypeName, "Goal"));
+        PlacedEditorObject goalObj = editorObjects.Find(o => o != null && IsGoalAsset(o.assetTypeName));
         if (goalObj != null)
         {
             levelData.goalPos = new Vector2S(goalObj.transform.position);
@@ -1489,9 +1519,9 @@ public class GridPainter : MonoBehaviour
         // Export all other placed tiles and traps
         foreach (var obj in editorObjects)
         {
-            if (obj == null || IsPlayerAsset(obj.assetTypeName) || MatchAssetType(obj.assetTypeName, "Goal")) continue;
+            if (obj == null || IsPlayerAsset(obj.assetTypeName) || IsGoalAsset(obj.assetTypeName)) continue;
 
-            if (IsTrapAsset(obj.assetTypeName))
+            if (IsTrapAsset(obj))
             {
                 levelData.traps.Add(obj.ToTrapData());
             }
@@ -1509,8 +1539,17 @@ public class GridPainter : MonoBehaviour
         return MatchAssetType(name, "PlayerStart") || MatchAssetType(name, "Hero") || MatchAssetType(name, "Spawn") || MatchAssetType(name, "Player");
     }
 
-    private bool IsTrapAsset(string name)
+    private bool IsGoalAsset(string name)
     {
+        return MatchAssetType(name, "Goal") || MatchAssetType(name, "Portal") || MatchAssetType(name, "GoalPortal") || MatchAssetType(name, "Goal Portal");
+    }
+
+    private bool IsTrapAsset(PlacedEditorObject obj)
+    {
+        if (obj == null) return false;
+        if (obj.GetComponent<CollisionsAndTriggers>() != null) return true;
+
+        string name = obj.assetTypeName;
         return name == "MovingPlatform" || name == "ProjectileSpawner" || name == "TriggerZone" || name == "CameraShake";
     }
 

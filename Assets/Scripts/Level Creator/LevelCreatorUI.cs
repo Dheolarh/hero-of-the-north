@@ -74,6 +74,7 @@ public class LevelCreatorUI : MonoBehaviour
 
     [Header("Custom Brush Mappings")]
     [SerializeField] private List<BrushPrefabMapping> customBrushes = new List<BrushPrefabMapping>();
+    public List<BrushPrefabMapping> CustomBrushes => customBrushes;
 
     public GameObject GetPrefabForType(string typeName)
     {
@@ -166,36 +167,7 @@ public class LevelCreatorUI : MonoBehaviour
         if (playerJumpForce == 12f) playerJumpForce = 7f;
         if (playerMaxJumps == 2) playerMaxJumps = 1;
 
-        // Check if loading a community level for direct playtest
-        if (PlayerPrefs.HasKey("PlayCommunityLevelJSON"))
-        {
-            string comJson = PlayerPrefs.GetString("PlayCommunityLevelJSON", "");
-            PlayerPrefs.DeleteKey("PlayCommunityLevelJSON");
-            PlayerPrefs.Save();
-
-            if (!string.IsNullOrEmpty(comJson))
-            {
-                try
-                {
-                    var data = JsonUtility.FromJson<CustomLevelData>(comJson);
-                    if (data != null)
-                    {
-                        currentLevelSlot = -1; // special slot
-                        _pendingLoadData = data;
-                        PlayerPrefs.SetInt("PlaytestOnLoad", 1);
-                        PlayerPrefs.Save();
-                        Debug.Log($"[LevelCreatorUI] Loading community level '{data.levelName}' for direct playtest.");
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[LevelCreatorUI] Failed to parse community level JSON: {e.Message}");
-                }
-            }
-        }
-
-        // Restore the level slot that the menu requested us to edit.
-        // LevelListManager sets "EditLevelSlot" before loading this scene.
+       
         if (PlayerPrefs.HasKey("EditLevelSlot"))
         {
             currentLevelSlot = PlayerPrefs.GetInt("EditLevelSlot", 0);
@@ -331,11 +303,11 @@ public class LevelCreatorUI : MonoBehaviour
             Debug.Log("[LevelCreatorUI] Playtest started.");
 
             // Enable HUD and Direction Controls for playtesting
-            if (UIManager.Instance != null)
-            {
-                UIManager.Instance.SetHUDActive(true);
-                UIManager.Instance.SetDirectionControlsActive(true);
-            }
+             if (UIManager.Instance != null)
+             {
+                 UIManager.Instance.SetHUDActive(false);
+                 UIManager.Instance.SetDirectionControlsActive(true);
+             }
         }
         else
         {
@@ -373,13 +345,14 @@ public class LevelCreatorUI : MonoBehaviour
 
         HasValidatedPlaytest = true;
 
+        // Exit playtest mode first to restore editor UI (making editorUIRoot and ValidatorPanel active)
+        TogglePlaytest();
+
         if (validationSuccessPanel != null)
             validationSuccessPanel.SetActive(true);
 
         Debug.Log("[LevelCreatorUI] Playtest validation success! Showing publish confirmation.");
 
-        // Show the dialog WHILE STILL IN PLAYTEST so the user sees it in the game view.
-        // Cancel returns them to editor mode; Proceed publishes and goes to Main.
         var panel = validatorPanel != null ? validatorPanel : ValidatorPanelController.Instance;
         if (panel != null)
         {
@@ -391,9 +364,7 @@ public class LevelCreatorUI : MonoBehaviour
                 },
                 onCancel: () =>
                 {
-                    // Return player to editor so they can adjust and re-test
-                    if (IsPlaytesting) TogglePlaytest();
-                    Debug.Log("[LevelCreatorUI] Publish cancelled — returned to editor.");
+                    Debug.Log("[LevelCreatorUI] Publish cancelled — staying in editor.");
                 }
             );
         }
@@ -552,6 +523,27 @@ public class LevelCreatorUI : MonoBehaviour
         Application.ExternalCall("publishCustomLevel", json);
 #else
         Debug.Log($"[LevelCreatorUI] [Editor Mock] Published event sent. JSON size: {json.Length} chars");
+
+        // Save to PlayerPrefs list of editor-published levels for local community panel demo
+        string publishedList = PlayerPrefs.GetString("EditorPublishedLevelsList", "");
+        if (string.IsNullOrEmpty(publishedList))
+        {
+            publishedList = levelName;
+        }
+        else
+        {
+            string[] items = publishedList.Split(',');
+            bool exists = false;
+            foreach (var item in items)
+            {
+                if (item == levelName) { exists = true; break; }
+            }
+            if (!exists) publishedList += "," + levelName;
+        }
+        PlayerPrefs.SetString("EditorPublishedLevelsList", publishedList);
+        PlayerPrefs.SetString("EditorPublishedLevelData_" + levelName, json);
+        PlayerPrefs.Save();
+        Debug.Log($"[LevelCreatorUI] [Editor Mock] Saved '{levelName}' locally to EditorPublishedLevelsList for community panel demo.");
 #endif
     }
 

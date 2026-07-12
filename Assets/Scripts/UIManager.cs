@@ -27,8 +27,8 @@ public class UIManager : MonoBehaviour
     public Transform communityCardContainer;
 
     [Header("Playtest Direction Controls")]
-    [Tooltip("Drag the 'Controls' prefab here to enable UI controls in playtest/mobile mode.")]
-    public GameObject directionControlsPrefab;
+    [Tooltip("Drag the 'Controls' prefab or scene child GameObject here.")]
+    public GameObject directionControls;
     [HideInInspector] public GameObject directionControlsInstance;
 
     [Header("Tutorial Settings")]
@@ -419,20 +419,31 @@ public class UIManager : MonoBehaviour
 
     public void SetDirectionControlsActive(bool active)
     {
-        if (directionControlsPrefab == null) return;
+        if (directionControls == null) return;
 
-        if (directionControlsInstance == null)
+        // If it is a project prefab asset (not in any active scene yet), instantiate it
+        if (string.IsNullOrEmpty(directionControls.scene.name))
         {
-            var parent = HUD != null ? HUD.transform.parent : transform;
-            directionControlsInstance = Instantiate(directionControlsPrefab, parent, false);
-            Debug.Log("[UIManager] Instantiated direction controls prefab.");
+            if (directionControlsInstance == null)
+            {
+                var parent = HUD != null ? HUD.transform.parent : transform;
+                directionControlsInstance = Instantiate(directionControls, parent, false);
+                Debug.Log("[UIManager] Instantiated direction controls prefab.");
+            }
+
+            if (directionControlsInstance != null)
+            {
+                directionControlsInstance.SetActive(active);
+                directionControlsInstance.transform.SetAsLastSibling(); // bring to front
+                Debug.Log($"[UIManager] Prefab direction controls visibility set to: {active}");
+            }
         }
-
-        if (directionControlsInstance != null)
+        else
         {
-            directionControlsInstance.SetActive(active);
-            directionControlsInstance.transform.SetAsLastSibling(); // bring to front
-            Debug.Log($"[UIManager] Direction controls visibility set to: {active}");
+            // It is an existing scene object (child of UIManager), toggle visibility directly
+            directionControls.SetActive(active);
+            directionControls.transform.SetAsLastSibling(); // bring to front
+            Debug.Log($"[UIManager] Existing child direction controls visibility set to: {active}");
         }
     }
 

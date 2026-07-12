@@ -140,7 +140,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 3f168f0ea54b4fe429d87130e1b0784a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 313c4997e91eae8499c367e8d4732cc6, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -483,7 +483,7 @@ GameObject:
   - component: {fileID: 2520145666375297445}
   - component: {fileID: 2092622662230858315}
   m_Layer: 0
-  m_Name: edit
+  m_Name: Play
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -530,7 +530,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.244126, g: 0.24528301, b: 0.2450813, a: 1}
+  m_Color: {r: 0.080010675, g: 0.5471698, b: 0.080010705, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1463,10 +1463,10 @@ MonoBehaviour:
   statusIndicator: {fileID: 3439124480002725394}
   liveColor: {r: 0.18, g: 0.75, b: 0.35, a: 1}
   draftColor: {r: 0.8, g: 0.2, b: 0.2, a: 1}
-  editButton: {fileID: 2520145666375297445}
+  editButton: {fileID: 7063838707360003744}
   shareButton: {fileID: 8222677342805264180}
   deleteButton: {fileID: 4461802900990109452}
-  playtestButton: {fileID: 7063838707360003744}
+  playtestButton: {fileID: 2520145666375297445}
 --- !u!114 &3981212667054362926
 MonoBehaviour:
   m_ObjectHideFlags: 0
