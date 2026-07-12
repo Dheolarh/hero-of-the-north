@@ -322,14 +322,31 @@ public class LevelCreatorUI : MonoBehaviour
             if (validationSuccessPanel != null)
                 validationSuccessPanel.SetActive(false);
 
-            // Disable HUD and Direction Controls when leaving playtest
+            // Reset time and game states immediately to prevent freezing/death panel states
+            Time.timeScale = 1f;
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.isPaused = false;
+                GameManager.Instance.isGameOver = false;
+                GameManager.Instance.isLevelCompleted = false;
+            }
+
+            // Stop walking loops and playtest sounds
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopAllSoundsExceptMusic();
+                AudioManager.Instance.StopWalkingSound();
+            }
+
+            // Hide HUD, controls, and any active popups (like Death or Level Complete screens)
             if (UIManager.Instance != null)
             {
+                UIManager.Instance.HidePanels();
                 UIManager.Instance.SetHUDActive(false);
                 UIManager.Instance.SetDirectionControlsActive(false);
             }
 
-            Debug.Log("[LevelCreatorUI] Playtest stopped. Returned to Editor.");
+            Debug.Log("[LevelCreatorUI] Playtest stopped. Cleaned up panels and sounds. Returned to Editor.");
         }
 
         OnPlaytestToggled?.Invoke(IsPlaytesting);

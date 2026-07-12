@@ -1547,10 +1547,13 @@ public class GridPainter : MonoBehaviour
     private bool IsTrapAsset(PlacedEditorObject obj)
     {
         if (obj == null) return false;
-        if (obj.GetComponent<CollisionsAndTriggers>() != null) return true;
 
-        string name = obj.assetTypeName;
-        return name == "MovingPlatform" || name == "ProjectileSpawner" || name == "TriggerZone" || name == "CameraShake";
+        // Player spawn and goal portal are handled as global parameters
+        if (IsPlayerAsset(obj.assetTypeName) || IsGoalAsset(obj.assetTypeName))
+            return false;
+
+        // Everything else is treated as a trap/dynamic object to preserve its configurations
+        return true;
     }
 
     private bool MatchAssetType(string assetName, string targetType)

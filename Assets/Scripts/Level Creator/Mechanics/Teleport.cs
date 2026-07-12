@@ -5,6 +5,10 @@ public class Teleport : MonoBehaviour
 {
     [SerializeField] private Slider teleportXSlider;
     [SerializeField] private Slider teleportYSlider;
+    [Tooltip("Offset applied to the X teleport coordinate when saved, and added back when loaded into the editor.")]
+    [SerializeField] private float coordinateOffsetX = 0f;
+    [Tooltip("Offset applied to the Y teleport coordinate when saved, and added back when loaded into the editor.")]
+    [SerializeField] private float coordinateOffsetY = 0f;
 
     public void Setup(CollisionsAndTriggers trigger)
     {
@@ -34,10 +38,23 @@ public class Teleport : MonoBehaviour
                 }
             }
             
-            borrower.Initialize(teleportXSlider, teleportYSlider, targetObj, trigger.teleportPosition, parentGroup);
+            // Adjust display position: add offset back (accounting for coordinate sign)
+            Vector2 displayPos = trigger.teleportPosition;
+            float signX = displayPos.x >= 0f ? 1f : -1f;
+            float signY = displayPos.y >= 0f ? 1f : -1f;
+            displayPos.x += coordinateOffsetX * signX;
+            displayPos.y += coordinateOffsetY * signY;
+
+            borrower.Initialize(teleportXSlider, teleportYSlider, targetObj, displayPos, parentGroup);
             borrower.OnPositionSaved = (pos) =>
             {
-                trigger.teleportPosition = pos;
+                // Subtract offset when saving (accounting for coordinate sign)
+                Vector2 savedPos = pos;
+                float saveSignX = savedPos.x >= 0f ? 1f : -1f;
+                float saveSignY = savedPos.y >= 0f ? 1f : -1f;
+                savedPos.x -= coordinateOffsetX * saveSignX;
+                savedPos.y -= coordinateOffsetY * saveSignY;
+                trigger.teleportPosition = savedPos;
             };
         }
     }

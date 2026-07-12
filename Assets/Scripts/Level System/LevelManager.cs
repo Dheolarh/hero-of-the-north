@@ -21,6 +21,14 @@ public class LevelManager : MonoBehaviour
     [Tooltip("Prefabs mapping list used to dynamically build community levels inside the Game scene.")]
     [SerializeField] private List<CommunityPrefabMapping> communityPrefabs = new List<CommunityPrefabMapping>();
 
+    [Header("Community Level Environment")]
+    [Tooltip("Prefab for the default background sky/scene to instantiate on community levels.")]
+    [SerializeField] private GameObject defaultBackgroundPrefab;
+    [Tooltip("Prefab for the default boundary barrier boundaries/walls to instantiate on community levels.")]
+    [SerializeField] private GameObject defaultBarrierPrefab;
+    [Tooltip("Prefab for the default background clouds to instantiate on community levels.")]
+    [SerializeField] private GameObject defaultCloudsPrefab;
+
     [Header("Scene Names")]
     public string mainMenu = "Main";
     [Tooltip("The dedicated empty scene for gameplay. Keep game UI here, separate from Main menu UI.")]
@@ -325,6 +333,42 @@ public class LevelManager : MonoBehaviour
         // Create a root object for the spawned level
         _currentLevelInstance = new GameObject("CommunityLevel_Spawned");
 
+        // Create dedicated GameObject for LevelCameraSettings to match campaign hierarchy
+        GameObject camSettingsObj = new GameObject("LevelCameraSettings");
+        camSettingsObj.transform.SetParent(_currentLevelInstance.transform);
+        LevelCameraSettings camSettings = camSettingsObj.AddComponent<LevelCameraSettings>();
+        camSettings.offset = new Vector3(data.camOffsetX, data.camOffsetY, -10f);
+        camSettings.orthoSize = data.camOrthoSize;
+        camSettings.followX = true;
+        camSettings.followY = true;
+        camSettings.useSmoothing = true;
+        camSettings.smoothSpeed = 5f;
+
+        // Spawn default background environment if configured
+        if (defaultBackgroundPrefab != null)
+        {
+            GameObject bg = Instantiate(defaultBackgroundPrefab, _currentLevelInstance.transform);
+            bg.name = "Background";
+            bg.transform.localPosition = new Vector3(22f, 18.5f, 0f);
+            bg.transform.localScale = new Vector3(10f, 10f, 1f);
+        }
+
+        // Spawn default boundaries/walls if configured
+        if (defaultBarrierPrefab != null)
+        {
+            GameObject bar = Instantiate(defaultBarrierPrefab, Vector3.zero, Quaternion.identity, _currentLevelInstance.transform);
+            bar.name = "Barrier";
+        }
+
+        // Spawn default clouds if configured
+        if (defaultCloudsPrefab != null)
+        {
+            GameObject clouds = Instantiate(defaultCloudsPrefab, _currentLevelInstance.transform);
+            clouds.name = "Clouds";
+            clouds.transform.localPosition = new Vector3(0f, 0f, 0f);
+            clouds.transform.localScale = new Vector3(1f, 1f, 1f);
+        }
+
         // 1. Spawn Player
         if (data.hasPlayerStart)
         {
@@ -345,11 +389,18 @@ public class LevelManager : MonoBehaviour
                 }
 
                 // Wire Camera
-                CameraFollow cam = FindFirstObjectByType<CameraFollow>();
+                CameraFollow cam = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : FindFirstObjectByType<CameraFollow>();
                 if (cam != null)
                 {
-                    cam.SetTarget(playerObj.transform);
+                    Transform cameraTarget = pc != null ? pc.transform : playerObj.transform;
+                    Debug.Log($"[LevelManager] Successfully found CameraFollow. Setting target to player: {cameraTarget.name}");
+                    cam.SetTarget(cameraTarget);
                     cam.StartFollowing();
+                    cam.InstantSnap();
+                }
+                else
+                {
+                    Debug.LogError("[LevelManager] CameraFollow component not found in scene!");
                 }
             }
         }
@@ -415,6 +466,11 @@ public class LevelManager : MonoBehaviour
             CustomTrapData trapData = trapDataMap[pos];
 
             CollisionsAndTriggers ct = trapObj.GetComponent<CollisionsAndTriggers>() ?? trapObj.GetComponentInChildren<CollisionsAndTriggers>();
+            if (ct == null && !string.IsNullOrEmpty(trapData.triggerTypeStr))
+            {
+                ct = trapObj.AddComponent<CollisionsAndTriggers>();
+            }
+
             if (ct != null)
             {
                 // Restore basic properties
@@ -435,6 +491,33 @@ public class LevelManager : MonoBehaviour
                 ct.audioClipName = trapData.audioClipName;
                 ct.loopAudio = trapData.loopAudio;
 
+                // Restore enums from strings
+                if (!string.IsNullOrEmpty(trapData.triggerTypeStr))
+                    System.Enum.TryParse(trapData.triggerTypeStr, out ct.triggerType);
+                if (!string.IsNullOrEmpty(trapData.componentActionStr))
+                    System.Enum.TryParse(trapData.componentActionStr, out ct.componentAction);
+                if (!string.IsNullOrEmpty(trapData.activationModeStr))
+                    System.Enum.TryParse(trapData.activationModeStr, out ct.activationMode);
+                if (!string.IsNullOrEmpty(trapData.moveDirectionStr))
+                    System.Enum.TryParse(trapData.moveDirectionStr, out ct.moveDirection);
+                if (!string.IsNullOrEmpty(trapData.rotationDirectionStr))
+                    System.Enum.TryParse(trapData.rotationDirectionStr, out ct.rotationDirection);
+
+                // Restore Object properties
+                ct.modifyColliderState = trapData.modifyColliderState;
+                ct.makeSolid = trapData.makeSolid;
+                ct.modifyGravityState = trapData.modifyGravityState;
+                ct.makeSubjectToGravity = trapData.makeSubjectToGravity;
+                ct.appearOnTrigger = trapData.appearOnTrigger;
+                ct.deleteTriggerZone = trapData.deleteTriggerZone;
+
+                // Restore Camera Shake settings
+                ct.enableCameraShake = trapData.enableCameraShake;
+                ct.playShakeSFX = trapData.playShakeSFX;
+                ct.cameraShakeIntensity = trapData.cameraShakeIntensity;
+                ct.cameraShakeFrequency = trapData.cameraShakeFrequency;
+                ct.stopShakeOnExitBoundary = trapData.stopShakeOnExitBoundary;
+
                 // Wire target objects
                 if (trapData.hasTarget)
                 {
@@ -443,6 +526,13 @@ public class LevelManager : MonoBehaviour
                     {
                         ct.objectToModify = spawnedTraps[targetPos];
                     }
+                }
+
+                // Wire destination target object
+                Vector2 destPos = trapData.destinationTargetPos.ToVector2();
+                if (spawnedTraps.ContainsKey(destPos))
+                {
+                    ct.destinationTargetObject = spawnedTraps[destPos];
                 }
 
                 // Wire multiple objects
@@ -459,22 +549,29 @@ public class LevelManager : MonoBehaviour
                     }
                     ct.objectsToTrigger = targetList.ToArray();
                 }
+
+                // Wire activation objects
+                if (trapData.activationObjectsPositions != null && trapData.activationObjectsPositions.Count > 0)
+                {
+                    List<GameObject> activatorList = new List<GameObject>();
+                    foreach (var objPos in trapData.activationObjectsPositions)
+                    {
+                        Vector2 oPos = objPos.ToVector2();
+                        if (spawnedTraps.ContainsKey(oPos))
+                        {
+                            activatorList.Add(spawnedTraps[oPos]);
+                        }
+                    }
+                    ct.activationObjects = activatorList.ToArray();
+                }
             }
         }
 
-        // Configure Camera Settings
-        var camFollowSettings = FindFirstObjectByType<LevelCameraSettings>();
-        if (camFollowSettings != null)
+        // Force Main Camera viewport update
+        var mainCam = Camera.main;
+        if (mainCam != null)
         {
-            camFollowSettings.offset = new Vector3(data.camOffsetX, data.camOffsetY, camFollowSettings.offset.z);
-            camFollowSettings.orthoSize = data.camOrthoSize;
-            
-            // Force Main Camera viewport update
-            var mainCam = Camera.main;
-            if (mainCam != null)
-            {
-                mainCam.orthographicSize = data.camOrthoSize;
-            }
+            mainCam.orthographicSize = data.camOrthoSize;
         }
 
         // Enable HUD and Controls in game scene

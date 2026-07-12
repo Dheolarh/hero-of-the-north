@@ -67,6 +67,17 @@ public class PlayerController : MonoBehaviour
             MaxMultiJumps = 1; // Default to normal jump in editor/sandbox scenes
         }
 
+        if (LevelCreatorUI.Instance != null && !LevelCreatorUI.Instance.IsPlaytesting)
+        {
+            if (PlayerRigidbody != null)
+            {
+                PlayerRigidbody.simulated = false;
+                PlayerRigidbody.linearVelocity = Vector2.zero;
+                PlayerRigidbody.bodyType = RigidbodyType2D.Kinematic;
+            }
+            return; // Skip setting up state machine during edit mode
+        }
+
         // Boot the state machine into Idle
         StateMachine = new PlayerStateMachine();
         StateMachine.ChangeState(new PlayerIdleState(this));
@@ -75,6 +86,17 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         bool isPlaytesting = LevelCreatorUI.Instance != null && LevelCreatorUI.Instance.IsPlaytesting;
+        if (LevelCreatorUI.Instance != null && !isPlaytesting)
+        {
+            if (PlayerRigidbody != null)
+            {
+                PlayerRigidbody.simulated = false;
+                PlayerRigidbody.linearVelocity = Vector2.zero;
+                PlayerRigidbody.bodyType = RigidbodyType2D.Kinematic;
+            }
+            return;
+        }
+
         if (GameManager.Instance == null && !isPlaytesting) return;
 
         if (GameManager.Instance != null && GameManager.Instance.isGameOver) return;

@@ -6344,6 +6344,9 @@ MonoBehaviour:
     prefab: {fileID: 4504548688484699201, guid: 0d54b51888b78d24aa1803ed6681fa0a, type: 3}
   - toolName: Death
     prefab: {fileID: 4504548688484699201, guid: 0576abb7486754541ae286cfd0d58853, type: 3}
+  defaultBackgroundPrefab: {fileID: 788331729440276289, guid: 11fcf993dc7c00447be38b0e8366b9eb, type: 3}
+  defaultBarrierPrefab: {fileID: 5148632184099633770, guid: 4097504725054ac4499b11b5653d3d5a, type: 3}
+  defaultCloudsPrefab: {fileID: 3287702478241420915, guid: d323f53f804afcc41831371a7644383e, type: 3}
   mainMenu: Main
   gameScene: Game
   bypassLevelLock: 0

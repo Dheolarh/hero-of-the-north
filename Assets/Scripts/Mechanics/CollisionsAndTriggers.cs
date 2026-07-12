@@ -780,7 +780,7 @@ public class CollisionsAndTriggers : MonoBehaviour
         // Handle camera shake trigger if enabled
         if (enableCameraShake && CameraShake.Instance != null)
         {
-            string sfx = playShakeSFX ? (string.IsNullOrEmpty(audioClipName) ? "boulder" : audioClipName) : "";
+            string sfx = playShakeSFX ? (string.IsNullOrEmpty(audioClipName) ? "Boulder" : audioClipName) : "";
             CameraShake.Instance.StartShake(cameraShakeIntensity, cameraShakeFrequency, sfx, null, 9999f);
             isActivelyShaking = true;
             Debug.Log($"[CollisionsAndTriggers] Started camera shake. Intensity={cameraShakeIntensity}, Frequency={cameraShakeFrequency}, SFX={sfx}");

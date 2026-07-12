@@ -1,0 +1,337 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5148632184099633770
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8461367057197464329}
+  m_Layer: 0
+  m_Name: Barrier 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &8461367057197464329
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5148632184099633770}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1012045057289190980}
+  - {fileID: 3401858003911508040}
+  - {fileID: 5608137473033913268}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0, y: 0}
+--- !u!1001 &128351069510396880
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8461367057197464329}
+    m_Modifications:
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 65.93725
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 4.1635222
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 22.0479
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 35.2016
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_Name
+      value: Barrier (2)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9098900954717551592}
+  m_SourcePrefab: {fileID: 100100000, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+--- !u!4 &5608137473033913268 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+  m_PrefabInstance: {fileID: 128351069510396880}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &6113012850172337251 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+  m_PrefabInstance: {fileID: 128351069510396880}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9098900954717551592
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6113012850172337251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Barrier
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
+--- !u!1001 &4762666908008994336
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8461367057197464329}
+    m_Modifications:
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 5.429871
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 37.277756
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -11.288
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 18.6704
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_Name
+      value: Barrier
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5200725863426973888}
+  m_SourcePrefab: {fileID: 100100000, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+--- !u!4 &1012045057289190980 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+  m_PrefabInstance: {fileID: 4762666908008994336}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1660229585515356563 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+  m_PrefabInstance: {fileID: 4762666908008994336}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5200725863426973888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1660229585515356563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Barrier
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
+--- !u!1001 &7144457348470024236
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8461367057197464329}
+    m_Modifications:
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 5.429871
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 37.277756
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 55.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 18.6704
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      propertyPath: m_Name
+      value: Barrier (1)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7868948154646248803}
+  m_SourcePrefab: {fileID: 100100000, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+--- !u!4 &3401858003911508040 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5481977851530651748, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+  m_PrefabInstance: {fileID: 7144457348470024236}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3905747093341527967 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6130021771595675571, guid: 043eb80322426b140b017ae36ac4e299, type: 3}
+  m_PrefabInstance: {fileID: 7144457348470024236}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7868948154646248803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3905747093341527967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1d7a810db30947bb4bbc35788b7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacedEditorObject
+  assetTypeName: Barrier
+  customToolDisplayName: 
+  customPlaytestPrefab: {fileID: 0}
+  moveDir: Down
+  speed: 3
+  delay: 1
+  hasTarget: 0
+  targetObject: {fileID: 0}
+  wireLine: {fileID: 0}
