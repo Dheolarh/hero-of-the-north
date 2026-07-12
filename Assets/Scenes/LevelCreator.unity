@@ -1244,7 +1244,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 1}
   m_EffectDistance: {x: 2, y: -2}
   m_UseGraphicAlpha: 1
 --- !u!1 &57466780
@@ -3101,7 +3101,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 1}
   m_EffectDistance: {x: 2, y: -2}
   m_UseGraphicAlpha: 1
 --- !u!114 &178590835
@@ -3143,7 +3143,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 178590836}
   m_OnClick:
     m_PersistentCalls:
@@ -3173,7 +3173,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6941,7 +6941,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
-  m_EffectDistance: {x: 2, y: -2}
+  m_EffectDistance: {x: 0, y: 0}
   m_UseGraphicAlpha: 1
 --- !u!1 &452853933
 GameObject:
@@ -9037,7 +9037,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 2107148184}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.28773627
+  m_Size: 0.04679197
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -9290,7 +9290,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 1}
   m_EffectDistance: {x: 2, y: -2}
   m_UseGraphicAlpha: 1
 --- !u!1 &557147623 stripped
@@ -11061,7 +11061,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 1}
   m_EffectDistance: {x: 2, y: -2}
   m_UseGraphicAlpha: 1
 --- !u!114 &689932248
@@ -17588,7 +17588,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -22.5, y: 0}
-  m_SizeDelta: {x: -45, y: 2702.692}
+  m_SizeDelta: {x: -45, y: 22241.63}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1157883813
 MonoBehaviour:
@@ -18554,6 +18554,7 @@ MonoBehaviour:
   editorUIRoot: {fileID: 906300757}
   validationSuccessPanel: {fileID: 1109326028}
   validatorPanel: {fileID: 1109326033}
+  tutorialPanel: {fileID: 748911747}
   terrainPalettePanel: {fileID: 81195897}
   hazardsPalettePanel: {fileID: 2037058728}
   essentialsPalettePanel: {fileID: 1112055409}
@@ -20880,7 +20881,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1204830056}
         m_TargetAssemblyTypeName: LevelCreatorUI, Assembly-CSharp
-        m_MethodName: RequestSnapToPlayer
+        m_MethodName: ToggleTutorialPanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -23692,7 +23693,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.47638342, b: 0.8584906, a: 1}
+  m_Color: {r: 0, g: 0.47638342, b: 0.8584906, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -24326,7 +24327,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1584775357}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1204830056}
+        m_TargetAssemblyTypeName: LevelCreatorUI, Assembly-CSharp
+        m_MethodName: ToggleTutorialPanel
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1584775357
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25162,9 +25175,9 @@ RectTransform:
   - {fileID: 1271316702}
   - {fileID: 54982537}
   - {fileID: 445248391}
-  - {fileID: 178590833}
   - {fileID: 1758156235}
   - {fileID: 551466931}
+  - {fileID: 178590833}
   - {fileID: 689932246}
   m_Father: {fileID: 906300758}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -26616,7 +26629,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 1}
   m_EffectDistance: {x: 2, y: -2}
   m_UseGraphicAlpha: 1
 --- !u!1 &1769597435
@@ -30841,8 +30854,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 307.5, y: -1882.255}
-  m_SizeDelta: {x: 575, y: 3724.51}
+  m_AnchoredPosition: {x: 307.5, y: -11651.725}
+  m_SizeDelta: {x: 575, y: 23263.45}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2082366346
 MonoBehaviour:
@@ -30864,56 +30877,107 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'What is Lorem Ipsum?
-
-    Lorem Ipsum is simply dummy text of the printing
-    and typesetting industry. Lorem Ipsum has been the industry''s standard dummy
-    text ever since 1966, when designers at Letraset and James Mosley, the librarian
-    at St Bride Printing Library in London, took a 1914 Cicero translation and scrambled
-    it to make dummy text for Letraset''s Body Type sheets. It has survived not only
-    many decades, but also the leap into electronic typesetting, remaining essentially
-    unchanged. It was popularised thanks to these sheets and more recently with desktop
-    publishing software like Aldus PageMaker and Microsoft Word including versions
-    of Lorem Ipsum.
-
-
-
-    Why do we use it?
-
-    It is a long established fact that
-    a reader will be distracted by the readable content of a page when looking at
-    its layout. The point of using Lorem Ipsum is that it has a more-or-less normal
-    distribution of letters, as opposed to using ''Content here, content here'',
-    making it look like readable English. Many desktop publishing packages and web
-    page editors now use Lorem Ipsum as their default model text, and a search for
-    ''lorem ipsum'' will uncover many web sites still in their infancy. Various versions
-    have evolved over the years, sometimes by accident, sometimes on purpose (injected
-    humour and the like).
-
-
-
-
-
-    Where does it come from?
-
-    Contrary to popular
-    belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical
-    Latin literature from 45 BC, making it over 2000 years old. Richard McClintock,
-    a Latin professor at Hampden-Sydney College in Virginia, looked up one of the
-    more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going
-    through the cites of the word in classical literature, discovered the undoubtable
-    source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum
-    et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This
-    book is a treatise on the theory of ethics, very popular during the Renaissance.
-    The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line
-    in section 1.10.32.
-
-
-
-    The standard chunk of Lorem Ipsum used since 1966
-    is reproduced below for those interested. Sections 1.10.32 and 1.10.33 from "de
-    Finibus Bonorum et Malorum" by Cicero are also reproduced in their exact original
-    form, accompanied by English versions from the 1914 translation by H. Rackham.'
+  m_text: "<size=130%><b><color=#FFD700>LEVEL CREATOR & TRAP SYSTEM TUTORIAL</color></b></size>\r\n<size=105%><color=#87CEFA><b>Welcome
+    Creator!</b></color></size>\r\nLearn how to build, customize, and validate your
+    own levels using the Level Creator tools.\r\nPlace objects, create traps, and
+    design unique challenges for players.\r\n<br>\r\n<size=118%><b><color=#00FF7F>1.
+    TOP BAR CONTROLS</color></b></size>\r\n<color=#00FF7F><b>Playtest (Green Play
+    Icon)</b></color>\r\nTest your level instantly in game mode.\r\nYou must successfully
+    complete your level in Playtest mode before it can be validated and published.\r\n<br>\r\n<color=#FF69B4><b>Erase
+    (Pink Eraser)</b></color>\r\nToggle Erase Mode, then click any placed object
+    to remove it from the grid.\r\n<br>\r\n<color=#4DA6FF><b>Load (Blue File)</b></color>\r\nLoad
+    a previously saved level draft.\r\n<br>\r\n<color=#00FF7F><b>Save (Green Save
+    Icon)</b></color>\r\nSave your current level progress locally.\r\n<br>\r\n<color=#FF4444><b>Delete
+    (Red Trash Can)</b></color>\r\nPermanently remove the current level data.\r\n<br>\r\n<color=#FF4444><b>Exit
+    (Red Door)</b></color>\r\nReturn to the main menu.\r\n<br><br>\r\n<size=118%><b><color=#00BFFF>2.
+    MIDDLE TOOLBAR</color></b></size>\r\n<color=#FFD700><b>Tutorial (Book)</b></color>\r\nOpen
+    or close this complete level creation guide.\r\n<br>\r\n<color=#FFD700><b>Focus
+    Camera (Target Icon)</b></color>\r\nReturn the camera view instantly to the player's
+    starting position.\r\n<br>\r\n<color=#B57EDC><b>Transform Settings</b></color>\r\nAdjust
+    the selected object's:\r\n<br>\r\n\u2022 Scale\r\n\u2022 Rotation\r\n\u2022 Exact
+    X/Y coordinates\r\n<br>\r\n<color=#FF8C00><b>Trap Settings</b></color>\r\nThe
+    core of the level logic system. Configure:\r\n<br>\r\n\u2022 Object movement\r\n\u2022
+    Trigger events\r\n\u2022 Special behaviours\r\n\u2022 Dynamic obstacles\r\n<br><br>\r\n<size=118%><b><color=#FFB347>3.
+    BOTTOM PALETTE (OBJECT CATEGORIES)</color></b></size>\r\nSelect a category tab
+    to view all available objects.\r\n<br>\r\n<color=#32CD32><b>Terrain</b></color>\r\nBuild
+    the environment. Includes:\r\n<br>\r\n\u2022 Ground\r\n\u2022 Invisible Ground\r\n\u2022
+    Sky Background Tiles\r\n\u2022 Platforms\r\n<br>\r\n<color=#FF4444><b>Hazards</b></color>\r\nCreate
+    dangerous obstacles. Includes:\r\n<br>\r\n\u2022 Spikes\r\n\u2022 Sky Dangers\r\n\u2022
+    Rolling Boulders\r\n\u2022 Fake Portals\r\n\u2022 Invisible Death Zones\r\n<br>\r\n<color=#00FFFF><b>Essentials</b></color>\r\nCore
+    gameplay objects. Includes:\r\n<br>\r\n\u2022 Player Spawn Point\r\n\u2022 Goal
+    Portal\r\n\u2022 Rescue Allies\r\n\u2022 Teleporters\r\n\u2022 Blockades\r\n<br>\r\n<color=#B57EDC><b>Camera
+    Settings</b></color>\r\nAdjust camera behaviour for the level:\r\n<br>\r\n\u2022
+    X/Y Offset\r\n\u2022 Zoom Level\r\n<br><br>\r\n<size=118%><b><color=#FF8C00>4.
+    TRAP SETTINGS PANEL</color></b></size>\r\nWhen Trap Settings is opened, a dedicated
+    trap configuration panel will appear.\r\nA <b>Trap Trigger Zone</b> is automatically
+    created for the selected object. This trigger zone controls when the trap activates.\r\n<br>\r\n<size=108%><b><color=#FFD700>Creating
+    New Traps</color></b></size>\r\n<b>Create New Trap:</b> Press the <color=#00FF7F><b>+</b></color>
+    button to create an additional trap for the selected object.\r\nNewly created
+    traps will automatically be added to the <b>Traps List</b>. Each trap can have
+    its own:\r\n\u2022 Trigger type\r\n\u2022 Movement behaviour\r\n\u2022 Object
+    settings\r\n\u2022 Special effects\r\n<br>\r\n<size=108%><b><color=#FFD700>Trap
+    Trigger Zone</color></b></size>\r\nThe trigger zone appears as a white object
+    when the Trap Settings panel is closed. You can:\r\n\u2022 Drag the trigger zone
+    anywhere in the level\r\n\u2022 Resize or reposition it to control where the
+    trap activates\r\nWhen the player enters this area, the assigned trap behaviour
+    will begin.\r\n<br>\r\n<size=108%><b><color=#FFD700>Spawned Object Placement</color></b></size>\r\nObjects
+    drop in scene can be freely moved after spawning. You can:\r\n\u2022 Drag spawned
+    objects to any location\r\n\u2022 Adjust their position before testing\r\n\u2022
+    Create complex trap setups by combining multiple objects\r\n<br>\r\n<size=108%><b><color=#FFD700>Camera
+    Shake Effect</color></b></size>\r\nAdds a camera shake effect when the trap is
+    activated. This can be used to create impact effects such as:\r\n\u2022 A heavy
+    boulder rolling nearby\r\n\u2022 A platform collapsing\r\n\u2022 A powerful object
+    landing\r\n\u2022 An environmental earthquake\r\n<i>Example: When a large boulder
+    trap is triggered, the camera will shake to simulate the force and impact of
+    the object moving.</i>\r\n<br>\r\n<b>Settings:</b>\r\n<color=#AAAAAA>Enable Effect:</color>
+    Turns the camera shake effect on or off.\r\n<color=#AAAAAA>Play Shake SFX:</color>
+    Adds a sound effect when the camera shake happens.\r\n<color=#AAAAAA>Shake Intensity:</color>
+    Controls how strong the camera movement is.\r\n<color=#AAAAAA>Shake Frequency:</color>
+    Controls how fast the camera shakes.\r\n<color=#AAAAAA>Stop Shake On Level Boundary
+    Exit:</color> Automatically stops the effect when leaving the active level area.\r\n<br>\r\n<size=108%><b><color=#FFD700>Delete
+    Trap Trigger</color></b></size>\r\nWhen enabled, the trap trigger zone will automatically
+    be removed after activating the trap. Useful for:\r\n\u2022 One-time events\r\n\u2022
+    Explosions\r\n\u2022 Falling objects\r\n\u2022 Hidden pathways\r\n\u2022 Single-use
+    mechanisms\r\n<i>Example: A hidden bridge appears when the player enters a trigger
+    zone. After activation, the trigger disappears so the event cannot happen again.</i>\r\n<br><br>\r\n<size=118%><b><color=#FF69B4>5.
+    TRAP TYPES & CONFIGURATIONS</color></b></size>\r\nAlmost any object can become
+    a dynamic trap or interactive object using the <color=#FF8C00><b>Trap Settings</b></color>
+    panel.\r\nSelect an object and choose a trigger type:\r\n<br>\r\n<size=108%><b><color=#FFD700>1.
+    Teleport</color></b></size>\r\nInstantly moves a target object to a selected
+    location.\r\n<i><color=#AAAAAA>Configurations:</color></i>\r\n<b>Objects to Trigger:</b>
+    Select the object that will be teleported (usually the Player).\r\n<b>Target
+    Destination:</b> Use X and Y sliders to choose the teleport location.\r\n<br>\r\n<size=108%><b><color=#FFD700>2.
+    Single Motion</color></b></size>\r\nMoves an object smoothly to a target position
+    once.\r\n<i><color=#AAAAAA>Configurations:</color></i>\r\n<b>Objects to Trigger:</b>
+    The object that will move.\r\n<b>Move Speed:</b> Controls how quickly the object
+    reaches its destination.\r\n<b>Move Stagger Interval:</b> Adds a delay before
+    movement begins.\r\n<b>Target Destination:</b> Choose the final X/Y position.\r\n<br>\r\n<size=108%><b><color=#FFD700>3.
+    Continuous Motion</color></b></size>\r\nCreates moving objects such as platforms,
+    traps, or sliding hazards.\r\n<i><color=#AAAAAA>Configurations:</color></i>\r\n<b>Direction
+    & Speed:</b> Choose:\r\n\u2022 Up\r\n\u2022 Down\r\n\u2022 Left\r\n\u2022 Right\r\n<b>Ping-Pong
+    Mode:</b> The object moves back and forth between two points.\r\n<b>Ping-Pong
+    Distance:</b> Controls how far the object travels before reversing.\r\n<br>\r\n<size=108%><b><color=#FFD700>4.
+    Object Properties (Physics Modifier)</color></b></size>\r\nChange an object's
+    physical behaviour.\r\n<i><color=#AAAAAA>Configurations:</color></i>\r\n<b>Make
+    Solid / Remove Collision:</b> Allows players to stand on or pass through objects.\r\n<b>Subject
+    to Gravity:</b> Makes floating objects fall naturally.\r\n<b>Appear On Trigger:</b>
+    Objects remain hidden and inactive until the trap activates them.\r\n<br>\r\n<size=108%><b><color=#FFD700>5.
+    Jump Modifier</color></b></size>\r\nChanges the player's jumping ability.\r\n<i><color=#AAAAAA>Configuration:</color></i>\r\n<b>Max
+    Jumps Value:</b> Adjust the number of air jumps:\r\n\u2022 2 = Double Jump\r\n\u2022
+    1 = Normal Jump\r\n\u2022 0 = Disable Jumping\r\n<br><br>\r\n<size=118%><b><color=#00FFAA>6.
+    TRIGGER ZONES & EXAMPLE</color></b></size>\r\nCreate events that activate when
+    players enter specific areas.\r\n<b>Example: Hidden Platform</b>\r\n<br>\r\n<b><color=#00FFAA>Step
+    1:</color></b> Place a Trigger Zone from the Essentials category.\r\n<b><color=#00FFAA>Step
+    2:</color></b> Open Trap Settings and select: <i>Trigger Type \u2192 Object Properties</i>\r\n<b><color=#00FFAA>Step
+    3:</color></b> Enable: <i>\"Appear On Trigger\"</i>\r\n<b><color=#00FFAA>Step
+    4:</color></b> Select the hidden platform under: <i>Objects to Trigger</i>\r\n<br>\r\n<b>Result:</b>
+    During Playtest, the platform will be invisible. When the player enters the Trigger
+    Zone, the platform appears instantly!\r\n<br><br>\r\n<size=118%><b><color=#FFD700>7.
+    SAVING & VALIDATION</color></b></size>\r\nBefore publishing your level:\r\n<br>\r\n<b>1.</b>
+    Press <color=#00FF7F><b>Playtest</b></color>\r\n<b>2.</b> Complete the level
+    successfully\r\n<b>3.</b> Collect required allies\r\n<b>4.</b> Reach the Goal
+    Portal\r\n<br>\r\nOnce your level has been verified as beatable, the <color=#00FF7F><b>Publish</b></color>
+    option will become available.\r\n<br>\r\n<color=#FFD700><b>Good luck!</b></color>"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -31333,7 +31397,7 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1238527574}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.7122637}
+  m_AnchorMin: {x: 0, y: 0.953208}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}

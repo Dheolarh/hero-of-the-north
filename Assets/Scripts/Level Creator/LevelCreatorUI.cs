@@ -20,6 +20,8 @@ public class LevelCreatorUI : MonoBehaviour
     [SerializeField] private GameObject validationSuccessPanel;
     [Tooltip("Validator / confirmation panel controller.")]
     [SerializeField] private ValidatorPanelController validatorPanel;
+    [Tooltip("Panel showing the comprehensive tutorial.")]
+    [SerializeField] private GameObject tutorialPanel;
 
     [Header("Palette Category Sub-Panels")]
     [SerializeField] private GameObject terrainPalettePanel;
@@ -199,6 +201,7 @@ public class LevelCreatorUI : MonoBehaviour
         }
 
         UpdateToolText();
+        UpdateToolButtonHighlights();
 
         // Publish button lives behind the publish confirm panel now — hide it from toolbar
         if (publishButton != null) publishButton.gameObject.SetActive(false);
@@ -211,6 +214,14 @@ public class LevelCreatorUI : MonoBehaviour
 
         // Dynamically inject Exit Playtest button (non-destructive)
         CreateDynamicExitPlaytestButton();
+
+        // Show tutorial automatically if this is their first time
+        if (PlayerPrefs.GetInt("HasSeenLevelTutorial", 0) == 0)
+        {
+            if (tutorialPanel != null) tutorialPanel.SetActive(true);
+            PlayerPrefs.SetInt("HasSeenLevelTutorial", 1);
+            PlayerPrefs.Save();
+        }
     }
 
     // ── Palette Navigation ───────────────────────────────────────────────────
@@ -231,6 +242,8 @@ public class LevelCreatorUI : MonoBehaviour
         {
             InitializeCameraSettingsSliders();
         }
+
+        UpdateToolButtonHighlights();
     }
 
     // ── Tool Selection API ───────────────────────────────────────────────────
@@ -239,6 +252,7 @@ public class LevelCreatorUI : MonoBehaviour
         SelectedAsset = assetType;
         IsEraserActive = false;
         UpdateToolText();
+        UpdateToolButtonHighlights();
         OnToolChanged?.Invoke(SelectedAsset, IsEraserActive);
 
         if (GridPainter.Instance != null)
@@ -254,6 +268,7 @@ public class LevelCreatorUI : MonoBehaviour
     {
         IsEraserActive = !IsEraserActive;
         UpdateToolText();
+        UpdateToolButtonHighlights();
         OnToolChanged?.Invoke(SelectedAsset, IsEraserActive);
     }
 
@@ -261,7 +276,11 @@ public class LevelCreatorUI : MonoBehaviour
     {
         if (selectedToolText == null) return;
 
-        if (GridPainter.Instance != null && GridPainter.Instance.GetSelectedObject() != null)
+        if (IsEraserActive)
+        {
+            selectedToolText.text = "Active Tool: <color=red>Eraser</color>";
+        }
+        else if (GridPainter.Instance != null && GridPainter.Instance.GetSelectedObject() != null)
         {
             var selected = GridPainter.Instance.GetSelectedObject();
             string displayName = !string.IsNullOrEmpty(selected.customToolDisplayName) 
@@ -269,10 +288,6 @@ public class LevelCreatorUI : MonoBehaviour
                 : selected.assetTypeName;
 
             selectedToolText.text = $"Active Tool: <color=blue>{displayName}</color>";
-        }
-        else if (IsEraserActive)
-        {
-            selectedToolText.text = "Active Tool: <color=red>Eraser</color>";
         }
         else
         {
@@ -1098,5 +1113,76 @@ public class LevelCreatorUI : MonoBehaviour
             Destroy(modalBackdrop);
             onCancel?.Invoke();
         });
+    }
+    public void ToggleTutorialPanel()
+    {
+        if (tutorialPanel != null)
+        {
+            tutorialPanel.SetActive(!tutorialPanel.activeSelf);
+        }
+    }
+
+    /// <summary>
+    /// Finds all palette and tool buttons and updates their scale and outline colors 
+    /// dynamically to highlight the active tool/eraser.
+    /// </summary>
+    private void UpdateToolButtonHighlights()
+    {
+        List<Button> allButtons = new List<Button>();
+        
+        // Gather buttons from all palette panels (includes active and inactive panels)
+        if (terrainPalettePanel != null) allButtons.AddRange(terrainPalettePanel.GetComponentsInChildren<Button>(true));
+        if (hazardsPalettePanel != null) allButtons.AddRange(hazardsPalettePanel.GetComponentsInChildren<Button>(true));
+        if (essentialsPalettePanel != null) allButtons.AddRange(essentialsPalettePanel.GetComponentsInChildren<Button>(true));
+        
+        // Also find Eraser buttons under UI root
+        if (editorUIRoot != null)
+        {
+            foreach (var btn in editorUIRoot.GetComponentsInChildren<Button>(true))
+            {
+                string btnName = btn.name.ToLower();
+                if (btnName.Contains("eraser") || btnName.Contains("erase"))
+                {
+                    if (!allButtons.Contains(btn)) allButtons.Add(btn);
+                }
+            }
+        }
+
+        foreach (var btn in allButtons)
+        {
+            if (btn == null) continue;
+
+            bool isSelected = false;
+            var dragItem = btn.GetComponent<PaletteDragItem>();
+            
+            if (dragItem != null)
+            {
+                // Select if eraser is inactive and this button matches the active brush asset
+                isSelected = !IsEraserActive && (SelectedAsset == dragItem.assetTypeName);
+            }
+            else if (btn.name.ToLower().Contains("eraser") || btn.name.ToLower().Contains("erase"))
+            {
+                // Select if eraser tool is active
+                isSelected = IsEraserActive;
+            }
+
+            // 1. Set scale (1.1x when selected, 1.0x when idle)
+            btn.transform.localScale = isSelected ? new Vector3(1.1f, 1.1f, 1f) : new Vector3(1f, 1f, 1f);
+
+            // 2. Set red outline when selected, black outline when idle
+            var outline = btn.GetComponent<Outline>();
+            if (outline == null && isSelected)
+            {
+                // Dynamically add Outline component if selected and it has none
+                outline = btn.gameObject.AddComponent<Outline>();
+            }
+
+            if (outline != null)
+            {
+                outline.effectColor = isSelected ? Color.red : Color.black;
+                outline.effectDistance = new Vector2(2f, -2f);
+                outline.enabled = true; // Always enable so the outline is visible (either red or black)
+            }
+        }
     }
 }

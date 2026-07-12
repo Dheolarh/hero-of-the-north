@@ -87,6 +87,21 @@ public class CommunityListManager : MonoBehaviour
                 return;
             }
 
+            // Assign sequential "Level X" names based on creator's publish order (assuming array is chronological)
+            Dictionary<string, int> creatorCounts = new Dictionary<string, int>();
+            foreach (var lvl in levels)
+            {
+                if (lvl == null) continue;
+                if (!creatorCounts.ContainsKey(lvl.creator))
+                    creatorCounts[lvl.creator] = 0;
+                
+                creatorCounts[lvl.creator]++;
+                lvl.levelName = $"Level {creatorCounts[lvl.creator]}";
+            }
+
+            // Sort levels by most plays (descending)
+            System.Array.Sort(levels, (a, b) => b.playCount.CompareTo(a.playCount));
+
             foreach (var lvl in levels)
             {
                 if (lvl == null) continue;
@@ -105,7 +120,11 @@ public class CommunityListManager : MonoBehaviour
                     cardCtrl = cardObj.AddComponent<CommunityCardController>();
                 }
                 
-                cardCtrl.Initialize(lvl.levelName, lvl.creator, lvl.playCount, lvl.topPlayer, lvl.levelData, lvl.avatarUrl);
+                // Clean up any "u/" prefixes that Reddit might return
+                string cleanCreator = DevvitBridge.TrimUsername(lvl.creator, "Unknown");
+                string cleanTopPlayer = string.IsNullOrEmpty(lvl.topPlayer) ? "" : DevvitBridge.TrimUsername(lvl.topPlayer, "");
+
+                cardCtrl.Initialize(lvl.levelName, cleanCreator, lvl.playCount, cleanTopPlayer, lvl.levelData, lvl.avatarUrl);
             }
 
             Debug.Log($"[CommunityListManager] Successfully populated {levels.Length} community levels.");

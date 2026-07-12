@@ -333,6 +333,10 @@ public class LevelManager : MonoBehaviour
         // Create a root object for the spawned level
         _currentLevelInstance = new GameObject("CommunityLevel_Spawned");
 
+        // Keep track of spawned traps to copy links/wiring afterwards
+        Dictionary<Vector2, GameObject> spawnedTraps = new Dictionary<Vector2, GameObject>();
+        Dictionary<Vector2, CustomTrapData> trapDataMap = new Dictionary<Vector2, CustomTrapData>();
+
         // Create dedicated GameObject for LevelCameraSettings to match campaign hierarchy
         GameObject camSettingsObj = new GameObject("LevelCameraSettings");
         camSettingsObj.transform.SetParent(_currentLevelInstance.transform);
@@ -378,7 +382,6 @@ public class LevelManager : MonoBehaviour
                 GameObject playerObj = Instantiate(playerPrefab, data.playerStartPos.ToVector2(), Quaternion.identity, _currentLevelInstance.transform);
                 playerObj.name = "Player";
                 
-                // Set custom stats
                 PlayerController pc = playerObj.GetComponent<PlayerController>() ?? playerObj.GetComponentInChildren<PlayerController>();
                 if (pc != null)
                 {
@@ -387,6 +390,10 @@ public class LevelManager : MonoBehaviour
                     pc.MaxMultiJumps = data.playerMaxJumps;
                     pc.EnableFallDamage = data.playerEnableFallDamage;
                 }
+
+                // Add the player to spawnedTraps at its starting coordinates so other triggers can wire to it
+                Vector2 startPos = data.playerStartPos.ToVector2();
+                spawnedTraps[startPos] = pc != null ? pc.gameObject : playerObj;
 
                 // Wire Camera
                 CameraFollow cam = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : FindFirstObjectByType<CameraFollow>();
@@ -427,9 +434,7 @@ public class LevelManager : MonoBehaviour
             }
         }
 
-        // Keep track of spawned traps to copy links/wiring afterwards
-        Dictionary<Vector2, GameObject> spawnedTraps = new Dictionary<Vector2, GameObject>();
-        Dictionary<Vector2, CustomTrapData> trapDataMap = new Dictionary<Vector2, CustomTrapData>();
+
 
         // 3. Spawn Tiles
         foreach (var tile in data.tiles)
@@ -462,6 +467,8 @@ public class LevelManager : MonoBehaviour
         foreach (var pair in spawnedTraps)
         {
             Vector2 pos = pair.Key;
+            if (!trapDataMap.ContainsKey(pos)) continue; // Skip objects (like the player) that are not traps
+
             GameObject trapObj = pair.Value;
             CustomTrapData trapData = trapDataMap[pos];
 
@@ -503,7 +510,20 @@ public class LevelManager : MonoBehaviour
                 if (!string.IsNullOrEmpty(trapData.rotationDirectionStr))
                     System.Enum.TryParse(trapData.rotationDirectionStr, out ct.rotationDirection);
 
+                // Ensure collider is set to trigger if it exists (fixes Trigger Zones lacking colliders in Game Mode)
+                var col = trapObj.GetComponent<Collider2D>();
+                if (col == null)
+                {
+                    var newCol = trapObj.AddComponent<BoxCollider2D>();
+                    newCol.isTrigger = true;
+                }
+                else if (trapData.type.Replace(" ", "").ToLower() == "triggerzone")
+                {
+                    col.isTrigger = true;
+                }
+
                 // Restore Object properties
+                ct.setObjectActive = trapData.setObjectActive;
                 ct.modifyColliderState = trapData.modifyColliderState;
                 ct.makeSolid = trapData.makeSolid;
                 ct.modifyGravityState = trapData.modifyGravityState;
@@ -546,6 +566,15 @@ public class LevelManager : MonoBehaviour
                         {
                             targetList.Add(spawnedTraps[oPos]);
                         }
+                        else if (data.hasPlayerStart && Vector2.Distance(oPos, data.playerStartPos.ToVector2()) < 0.1f)
+                        {
+                            GameObject activePlayer = GameObject.Find("Player");
+                            if (activePlayer != null)
+                            {
+                                PlayerController activePC = activePlayer.GetComponent<PlayerController>() ?? activePlayer.GetComponentInChildren<PlayerController>();
+                                targetList.Add(activePC != null ? activePC.gameObject : activePlayer);
+                            }
+                        }
                     }
                     ct.objectsToTrigger = targetList.ToArray();
                 }
@@ -560,6 +589,15 @@ public class LevelManager : MonoBehaviour
                         if (spawnedTraps.ContainsKey(oPos))
                         {
                             activatorList.Add(spawnedTraps[oPos]);
+                        }
+                        else if (data.hasPlayerStart && Vector2.Distance(oPos, data.playerStartPos.ToVector2()) < 0.1f)
+                        {
+                            GameObject activePlayer = GameObject.Find("Player");
+                            if (activePlayer != null)
+                            {
+                                PlayerController activePC = activePlayer.GetComponent<PlayerController>() ?? activePlayer.GetComponentInChildren<PlayerController>();
+                                activatorList.Add(activePC != null ? activePC.gameObject : activePlayer);
+                            }
                         }
                     }
                     ct.activationObjects = activatorList.ToArray();

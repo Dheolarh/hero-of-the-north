@@ -1719,15 +1719,14 @@ public class GridPainter : MonoBehaviour
             col.isTrigger = true;
         }
 
-        // If this trap uses "Appear on Trigger", hide target objects' renderers right now
-        // so they start invisible in playtest. They'll be re-enabled when the trap fires.
+        // If this trap uses "Appear on Trigger", hide target objects right now by deactivating them
+        // so they start inactive in playtest. They'll be re-activated when the trap fires.
         if (playtestTrigger.appearOnTrigger && playtestTrigger.objectsToTrigger != null)
         {
             foreach (var targetObj in playtestTrigger.objectsToTrigger)
             {
                 if (targetObj == null) continue;
-                var renderers = targetObj.GetComponentsInChildren<Renderer>(true);
-                foreach (var r in renderers) r.enabled = false;
+                targetObj.SetActive(false);
             }
         }
     }

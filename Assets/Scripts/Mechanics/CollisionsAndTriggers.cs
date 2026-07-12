@@ -137,6 +137,7 @@ public class CollisionsAndTriggers : MonoBehaviour
     private float originalGravityScale;
     private bool isPhysicsModified = false;
     private float lastTriggerTime = -999f;
+    private bool _isExecuting = false;
 
     [Header("Change Object Properties Settings")]
     public bool modifyColliderState = false;
@@ -182,14 +183,13 @@ public class CollisionsAndTriggers : MonoBehaviour
             }
         }
 
-        // If configured to appear on trigger, make targets invisible at start
+        // If configured to appear on trigger, make targets invisible at start by deactivating them
         if (appearOnTrigger && objectsToTrigger != null)
         {
             foreach (var obj in objectsToTrigger)
             {
                 if (obj == null) continue;
-                var renderers = obj.GetComponentsInChildren<Renderer>(true);
-                foreach (var r in renderers) r.enabled = false;
+                obj.SetActive(false);
             }
         }
 
@@ -777,167 +777,191 @@ public class CollisionsAndTriggers : MonoBehaviour
 
     private void ExecuteTriggerActions()
     {
-        // Handle camera shake trigger if enabled
-        if (enableCameraShake && CameraShake.Instance != null)
-        {
-            string sfx = playShakeSFX ? (string.IsNullOrEmpty(audioClipName) ? "Boulder" : audioClipName) : "";
-            CameraShake.Instance.StartShake(cameraShakeIntensity, cameraShakeFrequency, sfx, null, 9999f);
-            isActivelyShaking = true;
-            Debug.Log($"[CollisionsAndTriggers] Started camera shake. Intensity={cameraShakeIntensity}, Frequency={cameraShakeFrequency}, SFX={sfx}");
-        }
-        // If configured to appear on trigger, make targets visible now
-        if (appearOnTrigger && objectsToTrigger != null)
-        {
-            foreach (var obj in objectsToTrigger)
-            {
-                if (obj == null) continue;
-                var renderers = obj.GetComponentsInChildren<Renderer>(true);
-                foreach (var r in renderers) r.enabled = true;
-            }
-        }
+        if (_isExecuting) return;
+        _isExecuting = true;
 
-        // Handle audio playback first (before teleporting/moving the player)
-        if (triggerType == TriggerType.Teleport)
+        try
         {
-            if (AudioManager.Instance != null)
+            // Handle camera shake trigger if enabled
+            if (enableCameraShake && CameraShake.Instance != null)
             {
-                // Play configured sound if set, otherwise default to "Teleport"
-                string soundToPlay = (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName)) ? audioClipName : "Teleport";
-                AudioManager.Instance.PlaySfx(soundToPlay);
+                string sfx = playShakeSFX ? (string.IsNullOrEmpty(audioClipName) ? "Boulder" : audioClipName) : "";
+                CameraShake.Instance.StartShake(cameraShakeIntensity, cameraShakeFrequency, sfx, null, 9999f);
+                isActivelyShaking = true;
+                Debug.Log($"[CollisionsAndTriggers] Started camera shake. Intensity={cameraShakeIntensity}, Frequency={cameraShakeFrequency}, SFX={sfx}");
             }
-        }
-        else if (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName))
-        {
-            if (AudioManager.Instance != null)
+            // If configured to appear on trigger, make targets visible now by activating them
+            if (appearOnTrigger && objectsToTrigger != null)
             {
-                if (loopAudio)
+                foreach (var obj in objectsToTrigger)
                 {
-                    AudioManager.Instance.PlayLoopingSound(audioClipName);
-                }
-                else
-                {
-                    AudioManager.Instance.PlaySfx(audioClipName);
+                    if (obj == null) continue;
+                    obj.SetActive(true);
                 }
             }
-        }
 
-        switch (triggerType)
-        {
-            case TriggerType.ContinousMotion:
-                enableMove = true;
-                if (rotationSpeed > 0f) enableRotation = true;
-                if (objectsToTrigger != null)
+            // Handle audio playback first (before teleporting/moving the player)
+            if (triggerType == TriggerType.Teleport)
+            {
+                if (AudioManager.Instance != null)
                 {
-                    foreach (GameObject obj in objectsToTrigger)
+                    // Play configured sound if set, otherwise default to "Teleport"
+                    string soundToPlay = (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName)) ? audioClipName : "Teleport";
+                    AudioManager.Instance.PlaySfx(soundToPlay);
+                }
+            }
+            else if (playAudioOnTrigger && !string.IsNullOrEmpty(audioClipName))
+            {
+                if (AudioManager.Instance != null)
+                {
+                    if (loopAudio)
                     {
-                        if (obj != null)
+                        AudioManager.Instance.PlayLoopingSound(audioClipName);
+                    }
+                    else
+                    {
+                        AudioManager.Instance.PlaySfx(audioClipName);
+                    }
+                }
+            }
+
+            switch (triggerType)
+            {
+                case TriggerType.ContinousMotion:
+                    enableMove = true;
+                    if (rotationSpeed > 0f) enableRotation = true;
+                    if (objectsToTrigger != null)
+                    {
+                        foreach (GameObject obj in objectsToTrigger)
                         {
-                            PingPongMovement ppm = obj.GetComponent<PingPongMovement>();
-                            if (isPingPong)
+                            if (obj != null)
                             {
-                                if (ppm == null) ppm = obj.AddComponent<PingPongMovement>();
-                                ppm.enabled = true;
-                                if (moveDirection == MoveDirection.Left || moveDirection == MoveDirection.Right)
+                                PingPongMovement ppm = obj.GetComponent<PingPongMovement>();
+                                if (isPingPong)
                                 {
-                                    ppm.movementDirection = PingPongDirection.Horizontal;
+                                    if (ppm == null) ppm = obj.AddComponent<PingPongMovement>();
+                                    ppm.enabled = true;
+                                    if (moveDirection == MoveDirection.Left || moveDirection == MoveDirection.Right)
+                                    {
+                                        ppm.movementDirection = PingPongDirection.Horizontal;
+                                    }
+                                    else
+                                    {
+                                        ppm.movementDirection = PingPongDirection.Vertical;
+                                    }
+                                    ppm.speed = moveSpeed;
+                                    ppm.maxLeftOffset = pingPongDistance;
+                                    ppm.maxRightOffset = pingPongDistance;
+                                    ppm.Activate();
                                 }
                                 else
                                 {
-                                    ppm.movementDirection = PingPongDirection.Vertical;
-                                }
-                                ppm.speed = moveSpeed;
-                                ppm.maxLeftOffset = pingPongDistance;
-                                ppm.maxRightOffset = pingPongDistance;
-                                ppm.Activate();
-                            }
-                            else
-                            {
-                                if (ppm != null)
-                                {
-                                    ppm.enabled = false;
+                                    if (ppm != null)
+                                    {
+                                        ppm.enabled = false;
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                break;
+                    break;
 
-            case TriggerType.RotationTrap:
-                enableRotation = true;
-                break;
+                case TriggerType.RotationTrap:
+                    enableRotation = true;
+                    break;
 
-            case TriggerType.SingleMotion:
-                StartMoveToTarget();
-                if (rotationSpeed > 0f) enableRotation = true;
-                Debug.Log("Trap triggered!");
-                break;
+                case TriggerType.SingleMotion:
+                    StartMoveToTarget();
+                    if (rotationSpeed > 0f) enableRotation = true;
+                    Debug.Log("Trap triggered!");
+                    break;
 
-            case TriggerType.Teleport:
-                Teleport();
-                Debug.Log("Teleport triggered!");
-                break;
+                case TriggerType.Teleport:
+                    Teleport();
+                    Debug.Log("Teleport triggered!");
+                    break;
 
-            case TriggerType.PhysicsModifier:
-                if (objectsToTrigger != null)
-                {
-                    foreach (GameObject obj in objectsToTrigger)
+                case TriggerType.PhysicsModifier:
+                    if (objectsToTrigger != null)
                     {
-                        if (obj == null) continue;
-
-                        // 1. Handle Collider — disable ALL colliders (parent + children) for pass-through
-                        if (modifyColliderState)
+                        foreach (GameObject obj in objectsToTrigger)
                         {
-                            var colliders = obj.GetComponentsInChildren<Collider2D>(true);
-                            foreach (var col in colliders)
-                            {
-                                col.enabled = makeSolid; // true = solid, false = pass-through (disabled)
-                            }
-                        }
+                            if (obj == null) continue;
 
-                        // 2. Handle Gravity
-                        if (modifyGravityState)
-                        {
-                            var rb = obj.GetComponent<Rigidbody2D>();
-                            if (rb == null && makeSubjectToGravity)
+                            // 1. Handle Collider — disable ALL colliders (parent + children) for pass-through
+                            if (modifyColliderState)
                             {
-                                rb = obj.AddComponent<Rigidbody2D>();
-                                rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-                            }
-                            if (rb != null)
-                            {
-                                rb.simulated = true;
-                                rb.gravityScale = makeSubjectToGravity ? 1f : 0f;
-                                if (!makeSubjectToGravity)
+                                var colliders = obj.GetComponentsInChildren<Collider2D>(true);
+                                foreach (var col in colliders)
                                 {
-                                    rb.linearVelocity = Vector2.zero;
+                                    col.enabled = makeSolid; // true = solid, false = pass-through (disabled)
+                                }
+                            }
+
+                            // 2. Handle Gravity
+                            if (modifyGravityState)
+                            {
+                                var rb = obj.GetComponent<Rigidbody2D>();
+                                if (rb == null && makeSubjectToGravity)
+                                {
+                                    rb = obj.AddComponent<Rigidbody2D>();
+                                    rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+                                }
+                                if (rb != null)
+                                {
+                                    rb.simulated = true;
+                                    rb.gravityScale = makeSubjectToGravity ? 1f : 0f;
+                                    if (!makeSubjectToGravity)
+                                    {
+                                        rb.linearVelocity = Vector2.zero;
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                break;
+                    break;
 
-            case TriggerType.JumpModifier:
-                if (applyOnEnter)
+                case TriggerType.JumpModifier:
+                    if (applyOnEnter)
+                    {
+                        ModifyJumpSettings();
+                    }
+                    break;
+
+                case TriggerType.Ally:
+                    break;
+            }
+
+            // Handle object active toggle
+            if (setObjectActive)
+            {
+                SetObjectActiveState();
+            }
+
+            // Handle component actions
+            if (componentAction != ComponentAction.None)
+            {
+                AddComponentToObject();
+            }
+
+            // Cascade execution to any CollisionsAndTriggers components on the target objects
+            if (objectsToTrigger != null)
+            {
+                foreach (GameObject obj in objectsToTrigger)
                 {
-                    ModifyJumpSettings();
+                    if (obj == null) continue;
+
+                    CollisionsAndTriggers targetCT = obj.GetComponent<CollisionsAndTriggers>() ?? obj.GetComponentInChildren<CollisionsAndTriggers>();
+                    if (targetCT != null)
+                    {
+                        targetCT.ExecuteTriggerActions();
+                    }
                 }
-                break;
-
-            case TriggerType.Ally:
-                break;
+            }
         }
-
-        // Handle object active toggle
-        if (setObjectActive)
+        finally
         {
-            SetObjectActiveState();
-        }
-
-        // Handle component actions
-        if (componentAction != ComponentAction.None)
-        {
-            AddComponentToObject();
+            _isExecuting = false;
         }
     }
 
