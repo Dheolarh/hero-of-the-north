@@ -312,13 +312,6 @@ public class UIManager : MonoBehaviour
         communityPanel = ResolvePanelGameObject(communityPanel);
         creatorPanel = ResolvePanelGameObject(creatorPanel);
 
-        // Dynamically add CommunityListManager to the community panel if found (only if it is actually the community panel and not mis-mapped)
-        if (communityPanel != null && communityPanel.name.ToLower().Contains("community") && communityPanel.GetComponent<CommunityListManager>() == null)
-        {
-            var manager = communityPanel.AddComponent<CommunityListManager>();
-            manager.Setup(communityCardPrefab, communityCardContainer);
-            Debug.Log("[UIManager] Programmatically added and configured CommunityListManager component on communityPanel.");
-        }
     }
 
     void Update()

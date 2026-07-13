@@ -14,10 +14,17 @@ public class CommunityListManager : MonoBehaviour
 
     void Awake()
     {
-        // Programmatically locate cardContainer if not set
+        // Read inspector-assigned values from UIManager if they are not set on this component directly
+        var uiMgr = FindFirstObjectByType<UIManager>();
+        if (uiMgr != null)
+        {
+            if (communityCardPrefab == null) communityCardPrefab = uiMgr.communityCardPrefab;
+            if (cardContainer == null) cardContainer = uiMgr.communityCardContainer;
+        }
+
+        // Programmatically locate cardContainer if still not set
         if (cardContainer == null)
         {
-            var uiMgr = FindFirstObjectByType<UIManager>();
             if (uiMgr != null && uiMgr.communityPanel != null)
             {
                 var contentTransform = uiMgr.communityPanel.transform.Find("showcase/SectionB/Scroll View/Viewport/Content");
@@ -29,7 +36,7 @@ public class CommunityListManager : MonoBehaviour
             }
         }
 
-        // Programmatically resolve prefab by using the first child in cardContainer as a template if not assigned
+        // Programmatically resolve prefab by using the first child in cardContainer as a template if still not assigned
         if (communityCardPrefab == null && cardContainer != null && cardContainer.childCount > 0)
         {
             var template = cardContainer.GetChild(0).gameObject;
