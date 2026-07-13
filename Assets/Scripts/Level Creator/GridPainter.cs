@@ -53,6 +53,7 @@ public class GridPainter : MonoBehaviour
 
     // Camera panning
     private Vector3 lastMousePos;
+    private bool isPanning = false;
 
     // Drag-and-drop selectable state
     private GameObject activeDraggedSelectable = null;
@@ -111,6 +112,15 @@ public class GridPainter : MonoBehaviour
 
         if (LevelCreatorUI.Instance.IsPlaytesting) return;
 
+        // Handle Select and Double-click interactions
+        HandleClickSelection();
+
+        // Handle dragging selectable objects on screen
+        HandleSelectableDragging();
+
+        // Handle automatic edge-scrolling during drag operations
+        HandleDragEdgeScroll();
+
         // Camera Panning (Right Mouse Button drag)
         HandleCameraPanning();
 
@@ -122,12 +132,6 @@ public class GridPainter : MonoBehaviour
         {
             SnapCameraToPlayerStart();
         }
-
-        // Handle Select and Double-click interactions
-        HandleClickSelection();
-
-        // Handle dragging selectable objects on screen
-        HandleSelectableDragging();
 
         // Handle Linking Mode wire update
         HandleLinkingWireUpdate();
@@ -209,8 +213,21 @@ public class GridPainter : MonoBehaviour
 
     private void HandleCameraPanning()
     {
-        if (Input.GetMouseButtonDown(1))
+        // Prevent panning when clicking UI buttons
+        bool overUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        if (Input.touchCount > 0)
         {
+            // On mobile touch, check touch ID 0 specifically
+            overUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
+        }
+
+        // Start panning: Right click Down OR Left click Down on empty space (no UI, not dragging/placing objects)
+        bool startPanning = Input.GetMouseButtonDown(1) || 
+            (Input.GetMouseButtonDown(0) && !overUI && activeDraggedSelectable == null && activeDragObject == null);
+
+        if (startPanning)
+        {
+            isPanning = true;
             lastMousePos = Input.mousePosition;
 
             // Stop camera follow so user can pan manual workspace freely
@@ -221,7 +238,14 @@ public class GridPainter : MonoBehaviour
             }
         }
 
-        if (Input.GetMouseButton(1))
+        // Stop panning when releasing RMB or releasing LMB when panning was active
+        if (Input.GetMouseButtonUp(1) || (Input.GetMouseButtonUp(0) && isPanning))
+        {
+            isPanning = false;
+        }
+
+        // Perform camera move when dragging
+        if (isPanning && (Input.GetMouseButton(1) || Input.GetMouseButton(0)))
         {
             Vector3 delta = editorCamera.ScreenToViewportPoint(lastMousePos - Input.mousePosition);
             Vector3 move = new Vector3(delta.x * editorCamera.orthographicSize * 2f * editorCamera.aspect, delta.y * editorCamera.orthographicSize * 2f, 0f);
@@ -230,6 +254,77 @@ public class GridPainter : MonoBehaviour
             ClampCameraPosition();
             lastMousePos = Input.mousePosition;
         }
+    }
+
+    /// <summary>
+    /// Checks if the user is dragging an object near the screen boundaries. 
+    /// If so, automatically scrolls the camera in that direction.
+    /// </summary>
+    private void HandleDragEdgeScroll()
+    {
+        // Only scroll if we are actively dragging an object (placed object or spawning item)
+        if (activeDraggedSelectable == null && activeDragObject == null) return;
+
+        float margin = 80f; // Pixels from screen edge to trigger auto-scroll
+        Vector3 mousePos = Input.mousePosition;
+        Vector3 scrollDir = Vector3.zero;
+
+        // Check horizontal boundaries
+        if (mousePos.x < margin) scrollDir.x = -1f;
+        else if (mousePos.x > Screen.width - margin) scrollDir.x = 1f;
+
+        // Check vertical boundaries
+        if (mousePos.y < margin) scrollDir.y = -1f;
+        else if (mousePos.y > Screen.height - margin) scrollDir.y = 1f;
+
+        if (scrollDir != Vector3.zero)
+        {
+            // Scale scroll speed based on camera zoom/orthographic size
+            float speed = 8f * Time.deltaTime * (editorCamera.orthographicSize / 5f);
+            
+            // Move camera
+            editorCamera.transform.position += scrollDir * speed;
+            
+            // Ensure camera doesn't exceed maximum level bounds
+            ClampCameraPosition();
+
+            // Force update drag position immediately so object doesn't lag behind moving viewport
+            if (activeDraggedSelectable != null)
+            {
+                Vector3 mouseWorldPos = editorCamera.ScreenToWorldPoint(Input.mousePosition);
+                Vector3 newPos = mouseWorldPos + dragOffset + new Vector3(0f, 1.5f, 0f);
+                newPos.z = 0f;
+
+                activeDraggedSelectable.transform.position = ClampToViewportAndBounds(newPos);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Clamps an editor position to both the visible camera viewport (so it stays on screen)
+    /// and the absolute level bounds.
+    /// </summary>
+    private Vector3 ClampToViewportAndBounds(Vector3 targetPos)
+    {
+        if (editorCamera == null) return targetPos;
+
+        float halfHeight = editorCamera.orthographicSize;
+        float halfWidth = halfHeight * editorCamera.aspect;
+        float camX = editorCamera.transform.position.x;
+        float camY = editorCamera.transform.position.y;
+
+        // Keep a 0.8 unit margin so the object remains fully visible and doesn't get cut off by screen boundaries
+        float marginX = 0.8f;
+        float marginY = 0.8f;
+
+        targetPos.x = Mathf.Clamp(targetPos.x, camX - halfWidth + marginX, camX + halfWidth - marginX);
+        targetPos.y = Mathf.Clamp(targetPos.y, camY - halfHeight + marginY, camY + halfHeight - marginY);
+
+        // Clamp to overall level bounds
+        targetPos.x = Mathf.Clamp(targetPos.x, -7f, 50f);
+        targetPos.y = Mathf.Clamp(targetPos.y, -25f, 25f);
+
+        return targetPos;
     }
 
     private void HandleCameraZoom()
@@ -341,7 +436,12 @@ public class GridPainter : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             // Prevent clicks when clicking UI buttons
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            bool overUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            if (Input.touchCount > 0)
+            {
+                overUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
+            }
+            if (overUI)
             {
                 Debug.Log("[GridPainter] Selection ignored: Clicked on a UI element.");
                 return;
@@ -410,7 +510,12 @@ public class GridPainter : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            bool overUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            if (Input.touchCount > 0)
+            {
+                overUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
+            }
+            if (overUI)
                 return;
 
             Vector3 mouseWorldPos = editorCamera.ScreenToWorldPoint(Input.mousePosition);
@@ -437,14 +542,11 @@ public class GridPainter : MonoBehaviour
         if (Input.GetMouseButton(0) && activeDraggedSelectable != null)
         {
             Vector3 mouseWorldPos = editorCamera.ScreenToWorldPoint(Input.mousePosition);
-            Vector3 newPos = mouseWorldPos + dragOffset;
+            // Apply a +1.5f Y offset so the object floats above the player's thumb/finger
+            Vector3 newPos = mouseWorldPos + dragOffset + new Vector3(0f, 1.5f, 0f);
             newPos.z = 0f;
 
-            // Clamp coordinates to stay within level bounds
-            newPos.x = Mathf.Clamp(newPos.x, -7f, 50f);
-            newPos.y = Mathf.Clamp(newPos.y, -25f, 25f);
-
-            activeDraggedSelectable.transform.position = newPos;
+            activeDraggedSelectable.transform.position = ClampToViewportAndBounds(newPos);
         }
 
         if (Input.GetMouseButtonUp(0))
@@ -689,9 +791,12 @@ public class GridPainter : MonoBehaviour
     {
         if (activeDragObject == null) return;
 
+        // Apply a +1.5f Y offset so the newly drag-spawned object floats above the player's thumb/finger
+        Vector3 offsetPos = worldPos + new Vector3(0f, 1.5f, 0f);
+
         // Optional Snapping (e.g. snaps to 0.5 units for cleaner placement grids)
-        float snappedX = Mathf.Round(worldPos.x * 2f) / 2f;
-        float snappedY = Mathf.Round(worldPos.y * 2f) / 2f;
+        float snappedX = Mathf.Round(offsetPos.x * 2f) / 2f;
+        float snappedY = Mathf.Round(offsetPos.y * 2f) / 2f;
 
         activeDragObject.transform.position = new Vector3(snappedX, snappedY, 0f);
     }

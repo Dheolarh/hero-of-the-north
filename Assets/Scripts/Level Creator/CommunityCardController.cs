@@ -127,11 +127,12 @@ public class CommunityCardController : MonoBehaviour
 
         if (LevelManager.Instance != null)
         {
-            LevelManager.Instance.PlayCommunityLevel(levelDataJson);
+            LevelManager.Instance.PlayCommunityLevel(levelId, levelDataJson);
         }
         else
         {
             PlayerPrefs.SetString("PlayCommunityLevelJSON", levelDataJson);
+            PlayerPrefs.SetString("PlayCommunityLevelID", levelId);
             PlayerPrefs.Save();
 
             Debug.Log($"[CommunityCardController] Launching community level '{levelNameText?.text}' in Game scene.");

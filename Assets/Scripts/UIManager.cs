@@ -312,8 +312,8 @@ public class UIManager : MonoBehaviour
         communityPanel = ResolvePanelGameObject(communityPanel);
         creatorPanel = ResolvePanelGameObject(creatorPanel);
 
-        // Dynamically add CommunityListManager to the community panel if found
-        if (communityPanel != null && communityPanel.GetComponent<CommunityListManager>() == null)
+        // Dynamically add CommunityListManager to the community panel if found (only if it is actually the community panel and not mis-mapped)
+        if (communityPanel != null && communityPanel.name.ToLower().Contains("community") && communityPanel.GetComponent<CommunityListManager>() == null)
         {
             var manager = communityPanel.AddComponent<CommunityListManager>();
             manager.Setup(communityCardPrefab, communityCardContainer);
@@ -415,6 +415,29 @@ public class UIManager : MonoBehaviour
 
         HUD.transform.localScale = Vector3.one;
         HUD.SetActive(active);
+        UpdateDirectionControlsVisibility(); // Dynamically update direction controls
+    }
+
+    /// <summary>
+    /// Dynamically evaluates and updates the visibility of the mobile direction arrow controls
+    /// based on whether the gameplay HUD is active OR we are currently playtesting in the editor.
+    /// </summary>
+    public void UpdateDirectionControlsVisibility()
+    {
+        bool shouldShow = false;
+
+        // Show if HUD is active (actual gameplay)
+        if (HUD != null && HUD.activeInHierarchy)
+        {
+            shouldShow = true;
+        }
+        // Show if we are in playtest mode inside LevelCreatorUI
+        else if (LevelCreatorUI.Instance != null && LevelCreatorUI.Instance.IsPlaytesting)
+        {
+            shouldShow = true;
+        }
+
+        SetDirectionControlsActive(shouldShow);
     }
 
     public void SetDirectionControlsActive(bool active)

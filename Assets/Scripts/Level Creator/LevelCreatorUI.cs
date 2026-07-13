@@ -321,7 +321,7 @@ public class LevelCreatorUI : MonoBehaviour
              if (UIManager.Instance != null)
              {
                  UIManager.Instance.SetHUDActive(false);
-                 UIManager.Instance.SetDirectionControlsActive(true);
+                 UIManager.Instance.UpdateDirectionControlsVisibility();
              }
         }
         else
@@ -354,12 +354,12 @@ public class LevelCreatorUI : MonoBehaviour
             }
 
             // Hide HUD, controls, and any active popups (like Death or Level Complete screens)
-            if (UIManager.Instance != null)
-            {
-                UIManager.Instance.HidePanels();
-                UIManager.Instance.SetHUDActive(false);
-                UIManager.Instance.SetDirectionControlsActive(false);
-            }
+             if (UIManager.Instance != null)
+             {
+                 UIManager.Instance.HidePanels();
+                 UIManager.Instance.SetHUDActive(false);
+                 UIManager.Instance.UpdateDirectionControlsVisibility();
+             }
 
             Debug.Log("[LevelCreatorUI] Playtest stopped. Cleaned up panels and sounds. Returned to Editor.");
         }
@@ -512,12 +512,20 @@ public class LevelCreatorUI : MonoBehaviour
 
     // ── Publish to Reddit / Devvit ───────────────────────────────────────────
 
+    private bool isPublishing = false;
+
     /// <summary>
     /// Publishes the validated level design to Devvit backend and Reddit.
     /// Triggered by the Publish button.
     /// </summary>
     public void PublishLevel()
     {
+        if (isPublishing)
+        {
+            Debug.LogWarning("[LevelCreatorUI] Already publishing, click ignored.");
+            return;
+        }
+
         if (!HasValidatedPlaytest)
         {
             Debug.LogWarning("[LevelCreatorUI] Cannot publish unvalidated level. Playtest and complete the level first.");
@@ -551,9 +559,29 @@ public class LevelCreatorUI : MonoBehaviour
         string json = JsonUtility.ToJson(levelData);
         Debug.Log($"[LevelCreatorUI] Publishing '{levelName}' (slot {currentLevelSlot}) by {creatorName}.");
 
-#if UNITY_WEBGL && !UNITY_EDITOR
-        Application.ExternalCall("publishCustomLevel", json);
-#else
+        isPublishing = true;
+        if (DevvitBridge.Instance != null)
+        {
+            DevvitBridge.Instance.PublishCustomLevel(json, (success, responseMsg) =>
+            {
+                isPublishing = false;
+                if (success)
+                {
+                    Debug.Log($"[LevelCreatorUI] Level published successfully to Devvit! Server Response: {responseMsg}");
+                }
+                else
+                {
+                    Debug.LogError($"[LevelCreatorUI] Failed to publish level to Devvit: {responseMsg}");
+                }
+            });
+        }
+        else
+        {
+            isPublishing = false;
+            Debug.LogWarning("[LevelCreatorUI] DevvitBridge.Instance is null. Cannot publish level.");
+        }
+
+#if UNITY_EDITOR
         Debug.Log($"[LevelCreatorUI] [Editor Mock] Published event sent. JSON size: {json.Length} chars");
 
         // Save to PlayerPrefs list of editor-published levels for local community panel demo

@@ -184,6 +184,53 @@ api.post('/levels/:id/play', async (c) => {
     }
 });
 
+// POST /api/levels/community/score
+api.post('/levels/community/score', async (c) => {
+    let username = context.username || 'Anonymous';
+    
+    // Resolve clean username
+    if (username.startsWith('u/')) {
+        username = username.substring(2);
+    }
+
+    const body = await c.req.json();
+    const { levelId, alliesSaved, timeSpent, retryCount } = body;
+
+    if (!levelId) {
+        return c.json({ success: false, error: 'Missing levelId' }, 400);
+    }
+
+    try {
+        const dataStr = await redis.hGet('community:levels', levelId);
+        if (!dataStr) {
+            return c.json({ success: false, error: 'Level not found' }, 404);
+        }
+
+        const level = JSON.parse(dataStr);
+
+        // Score logic: allies saved (100 pts each) + speed bonus (max 1000 pts) - retries penalty (50 pts each)
+        const heroPoints = (alliesSaved * 100) + (1000 - Math.min(timeSpent, 900)) - (retryCount * 50);
+
+        const currentTopScore = level.topScore || 0;
+
+        if (heroPoints > currentTopScore || !level.topPlayer) {
+            level.topScore = heroPoints;
+            level.topPlayer = username;
+
+            await redis.hSet('community:levels', {
+                [levelId]: JSON.stringify(level)
+            });
+            console.log(`[API] New high score for ${levelId}: ${heroPoints} by ${username}`);
+            return c.json({ success: true, newHighScore: true, topPlayer: username, topScore: heroPoints });
+        }
+
+        return c.json({ success: true, newHighScore: false, topPlayer: level.topPlayer, topScore: currentTopScore });
+    } catch (e) {
+        console.error('[API] Error submitting community score:', e);
+        return c.json({ success: false }, 500);
+    }
+});
+
 // ========== SCORE SUBMISSION ==========
 
 // POST /api/score/submit

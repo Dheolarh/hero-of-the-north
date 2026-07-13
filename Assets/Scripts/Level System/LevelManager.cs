@@ -44,6 +44,7 @@ public class LevelManager : MonoBehaviour
     private LevelData    _currentLevelData;
     private GameObject   _currentLevelInstance;
     private string       _queuedCommunityLevelJson = "";
+    private string       _activeCommunityLevelId = "";
 
     private DevvitBridge.LevelUnlockInfo[] _serverUnlockData;
 
@@ -91,9 +92,11 @@ public class LevelManager : MonoBehaviour
         if (PlayerPrefs.HasKey("PlayCommunityLevelJSON"))
         {
             string json = PlayerPrefs.GetString("PlayCommunityLevelJSON", "");
+            string id = PlayerPrefs.GetString("PlayCommunityLevelID", "");
             PlayerPrefs.DeleteKey("PlayCommunityLevelJSON");
+            PlayerPrefs.DeleteKey("PlayCommunityLevelID");
             PlayerPrefs.Save();
-            PlayCommunityLevel(json);
+            PlayCommunityLevel(id, json);
         }
     }
 
@@ -201,6 +204,10 @@ public class LevelManager : MonoBehaviour
         GameManager.Instance.isGameOver      = false;
         GameManager.Instance.isLevelCompleted = false;
 
+        // Clear community level state so we load the actual campaign level
+        _queuedCommunityLevelJson = "";
+        _activeCommunityLevelId = "";
+
         _currentLevelIndex = levelNumber;
         _currentLevelData  = level;
 
@@ -270,8 +277,9 @@ public class LevelManager : MonoBehaviour
         SpawnLevel(); // Re-instantiate prefab in place
     }
 
-    public void PlayCommunityLevel(string json)
+    public void PlayCommunityLevel(string id, string json)
     {
+        _activeCommunityLevelId = id;
         _queuedCommunityLevelJson = json;
         _currentLevelData = null; // custom level
         
@@ -688,13 +696,26 @@ public class LevelManager : MonoBehaviour
 
             if (DevvitBridge.Instance != null)
             {
-                DevvitBridge.Instance.SendLevelComplete(
-                    ScoreManager.Instance.currentLevelNumber,
-                    ScoreManager.Instance.alliesSaved,
-                    ScoreManager.Instance.timeSpent,
-                    ScoreManager.Instance.retryCount,
-                    ScoreManager.Instance.heroPoints
-                );
+                if (ScoreManager.Instance.currentLevelNumber == -1 && !string.IsNullOrEmpty(_activeCommunityLevelId))
+                {
+                    DevvitBridge.Instance.SendCommunityScoreComplete(
+                        _activeCommunityLevelId,
+                        ScoreManager.Instance.alliesSaved,
+                        ScoreManager.Instance.timeSpent,
+                        ScoreManager.Instance.retryCount,
+                        ScoreManager.Instance.heroPoints
+                    );
+                }
+                else
+                {
+                    DevvitBridge.Instance.SendLevelComplete(
+                        ScoreManager.Instance.currentLevelNumber,
+                        ScoreManager.Instance.alliesSaved,
+                        ScoreManager.Instance.timeSpent,
+                        ScoreManager.Instance.retryCount,
+                        ScoreManager.Instance.heroPoints
+                    );
+                }
             }
         }
 

@@ -291,6 +291,63 @@ public class DevvitBridge : MonoBehaviour
 
     // ========== SENDING DATA TO REDDIT ==========
 
+    [System.Serializable]
+    public struct CommunityScoreData
+    {
+        public string levelId;
+        public int alliesSaved;
+        public float timeSpent;
+        public int retryCount;
+    }
+
+    /// <summary>
+    /// POST /api/levels/community/score — submits score data for a community level.
+    /// </summary>
+    public void SendCommunityScoreComplete(string levelId, int allies, float time, int retries, int points)
+    {
+        CommunityScoreData data = new CommunityScoreData
+        {
+            levelId = levelId,
+            alliesSaved = allies,
+            timeSpent = time,
+            retryCount = retries
+        };
+
+        if (logMessages)
+            Debug.Log($"[DevvitBridge] Submitting community score: Level {levelId}, {allies} allies, {time:F1}s, {retries} retries");
+
+        StartCoroutine(PostCommunityScore(data));
+    }
+
+    private IEnumerator PostCommunityScore(CommunityScoreData data)
+    {
+#if UNITY_EDITOR
+        if (logMessages)
+            Debug.Log("[DevvitBridge] [Editor Mock] Mocking community score submission success.");
+        yield break;
+#else
+        string json = JsonUtility.ToJson(data);
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+
+        using UnityWebRequest req = new UnityWebRequest("/api/levels/community/score", "POST");
+        req.uploadHandler   = new UploadHandlerRaw(bodyRaw);
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.SetRequestHeader("Content-Type", "application/json");
+
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[DevvitBridge] Community score submission failed: {req.error}");
+        }
+        else
+        {
+            if (logMessages)
+                Debug.Log($"[DevvitBridge] Community score submitted successfully. Response: {req.downloadHandler.text}");
+        }
+#endif
+    }
+
     /// <summary>
     /// POST /api/score/submit — submits level completion data.
     /// The server uses context.userId for authentication — no userId sent from client.
@@ -398,6 +455,45 @@ public class DevvitBridge : MonoBehaviour
         if (logMessages)
             Debug.Log("[DevvitBridge] Auto-refreshing leaderboard after score submission...");
         RequestLeaderboard();
+    }
+
+    /// <summary>
+    /// POST /api/levels/publish — publishes a custom level to the community database.
+    /// </summary>
+    public void PublishCustomLevel(string json, System.Action<bool, string> onComplete)
+    {
+        StartCoroutine(PostPublishLevel(json, onComplete));
+    }
+
+    private IEnumerator PostPublishLevel(string json, System.Action<bool, string> onComplete)
+    {
+#if UNITY_EDITOR
+        if (logMessages)
+            Debug.Log("[DevvitBridge] [Editor Mock] Mocking custom level publish success.");
+        onComplete?.Invoke(true, "MockSuccess");
+        yield break;
+#else
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
+
+        using UnityWebRequest req = new UnityWebRequest("/api/levels/publish", "POST");
+        req.uploadHandler   = new UploadHandlerRaw(bodyRaw);
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.SetRequestHeader("Content-Type", "application/json");
+
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[DevvitBridge] Custom level publish failed: {req.error}");
+            onComplete?.Invoke(false, req.error);
+        }
+        else
+        {
+            if (logMessages)
+                Debug.Log($"[DevvitBridge] Level published. Response: {req.downloadHandler.text}");
+            onComplete?.Invoke(true, req.downloadHandler.text);
+        }
+#endif
     }
 
     /// <summary>
