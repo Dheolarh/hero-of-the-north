@@ -13,6 +13,7 @@ public class ContinousMotion : MonoBehaviour
 
     [SerializeField] private Toggle horizontalToggle;
     [SerializeField] private Toggle verticalToggle;
+    [SerializeField] private Toggle lockMotionOnlyRotationToggle;
     
     [SerializeField] private Slider motionSpeedSlider;
     [SerializeField] private Slider rotationSpeedSlider;
@@ -26,6 +27,65 @@ public class ContinousMotion : MonoBehaviour
     {
         if (trigger == null) return;
 
+        // helper to update UI and trigger states based on Lock Motion Only Rotation
+        System.Action<bool> updateLockMotionState = (lockRotationActive) =>
+        {
+            if (lockRotationActive)
+            {
+                trigger.enableMove = false;
+                trigger.enableRotation = true;
+
+                // Disable movement controls
+                if (leftToggle != null) leftToggle.interactable = false;
+                if (rightToggle != null) rightToggle.interactable = false;
+                if (upToggle != null) upToggle.interactable = false;
+                if (downToggle != null) downToggle.interactable = false;
+                if (horizontalToggle != null) horizontalToggle.interactable = false;
+                if (verticalToggle != null) verticalToggle.interactable = false;
+                if (enableContinuousMotionToggle != null) enableContinuousMotionToggle.interactable = false;
+                if (motionSpeedSlider != null) motionSpeedSlider.interactable = false;
+                if (pingPongMinusButton != null) pingPongMinusButton.interactable = false;
+                if (pingPongPlusButton != null) pingPongPlusButton.interactable = false;
+            }
+            else
+            {
+                // Restore standard states
+                trigger.enableMove = enableMovementOnLevelStartToggle != null ? enableMovementOnLevelStartToggle.isOn : trigger.activateOnStart;
+                trigger.enableRotation = trigger.rotationSpeed > 0f;
+
+                if (enableContinuousMotionToggle != null) enableContinuousMotionToggle.interactable = true;
+                if (motionSpeedSlider != null) motionSpeedSlider.interactable = true;
+                
+                bool pingPongActive = enableContinuousMotionToggle != null ? enableContinuousMotionToggle.isOn : trigger.isPingPong;
+                if (leftToggle != null) leftToggle.interactable = !pingPongActive;
+                if (rightToggle != null) rightToggle.interactable = !pingPongActive;
+                if (upToggle != null) upToggle.interactable = !pingPongActive;
+                if (downToggle != null) downToggle.interactable = !pingPongActive;
+                
+                if (horizontalToggle != null) horizontalToggle.interactable = pingPongActive;
+                if (verticalToggle != null) verticalToggle.interactable = pingPongActive;
+
+                if (pingPongMinusButton != null) pingPongMinusButton.interactable = pingPongActive;
+                if (pingPongPlusButton != null) pingPongPlusButton.interactable = pingPongActive;
+            }
+        };
+
+        if (lockMotionOnlyRotationToggle != null)
+        {
+            lockMotionOnlyRotationToggle.onValueChanged.RemoveAllListeners();
+            // It is considered active if enableRotation is true and enableMove is false
+            lockMotionOnlyRotationToggle.isOn = (trigger.enableRotation && !trigger.enableMove);
+            lockMotionOnlyRotationToggle.onValueChanged.AddListener((val) =>
+            {
+                updateLockMotionState(val);
+            });
+            updateLockMotionState(lockMotionOnlyRotationToggle.isOn);
+        }
+        else
+        {
+            updateLockMotionState(false);
+        }
+
         // 1. Movement on start toggle
         if (enableMovementOnLevelStartToggle != null)
         {
@@ -34,7 +94,11 @@ public class ContinousMotion : MonoBehaviour
             enableMovementOnLevelStartToggle.onValueChanged.AddListener((val) =>
             {
                 trigger.activateOnStart = val;
-                trigger.enableMove = val;
+                // Only enable movement on value change if we are not locking motion
+                if (lockMotionOnlyRotationToggle == null || !lockMotionOnlyRotationToggle.isOn)
+                {
+                    trigger.enableMove = val;
+                }
             });
         }
 

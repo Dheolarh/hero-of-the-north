@@ -156,6 +156,10 @@ public class GridPainter : MonoBehaviour
             if (go == null || go.name.Contains("Wire") || go.name.Contains("Background") || go.name.Contains("Cloud") || go.name.Contains("Barrier") || go.GetComponent<LineRenderer>() != null)
                 continue;
 
+            // Skip child objects whose parents are already in the list or are tagged as Selectable (to prevent double registration)
+            if (go.transform.parent != null && (allTargets.Contains(go.transform.parent.gameObject) || go.transform.parent.CompareTag("Selectable")))
+                continue;
+
             // Fix degenerate Z-scale (Z scale = 0 breaks Unity 2D physics colliders)
             if (go.transform.localScale.z == 0f)
             {
