@@ -55,7 +55,7 @@ public class ScoreManager : MonoBehaviour
 
     void Update()
     {
-        if (currentLevelNumber > 0 && !GameManager.Instance.isGameOver && !GameManager.Instance.isLevelCompleted)
+        if (currentLevelNumber != 0 && !GameManager.Instance.isGameOver && !GameManager.Instance.isLevelCompleted)
         {
             timeSpent += Time.unscaledDeltaTime;
         }

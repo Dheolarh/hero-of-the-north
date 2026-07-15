@@ -261,6 +261,9 @@ public class LevelManager : MonoBehaviour
         // If we are playing a community level in the Game scene, rebuild it instantly to restart
         if (!string.IsNullOrEmpty(_queuedCommunityLevelJson))
         {
+            if (ScoreManager.Instance != null)
+                ScoreManager.Instance.IncrementRetryCount();
+
             SpawnCommunityLevel();
             return;
         }

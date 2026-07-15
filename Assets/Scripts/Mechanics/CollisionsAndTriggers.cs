@@ -707,9 +707,21 @@ public class CollisionsAndTriggers : MonoBehaviour
                 Debug.Log($"[JumpModifier] Jump settings reset to original: {originalMaxJumpsValue}");
             }
         }
+    }    // ========== COLLISION EVENTS ==========
+ 
+    private void HandleAllySaved()
+    {
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Instance.alliesSaved++;
+            Debug.Log($"[CollisionsAndTriggers] Ally saved! Total: {ScoreManager.Instance.alliesSaved}");
+        }
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySfx("Ally");
+        }
+        Destroy(gameObject);
     }
-
-    // ========== COLLISION EVENTS ==========
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -717,27 +729,18 @@ public class CollisionsAndTriggers : MonoBehaviour
         {
             if (triggerType == TriggerType.Ally)
             {
-                if (ScoreManager.Instance != null)
-                {
-                    ScoreManager.Instance.alliesSaved++;
-                    Debug.Log($"[CollisionsAndTriggers] Ally saved! Total: {ScoreManager.Instance.alliesSaved}");
-                }
-                if (AudioManager.Instance != null)
-                {
-                    AudioManager.Instance.PlaySfx("Ally");
-                }
-                Destroy(gameObject);
+                HandleAllySaved();
             }
         }
     }
-
+ 
     // ========== TRIGGER EVENTS ==========
-
+ 
     public void ReportActivationCollision(GameObject objA, GameObject objB)
     {
         if (Time.time - lastTriggerTime < 0.1f) return;
         lastTriggerTime = Time.time;
-
+ 
         Debug.Log($"[CollisionsAndTriggers] Activation collision detected between {objA.name} and {objB.name}!");
         if (triggerDelay > 0f)
         {
@@ -748,9 +751,18 @@ public class CollisionsAndTriggers : MonoBehaviour
             ExecuteTriggerActions();
         }
     }
-
+ 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (other.CompareTag("Player"))
+        {
+            if (triggerType == TriggerType.Ally)
+            {
+                HandleAllySaved();
+                return;
+            }
+        }
+
         // Fallback to default Player collision behavior if activationObjects list is empty and activateOnStart is false
         if ((activationObjects == null || activationObjects.Length == 0) && !activateOnStart)
         {

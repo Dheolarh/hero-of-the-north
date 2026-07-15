@@ -165,6 +165,8 @@ MonoBehaviour:
   moveDirection: 3
   moveSpeed: 0
   stopMoveOnExit: 0
+  isPingPong: 0
+  pingPongDistance: 5
   enableRotation: 0
   rotationDirection: 0
   rotationSpeed: 0
@@ -175,6 +177,7 @@ MonoBehaviour:
   moveStaggerInterval: 0
   moveOnXOnly: 0
   moveOnYOnly: 0
+  preserveRelativeDistance: 0
   teleportPosition: {x: 0, y: 0}
   destinationTargetObject: {fileID: 0}
   useTargetX: 1
@@ -191,6 +194,11 @@ MonoBehaviour:
   makeSubjectToGravity: 0
   appearOnTrigger: 0
   deleteTriggerZone: 0
+  enableCameraShake: 0
+  playShakeSFX: 0
+  cameraShakeIntensity: 0.3
+  cameraShakeFrequency: 10
+  stopShakeOnExitBoundary: 0
   playAudioOnTrigger: 0
   audioClipName: 
   loopAudio: 0
@@ -312,6 +320,8 @@ MonoBehaviour:
   moveDirection: 3
   moveSpeed: 0
   stopMoveOnExit: 0
+  isPingPong: 0
+  pingPongDistance: 5
   enableRotation: 0
   rotationDirection: 0
   rotationSpeed: 0
@@ -322,6 +332,7 @@ MonoBehaviour:
   moveStaggerInterval: 0
   moveOnXOnly: 0
   moveOnYOnly: 0
+  preserveRelativeDistance: 0
   teleportPosition: {x: 3.54, y: 4.89}
   destinationTargetObject: {fileID: 0}
   useTargetX: 1
@@ -338,6 +349,11 @@ MonoBehaviour:
   makeSubjectToGravity: 0
   appearOnTrigger: 0
   deleteTriggerZone: 1
+  enableCameraShake: 0
+  playShakeSFX: 0
+  cameraShakeIntensity: 0.3
+  cameraShakeFrequency: 10
+  stopShakeOnExitBoundary: 0
   playAudioOnTrigger: 1
   audioClipName: teleport
   loopAudio: 0
@@ -547,11 +563,13 @@ MonoBehaviour:
   triggerType: 2
   componentAction: 0
   setObjectActive: 1
-  activationMode: 0
+  activationMode: 1
   enableMove: 0
   moveDirection: 3
   moveSpeed: 3.4
   stopMoveOnExit: 0
+  isPingPong: 0
+  pingPongDistance: 5
   enableRotation: 1
   rotationDirection: 0
   rotationSpeed: 80
@@ -562,6 +580,7 @@ MonoBehaviour:
   moveStaggerInterval: 0
   moveOnXOnly: 0
   moveOnYOnly: 0
+  preserveRelativeDistance: 0
   teleportPosition: {x: 0, y: 0}
   destinationTargetObject: {fileID: 0}
   useTargetX: 1
@@ -578,6 +597,11 @@ MonoBehaviour:
   makeSubjectToGravity: 0
   appearOnTrigger: 0
   deleteTriggerZone: 1
+  enableCameraShake: 0
+  playShakeSFX: 0
+  cameraShakeIntensity: 0.3
+  cameraShakeFrequency: 10
+  stopShakeOnExitBoundary: 0
   playAudioOnTrigger: 0
   audioClipName: 
   loopAudio: 0
@@ -903,6 +927,8 @@ MonoBehaviour:
   moveDirection: 3
   moveSpeed: 5
   stopMoveOnExit: 0
+  isPingPong: 0
+  pingPongDistance: 5
   enableRotation: 0
   rotationDirection: 0
   rotationSpeed: 100
@@ -913,6 +939,7 @@ MonoBehaviour:
   moveStaggerInterval: 0
   moveOnXOnly: 0
   moveOnYOnly: 0
+  preserveRelativeDistance: 0
   teleportPosition: {x: 0, y: 0}
   destinationTargetObject: {fileID: 0}
   useTargetX: 1
@@ -929,6 +956,11 @@ MonoBehaviour:
   makeSubjectToGravity: 0
   appearOnTrigger: 0
   deleteTriggerZone: 0
+  enableCameraShake: 0
+  playShakeSFX: 0
+  cameraShakeIntensity: 0.3
+  cameraShakeFrequency: 10
+  stopShakeOnExitBoundary: 0
   playAudioOnTrigger: 0
   audioClipName: 
   loopAudio: 0
